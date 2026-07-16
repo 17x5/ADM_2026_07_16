@@ -10,6 +10,10 @@ async function rufeGemini(prompt) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
+      // HIER wird der Stil definiert:
+      system_instruction: {
+        parts: [{ text: "Antworte immer kurz, freundlich, in einfacher Sprache und vermeide technisches Fachchinesisch." }]
+      },
       contents: [{ parts: [{ text: prompt }] }]
     })
   });
