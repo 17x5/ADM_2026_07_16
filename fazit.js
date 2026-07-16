@@ -1,5 +1,5 @@
 // Gesamtfazit-Box: Statuslabel bleibt regelbasiert, 
-// "situationErklaerung" und "actions" kommen jetzt dynamisch/via API.
+// Actions kommen jetzt direkt aus dem Fallback (da keine API vorhanden).
 
 function baueStatusLabel(bfStatus, sfColor, welleDesc) {
   let ampelEmoji = getEmojiColor(sfColor);
@@ -39,25 +39,16 @@ function getStaticActionItems(bfStatus) {
   return ["Bleibe entspannt voll investiert.", "Nutze temporäre Dips als Nachkaufchance."];
 }
 
-async function fetchDynamicActions(bfStatus) {
-  try {
-    const response = await fetch('/api/get-actions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: bfStatus })
-    });
-    return await response.json(); 
-  } catch (error) {
-    console.warn("API nicht erreichbar, verwende statische Fallback-Actions.", error);
-    return getStaticActionItems(bfStatus);
-  }
+// Hier wird nun direkt die statische Liste zurückgegeben
+function fetchDynamicActions(bfStatus) {
+  return getStaticActionItems(bfStatus);
 }
 
 async function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousClose, situationErklaerung) {
   let accentColor = accentColorFuerStatus(bfStatus);
   let labelHtml = baueStatusLabel(bfStatus, sfColor, welleDesc);
   
-  let actionList = await fetchDynamicActions(bfStatus);
+  let actionList = fetchDynamicActions(bfStatus);
   let listHtml = actionList.map(item => `<li>${item}</li>`).join("");
 
   let diff = currentScore - previousClose;
