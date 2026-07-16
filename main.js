@@ -1,53 +1,40 @@
 /**
  * DATEI: main.js
- * FUNKTION: Koordiniert das Rendering und stellt sicher, dass alle globalen Funktionen geladen sind.
+ * FUNKTION: Koordiniert den Start des Dashboards und wartet auf alle Modul-Abhängigkeiten.
  */
 
 async function render(data) {
   console.log("RENDER START: Daten empfangen", data);
 
   try {
-    // 1. Prüfen, ob die Berechnungslogik da ist
+    // 1. Prüfen, ob die Berechnungslogik (aus einer anderen Datei) da ist
     if (typeof window.berechneMarktStatus !== 'function') {
-      console.error("KRITISCH: berechneMarktStatus ist nicht definiert.");
-      return;
+      throw new Error("window.berechneMarktStatus ist nicht definiert!");
     }
-    
-    console.log("Berechne Marktstatus...");
     const status = window.berechneMarktStatus(data);
     
-    // 2. KI-Analyse
+    // 2. KI-Analyse durchführen
     let texte;
     try {
       console.log("Starte KI-Abfrage...");
-      if (typeof window.rufeGemini !== 'function') {
-        throw new Error("window.rufeGemini ist nicht definiert!");
-      }
-      
+      // Die Funktionen kommen aus gemini-client.js und gemini-prompts.js
       const prompt = window.baueGeminiPrompt(data);
-      console.log("Prompt generiert, sende an Gemini...");
-      
       const rohAntwort = await window.rufeGemini(prompt);
-      console.log("Antwort von Gemini erhalten:", rohAntwort);
-      
       texte = window.parseGeminiFazitAntwort(rohAntwort);
-      console.log("Antwort erfolgreich geparst:", texte);
-      
+      console.log("KI-Analyse erfolgreich erhalten und geparst.");
     } catch (apiError) {
       console.error("Fehler bei der KI-Analyse:", apiError);
-      texte = {
-        gesamtsituation: "Die KI-Analyse ist aktuell nicht verfügbar.",
-        actions: ["Überprüfe den Marktstatus manuell."]
+      texte = { 
+        gesamtsituation: "Die KI-Analyse ist aktuell nicht verfügbar.", 
+        actions: ["Überprüfe die Internetverbindung.", "Versuche es in Kürze erneut."] 
       };
     }
 
-    // 3. UI-Komponente rendern
+    // 3. UI rendern (aus fazit.js)
     if (typeof window.buildFazitDuForm !== 'function') {
-      console.error("KRITISCH: window.buildFazitDuForm ist nicht definiert!");
-      return;
+      throw new Error("window.buildFazitDuForm ist nicht definiert! Prüfe fazit.js");
     }
 
-    console.log("Baue Fazit HTML...");
     const fazitHtml = window.buildFazitDuForm(
         status.bfStatus, status.sfColor, status.welleDesc, data.score, 
         data.previous_close, texte.gesamtsituation, texte.actions 
@@ -56,7 +43,7 @@ async function render(data) {
     const container = document.getElementById('fazitInhalt');
     if (container) {
       container.innerHTML = fazitHtml;
-      console.log("Rendering abgeschlossen.");
+      console.log("Rendering erfolgreich abgeschlossen.");
     } else {
       console.error("Element 'fazitInhalt' nicht im DOM gefunden.");
     }
@@ -65,19 +52,28 @@ async function render(data) {
   }
 }
 
+// Global für externe Aufrufe registrieren
+window.render = render;
+
+// Warteraum für alle Abhängigkeiten:
+// Erst wenn alle globalen Funktionen vorhanden sind, wird das Dashboard gestartet.
 window.addEventListener('load', () => {
   const checkInterval = setInterval(() => {
-    // Debug-Log, um zu sehen, ob das Intervall läuft
-    console.log("Warte auf Abhängigkeiten...");
-    
-    if (typeof window.starteDashboard === 'function' && 
+    const allesDa = (
+        typeof window.starteDashboard === 'function' && 
         typeof window.buildFazitDuForm === 'function' &&
         typeof window.rufeGemini === 'function' &&
-        typeof window.berechneMarktStatus === 'function') {
-      
+        typeof window.baueGeminiPrompt === 'function' &&
+        typeof window.parseGeminiFazitAntwort === 'function' &&
+        typeof window.berechneMarktStatus === 'function'
+    );
+    
+    if (allesDa) {
       clearInterval(checkInterval);
-      console.log("Alle Abhängigkeiten geladen, starte Dashboard...");
+      console.log("ALLES GELADEN - Starte Dashboard");
       window.starteDashboard();
+    } else {
+      console.log("Warte auf Module: fazit, gemini, etc...");
     }
   }, 500);
 });
