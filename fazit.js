@@ -26,19 +26,23 @@ function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousCl
     : "<li>Keine Aktionen empfangen.</li>";
 
   let diff = currentScore - previousClose;
-  let diffText = diff > 0 ? `▲ +${diff.toFixed(1)}` : diff < 0 ? `▼ ${diff.toFixed(1)}` : `■ Unverändert`;
+  let diffText = diff > 0 ? `▲ +${diff.toFixed(1)} Punkte...` : diff < 0 ? `▼ ${diff.toFixed(1)} Punkte...` : `■ Unverändert...`;
+  let diffColor = diff > 0 ? "var(--green)" : diff < 0 ? "var(--red)" : "var(--yellow)";
 
   return `
     <div class="fazit-section">
+      <div class="fazit-label">Deine Situation:</div>
       <p class="fazit-p">${labelHtml}${situationErklaerung || "Analyse wird geladen..."}</p>
-      <div class="fazit-change"><strong>Veränderung:</strong> ${diffText} Punkte</div>
+      <div class="fazit-change" style="color: ${diffColor};">
+        <strong>Veränderung zum letzten Handelstag:</strong> ${diffText}
+      </div>
     </div>
     <div id="actionBox" class="action-box" style="border-left-color:${accentColor};">
       <div class="action-header" onclick="toggleActionBox()">
         <h3 style="color:${accentColor};">Deine Actions:</h3>
         <span id="actionToggleIcon" class="action-toggle-icon">▶ Anzeigen</span>
       </div>
-      <!-- HIER: style="display: none;" sorgt dafür, dass es standardmäßig eingeklappt ist! -->
+      <!-- Standardmäßig eingeklappt durch style="display: none;" -->
       <div class="action-content" style="display: none;">
         <ul class="action-list">${items}</ul>
       </div>
