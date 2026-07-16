@@ -1,5 +1,5 @@
 // Gesamtfazit-Box: Statuslabel bleibt regelbasiert, 
-// "situationErklaerung" und "actions" kommen jetzt von der API.
+// "situationErklaerung" und "actions" kommen jetzt dynamisch/via API.
 
 function baueStatusLabel(bfStatus, sfColor, welleDesc) {
   let ampelEmoji = getEmojiColor(sfColor);
@@ -40,45 +40,26 @@ function getStaticActionItems(bfStatus) {
   return ["Bleibe entspannt voll investiert.", "Nutze temporäre Dips als Nachkaufchance."];
 }
 
-// fazit.js
-async function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousClose, situationErklaerung) {
-  let accentColor = accentColorFuerStatus(bfStatus);
-  let labelHtml = baueStatusLabel(bfStatus, sfColor, welleDesc);
-  
-  // Wichtig: Hier wird gewartet, bis die Actions geladen sind
-  let actionList = await fetchDynamicActions(bfStatus);
-  let listHtml = actionList.map(item => `<li>${item}</li>`).join("");
-
-  let diff = currentScore - previousClose;
-  let diffText = diff > 0 ? `▲ +${diff.toFixed(1)} Punkte...` : diff < 0 ? `▼ ${diff.toFixed(1)} Punkte...` : `■ Unverändert...`;
-  let diffColor = diff > 0 ? "var(--green)" : diff < 0 ? "var(--red)" : "var(--yellow)";
-
-  return `
-    <div class="fazit-section">
-      <div class="fazit-label">Deine Situation:</div>
-      <p class="fazit-p">${labelHtml}${situationErklaerung}</p>
-      <div class="fazit-change" style="color: ${diffColor};">
-        <strong>Veränderung zum letzten Handelstag:</strong> ${diffText}
-      </div>
-    </div>
-    <div id="actionBox" class="action-box" style="border-left-color:${accentColor};">
-      <div class="action-header" onclick="toggleActionBox()">
-        <h3 style="color:${accentColor};">Deine Actions:</h3>
-        <span id="actionToggleIcon" class="action-toggle-icon">▶ Anzeigen</span>
-      </div>
-      <div class="action-content">
-        <ul class="action-list">${listHtml}</ul>
-      </div>
-    </div>
-  `;
-}
+async function fetchDynamicActions(bfStatus) {
+  try {
+    // Hier den Endpunkt deiner API eintragen
+    const response = await fetch('/api/get-actions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: bfStatus })
+    });
+    return await response.json(); 
+  } catch (error) {
+    console.warn("API nicht erreichbar, verwende statische Fallback-Actions.", error);
+    return getStaticActionItems(bfStatus);
+  }
 }
 
 async function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousClose, situationErklaerung) {
   let accentColor = accentColorFuerStatus(bfStatus);
   let labelHtml = baueStatusLabel(bfStatus, sfColor, welleDesc);
   
-  // Dynamische Actions laden
+  // Warten auf dynamische Actions
   let actionList = await fetchDynamicActions(bfStatus);
   let listHtml = actionList.map(item => `<li>${item}</li>`).join("");
 
