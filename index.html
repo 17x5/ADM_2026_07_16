@@ -206,20 +206,28 @@
   </footer>
 </div>
 
+<!-- 1. Basis-Konfiguration & Hilfswerkzeuge (keine Abhängigkeiten) -->
 <script src="config.js"></script>
 <script src="helpers.js"></script>
 <script src="utils.js"></script>
 <script src="ampel-logik.js"></script>
+
+<!-- 2. UI-Komponenten (brauchen helpers.js) -->
 <script src="fazit.js"></script>
 <script src="kachel-sentiment.js"></script>
 <script src="kachel-trend.js"></script>
 <script src="kachel-struktur.js"></script>
 <script src="kachel-rohstoffe.js"></script>
-<script src="data-fetch.js"></script>
-<script src="gemini-client.js"></script>
+
+<!-- 3. KI-Logik (muss geladen sein, bevor data-fetch oder main darauf zugreifen) -->
 <script src="gemini-prompts.js"></script>
+<script src="gemini-client.js"></script>
+
+<!-- 4. Daten-Logik (braucht KI-Logik und Helfer) -->
+<script src="data-fetch.js"></script>
+
+<!-- 5. Hauptsteuerung (braucht alles oben) -->
 <script src="main.js"></script>
-<script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
       navigator.serviceWorker.register("service-worker.js");
