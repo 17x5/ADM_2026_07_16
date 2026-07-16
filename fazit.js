@@ -44,6 +44,7 @@ function accentColorFuerStatus(bfStatus) {
  * verzögert reagiert oder keine Daten liefert.
  */
 function getFallbackActions(bfStatus) {
+  console.log("fazit.js: Nutze regelbasiertes Fallback-System für Status:", bfStatus);
   if (bfStatus === "MARKT-ILLUSION") {
     return [
       "Reduziere riskante Nebenwerte und spekulative Hebelpositionen konsequent.",
@@ -80,19 +81,31 @@ function getFallbackActions(bfStatus) {
 }
 
 /**
- * Steuert das Auf- und Zuklappen der Actions-Box inklusive Icon-Wechsel
+ * Steuert das Auf- und Zuklappen der Actions-Box inklusive Icon-Wechsel.
+ * Nutzt 'header', um relativ im DOM zu suchen – extrem stabil und resistent gegen Konflikte.
  */
-function toggleActionBox() {
-  const content = document.querySelector(".action-content");
-  const icon = document.getElementById("actionToggleIcon");
+function toggleActionBox(headerElement) {
+  const box = headerElement ? headerElement.closest(".action-box") : document.getElementById("actionBox");
+  if (!box) {
+    console.error("fazit.js: .action-box konnte im DOM nicht gefunden werden.");
+    return;
+  }
+  
+  const content = box.querySelector(".action-content");
+  const icon = box.querySelector(".action-toggle-icon");
+  
   if (content && icon) {
     if (content.style.display === "none" || content.style.display === "") {
       content.style.display = "block";
       icon.textContent = "▼ Ausblenden";
+      console.log("fazit.js: Actions-Box geöffnet.");
     } else {
       content.style.display = "none";
       icon.textContent = "▶ Anzeigen";
+      console.log("fazit.js: Actions-Box geschlossen.");
     }
+  } else {
+    console.error("fazit.js: .action-content oder .action-toggle-icon fehlt innerhalb der Box.");
   }
 }
 
@@ -101,18 +114,49 @@ function toggleActionBox() {
  * Befüllt die Actions-Liste dynamisch aus den KI-Daten oder nutzt das Fallback.
  */
 function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousClose, situationErklaerung, actionList) {
+  console.log("fazit.js: buildFazitDuForm aufgerufen mit:", { bfStatus, sfColor, welleDesc, currentScore, previousClose });
+  console.log("fazit.js: Erhaltene raw actionList von KI:", actionList);
+
   let accentColor = accentColorFuerStatus(bfStatus);
   let labelHtml = baueStatusLabel(bfStatus, sfColor, welleDesc);
   
-  // Validierung der KI-Aktionen
-  let cleanActions = Array.isArray(actionList) 
-    ? actionList.filter(item => item && typeof item === "string" && item.trim().length > 0) 
-    : [];
+  // Extrem robuster Normalisierungs-Parser für jegliche Formate der Action-List
+  let cleanActions = [];
+  if (actionList) {
+    if (Array.isArray(actionList)) {
+      // Wenn es ein Array ist, konvertiere jedes Element sauber in Text
+      cleanActions = actionList.map(item => {
+        if (!item) return "";
+        if (typeof item === "string") return item.trim();
+        if (typeof item === "object") {
+          // Falls die KI Objekte wie { text: "Aktion" } liefert
+          return item.text || item.action || item.desc || JSON.stringify(item);
+        }
+        return String(item).trim();
+      }).filter(item => item.length > 0);
+    } else if (typeof actionList === "object") {
+      // Falls ein Objekt mit Keys { "1": "Aktion", "2": "Aktion" } geliefert wird
+      cleanActions = Object.values(actionList).map(item => {
+        if (!item) return "";
+        return typeof item === "string" ? item.trim() : String(item).trim();
+      }).filter(item => item.length > 0);
+    } else if (typeof actionList === "string" && actionList.trim().length > 0) {
+      // Falls ein einziger langer String geliefert wird, versuche ihn an Zeilenumbrüchen oder Aufzählungen zu splitten
+      const lines = actionList.split(/\n|- |• /).map(s => s.trim()).filter(s => s.length > 5);
+      if (lines.length > 1) {
+        cleanActions = lines;
+      } else {
+        cleanActions = [actionList.trim()];
+      }
+    }
+  }
 
-  // Nutzen der KI-Actions, sonst Aktivierung des passgenauen Fallback-Systems
+  // Nutzen der bereinigten KI-Actions, sonst Aktivierung des passgenauen Fallback-Systems
   let finalActions = (cleanActions.length > 0) 
     ? cleanActions 
     : getFallbackActions(bfStatus);
+
+  console.log("fazit.js: Finale verarbeitete Actions zur Anzeige:", finalActions);
 
   let items = finalActions.map(item => `<li>${item}</li>`).join("");
 
@@ -130,7 +174,7 @@ function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousCl
       </div>
     </div>
     <div id="actionBox" class="action-box" style="border-left-color:${accentColor};">
-      <div class="action-header" onclick="toggleActionBox()">
+      <div class="action-header" onclick="toggleActionBox(this)">
         <h3 style="color:${accentColor};">Deine Actions:</h3>
         <span id="actionToggleIcon" class="action-toggle-icon">▶ Anzeigen</span>
       </div>
@@ -141,3 +185,9 @@ function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousCl
     </div>
   `;
 }
+
+// EXPLIZITE GLOBALE REGISTRIERUNG:
+// Garantiert, dass inline 'onclick'-Attribute im dynamisch geladenen HTML 
+// die Funktionen unabhängig von Ladezeiten oder Modulscoping immer finden!
+window.toggleActionBox = toggleActionBox;
+window.buildFazitDuForm = buildFazitDuForm;
