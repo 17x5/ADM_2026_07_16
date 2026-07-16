@@ -5,6 +5,7 @@ async function render(data) {
 
   const status = berechneMarktStatus(data, vix, breadth, marginDebt);
 
+  // Kacheln rendern
   renderKachelSentiment(data, status.vixColor, status.rawVix, status.cnnColor);
   renderKachelTrend(data, status.sfColor, status.bfStatus, status.welleDesc, status.actBreadth);
   renderKachelStruktur(data);
@@ -13,6 +14,7 @@ async function render(data) {
   try {
     const prompt = baueGeminiPrompt(data, status);
     const antwortText = await rufeGemini(prompt);
+    // HINWEIS: Dein Parser muss hier ein Objekt liefern: { gesamtsituation: "...", actions: [...] }
     const texte = parseGeminiFazitAntwort(antwortText);
 
     document.getElementById('fazitContent1').innerHTML = texte.sentiment;
@@ -20,18 +22,22 @@ async function render(data) {
     document.getElementById('fazitContent3').innerHTML = texte.struktur;
     document.getElementById('fazitContent4').innerHTML = texte.rohstoffe;
     
-    // WICHTIG: Hier das await, da buildFazitDuForm nun async ist
-    const fazitHtml = await buildFazitDuForm(status.bfStatus, status.sfColor, status.welleDesc, data.score, data.previous_close, texte.gesamtsituation);
+    // Übergabe der dynamischen Actions an die Funktion
+    const fazitHtml = await buildFazitDuForm(
+        status.bfStatus, status.sfColor, status.welleDesc, 
+        data.score, data.previous_close, texte.gesamtsituation, 
+        texte.actions // Hier kommen die KI-Actions rein!
+    );
     document.getElementById('fazitInhalt').innerHTML = fazitHtml;
 
   } catch (err) {
-    console.error("Fehler:", err);
-    document.getElementById('fazitContent1').innerHTML = fallbackFazitSentiment(data, status.rawVix);
-    document.getElementById('fazitContent2').innerHTML = fallbackFazitTrend(data, status.bfStatus, status.actBreadth);
-    document.getElementById('fazitContent3').innerHTML = fallbackFazitStruktur(data);
-    document.getElementById('fazitContent4').innerHTML = fallbackFazitRohstoffe(data);
-    
-    const fallbackHtml = await buildFazitDuForm(status.bfStatus, status.sfColor, status.welleDesc, data.score, data.previous_close, "Marktlage wird analysiert...");
+    console.error("KI-Fehler, Fallback aktiv:", err);
+    // ... (Hier deine Fallback-Logik mit statischen Arrays) ...
+    const fallbackHtml = await buildFazitDuForm(
+        status.bfStatus, status.sfColor, status.welleDesc, 
+        data.score, data.previous_close, "Analyse derzeit nicht verfügbar.", 
+        ["Beobachte den Markt aktiv.", "Halte Liquidität bereit."]
+    );
     document.getElementById('fazitInhalt').innerHTML = fallbackHtml;
   }
 }
