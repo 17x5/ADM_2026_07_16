@@ -1,67 +1,41 @@
 /**
- * Haupt-Render-Logik
- * Diese Funktion steuert den gesamten Dashboard-Aufbau.
+ * Erzeugt den Prompt für die KI-Analyse.
+ * Sichergestellt durch explizite Zuweisung an das window-Objekt.
  */
-async function render(data) {
-  // 1. Marktdaten-Vorbereitung
-  const vix = data.subs.find(s => s.key === "market_volatility_vix");
-  const breadth = data.subs.find(s => s.key === "stock_price_breadth");
-  const marginDebt = data.subs.find(s => s.key === "finra_margin_debt");
+(function() {
+    function baueGeminiPrompt(data) {
+      return `Analysiere den aktuellen Markt basierend auf diesen Daten: ${JSON.stringify(data)}.
+      Antworte ausschließlich im JSON-Format mit folgenden Feldern:
+      {
+        "gesamtsituation": "Erklärung...",
+        "actions": ["Action 1", "Action 2", "Action 3", "Action 4"],
+        "sentiment": "...",
+        "trend": "...",
+        "struktur": "...",
+        "rohstoffe": "..."
+      }`;
+    }
 
-  const status = berechneMarktStatus(data, vix, breadth, marginDebt);
+    function parseGeminiFazitAntwort(antwortText) {
+      try {
+        const cleanText = antwortText.replace(/```json/gi, "").replace(/```/g, "").trim();
+        const startIndex = cleanText.indexOf('{');
+        const endIndex = cleanText.lastIndexOf('}');
+        if (startIndex === -1 || endIndex === -1) throw new Error("Kein JSON gefunden");
+        
+        return JSON.parse(cleanText.substring(startIndex, endIndex + 1));
+      } catch (e) {
+        console.error("Parsing-Fehler:", e);
+        return {
+          gesamtsituation: "Fehler beim Laden der Daten.",
+          actions: ["Systemfehler", "Bitte Refresh durchführen"],
+          sentiment: "Fehler", trend: "Fehler", struktur: "Fehler", rohstoffe: "Fehler"
+        };
+      }
+    }
 
-  // 2. Kacheln (Sentiment, Trend, Struktur, Rohstoffe) rendern
-  renderKachelSentiment(data, status.vixColor, status.rawVix, status.cnnColor);
-  renderKachelTrend(data, status.sfColor, status.bfStatus, status.welleDesc, status.actBreadth);
-  renderKachelStruktur(data);
-  renderKachelRohstoffe(data);
-
-  // 3. Dynamisches Fazit und Actions über die KI laden
-  try {
-    console.log("Starte KI-Datenabruf...");
-    
-    // Prompt-Erstellung
-    const prompt = baueGeminiPrompt(data, status);
-    
-    // KI-Antwort abwarten
-    const antwortText = await rufeGemini(prompt);
-    
-    // Antwort parsen (MUSS ein Objekt liefern: { gesamtsituation: "...", actions: [...] })
-    const texte = parseGeminiFazitAntwort(antwortText);
-
-    // Kachel-Texte aktualisieren
-    document.getElementById('fazitContent1').innerHTML = texte.sentiment;
-    document.getElementById('fazitContent2').innerHTML = texte.trend;
-    document.getElementById('fazitContent3').innerHTML = texte.struktur;
-    document.getElementById('fazitContent4').innerHTML = texte.rohstoffe;
-
-    // Fazit & Dynamische Actions rendern (WICHTIG: Hier kommt die Dynamik ins Spiel)
-    document.getElementById('fazitInhalt').innerHTML = buildFazitDuForm(
-        status.bfStatus, 
-        status.sfColor, 
-        status.welleDesc, 
-        data.score, 
-        data.previous_close, 
-        texte.gesamtsituation, 
-        texte.actions // Hier werden die KI-Actions direkt übergeben
-    );
-
-    console.log("KI-Daten erfolgreich verarbeitet.");
-
-  } catch (err) {
-    console.error("Fehler beim Laden der KI-Daten:", err);
-    
-    // Fallback-Anzeige bei Scheitern, um das "Hängenbleiben" zu verhindern
-    document.getElementById('fazitInhalt').innerHTML = `
-      <div class="action-box" style="border-left-color: var(--red);">
-        <h3 style="color: var(--red);">Fehler bei der KI-Analyse</h3>
-        <p>Die Analyse konnte nicht dynamisch geladen werden.</p>
-        <p><small>Fehler: ${err.message}</small></p>
-      </div>
-    `;
-  }
-}
-
-// Startpunkt: Daten laden und Dashboard initialisieren
-// Stelle sicher, dass ladeDaten() in deiner data-fetch.js diese Funktion aufruft.
-ladeDaten();
+    // Explizite Zuweisung an window
+    window.baueGeminiPrompt = baueGeminiPrompt;
+    window.parseGeminiFazitAntwort = parseGeminiFazitAntwort;
+    console.log("gemini-prompts.js: Funktionen erfolgreich registriert.");
+})();
