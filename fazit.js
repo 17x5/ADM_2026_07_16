@@ -1,5 +1,3 @@
-// fazit.js: Erhält dynamische Inhalte direkt vom Hauptskript
-
 function baueStatusLabel(bfStatus, sfColor, welleDesc) {
   let ampelEmoji = getEmojiColor(sfColor);
   const labels = {
@@ -18,13 +16,11 @@ function accentColorFuerStatus(bfStatus) {
   return "var(--green)";
 }
 
-// Diese Funktion nimmt jetzt ein Array (actionList) als Argument entgegen
-async function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousClose, situationErklaerung, actionList) {
+function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousClose, situationErklaerung, actionList) {
   let accentColor = accentColorFuerStatus(bfStatus);
   let labelHtml = baueStatusLabel(bfStatus, sfColor, welleDesc);
   
-  // Falls actionList leer ist, Fallback zeigen
-  let items = (Array.isArray(actionList) && actionList.length > 0) ? actionList : ["Analysiere Marktlage..."];
+  let items = (Array.isArray(actionList) && actionList.length > 0) ? actionList : ["Marktlage wird analysiert..."];
   let listHtml = items.map(item => `<li>${item}</li>`).join("");
 
   let diff = currentScore - previousClose;
