@@ -1,26 +1,24 @@
 /**
  * DATEI: main.js
- * FUNKTION: Koordiniert das Laden der Marktdaten, die KI-Analyse und das Rendering.
+ * FUNKTION: Koordiniert das Rendering und stellt sicher, dass alle globalen Funktionen geladen sind.
  */
 
 async function render(data) {
   console.log("RENDER START: Daten empfangen", data);
 
   try {
+    // 1. Prüfen, ob die Berechnungslogik da ist
     if (typeof window.berechneMarktStatus !== 'function') {
       throw new Error("berechneMarktStatus ist global nicht definiert!");
     }
     const status = window.berechneMarktStatus(data);
     
+    // 2. KI-Analyse mit korrekter Funktionsbezeichnung 'rufeGemini'
     let texte;
     try {
       console.log("Starte KI-Abfrage...");
-      const kiAbfrage = rufeGemini(window.baueGeminiPrompt(data));
-      const timeout = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Timeout bei KI-Abfrage")), 8000)
-      );
-      
-      const rohAntwort = await Promise.race([kiAbfrage, timeout]);
+      // Verwende hier den in gemini-client.js definierten Funktionsnamen 'rufeGemini'
+      const rohAntwort = await window.rufeGemini(window.baueGeminiPrompt(data));
       texte = window.parseGeminiFazitAntwort(rohAntwort);
     } catch (apiError) {
       console.error("Fehler bei der KI-Analyse:", apiError);
@@ -28,6 +26,11 @@ async function render(data) {
         gesamtsituation: "Die KI-Analyse ist aktuell nicht verfügbar.",
         actions: ["Überprüfe den Marktstatus manuell."]
       };
+    }
+
+    // 3. UI-Komponente rendern
+    if (typeof window.buildFazitDuForm !== 'function') {
+      throw new Error("window.buildFazitDuForm ist nicht definiert! Prüfe fazit.js");
     }
 
     const fazitHtml = window.buildFazitDuForm(
@@ -38,22 +41,27 @@ async function render(data) {
     const container = document.getElementById('fazitInhalt');
     if (container) {
       container.innerHTML = fazitHtml;
+    } else {
+      console.error("Element 'fazitInhalt' nicht im DOM gefunden.");
     }
   } catch (error) {
     console.error("Kritischer Fehler im Render-Prozess:", error);
   }
 }
 
-async function rufeGemini(prompt) {
-  if (typeof window.rufeGeminiAPI !== 'function') throw new Error("rufeGeminiAPI fehlt.");
-  return await window.rufeGeminiAPI(prompt); 
-}
+// Globaler Wrapper für die API-Funktion, falls main.js diese erwartet
+window.rufeGeminiAPI = window.rufeGemini;
 
 window.addEventListener('load', () => {
   const checkInterval = setInterval(() => {
-    if (typeof window.starteDashboard === 'function') {
+    // Wir prüfen nun, ob alle benötigten Abhängigkeiten geladen sind
+    if (typeof window.starteDashboard === 'function' && 
+        typeof window.buildFazitDuForm === 'function' &&
+        typeof window.rufeGemini === 'function') {
+      
       clearInterval(checkInterval);
+      console.log("Alle Abhängigkeiten geladen, starte Dashboard...");
       window.starteDashboard();
     }
-  }, 500);
+  }, 300);
 });
