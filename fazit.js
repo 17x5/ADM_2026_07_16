@@ -16,14 +16,53 @@ function accentColorFuerStatus(bfStatus) {
   return "var(--green)";
 }
 
+// Regelbasiertes, dynamisches Fallback-System, falls die KI-Actions verzögert sind
+function getFallbackActions(bfStatus) {
+  if (bfStatus === "MARKT-ILLUSION") {
+    return [
+      "Reduziere riskante Nebenwerte und spekulative Hebelpositionen konsequent.",
+      "Sichere deine Kernpositionen mit engen, strikten Stop-Loss-Marken ab.",
+      "Schichte frei werdendes Kapital vorübergehend in Cash oder hochdefensive Werte um."
+    ];
+  }
+  if (bfStatus === "ÜBERHITZT") {
+    return [
+      "Nimm strategische Teilgewinne bei stark gelaufenen Positionen mit.",
+      "Vermeide FOMO-Nachkäufe auf Allzeithochs.",
+      "Erhöhe die Cash-Quote für spätere Rücksetzer."
+    ];
+  }
+  if (bfStatus === "FALLENDES MESSER") {
+    return [
+      "Halte die Füße still und warte auf eine nachhaltige Bodenbestätigung.",
+      "Lasse langfristige Sparpläne stur weiterlaufen.",
+      "Vermeide verfrühtes 'Ins fallende Messer greifen' ohne Trendwende-Signale."
+    ];
+  }
+  if (bfStatus === "KORREKTUR") {
+    return [
+      "Keine Panikverkäufe – der Markt atmet lediglich gesund durch.",
+      "Bereite deine Watchlist für gezielte Qualitätskäufe vor.",
+      "Prüfe wichtige gleitende Durchschnitte (z.B. SMA 50/200) als Unterstützungszonen."
+    ];
+  }
+  return [
+    "Bleibe entspannt voll investiert.",
+    "Nutze temporäre Kursrücksetzer (Dips) als gezielte Nachkaufchance.",
+    "Überprüfe regelmäßig die fundamentale Stärke deines Depots."
+  ];
+}
+
 function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousClose, situationErklaerung, actionList) {
   let accentColor = accentColorFuerStatus(bfStatus);
   let labelHtml = baueStatusLabel(bfStatus, sfColor, welleDesc);
   
-  // Dynamische Liste aus der KI
-  let items = (Array.isArray(actionList) && actionList.length > 0) 
-    ? actionList.map(item => `<li>${item}</li>`).join("") 
-    : "<li>Keine Aktionen empfangen.</li>";
+  // ECHTE DYNAMIK: Nutzt die KI-Aktionen, weicht bei Fehlen aber auf die passgenauen Marktphasen-Aktionen aus
+  let finalActions = (Array.isArray(actionList) && actionList.length > 0) 
+    ? actionList 
+    : getFallbackActions(bfStatus);
+
+  let items = finalActions.map(item => `<li>${item}</li>`).join("");
 
   let diff = currentScore - previousClose;
   let diffText = diff > 0 ? `▲ +${diff.toFixed(1)} Punkte...` : diff < 0 ? `▼ ${diff.toFixed(1)} Punkte...` : `■ Unverändert...`;
