@@ -1,69 +1,37 @@
 /**
- * Haupt-Logik: Koordiniert das Laden der Marktdaten,
- * die KI-Analyse und das Rendering des Fazits.
+ * DATEI: gemini-client.js
+ * FUNKTION: API-Verbindung zu Google Gemini.
  */
-async function render(data) {
-  console.log("RENDER START: Daten empfangen", data);
+
+const GEMINI_API_KEY = "AQ.Ab8RN6I6i117jvqUVBPcgca7S0HTxD_EpYI1WFplok3q4qDhQg";
+const GEMINI_MODEL = "gemini-3.1-flash-lite";
+
+async function rufeGemini(prompt) {
+  console.log("Starte API-Aufruf an Gemini...");
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
   try {
-    // 1. Marktstatus berechnen
-    const status = berechneMarktStatus(data);
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }]
+      })
+    });
     
-    // 2. Fazit-Texte via KI abrufen (mit Fallback-Mechanismus)
-    let texte;
-    try {
-      // Zugriff auf die global registrierten Funktionen aus gemini-prompts.js
-      // Wir stellen sicher, dass die Funktionen im Window-Objekt vorhanden sind
-      if (typeof window.baueGeminiPrompt !== 'function' || typeof window.parseGeminiFazitAntwort !== 'function') {
-        throw new Error("KI-Hilfsfunktionen nicht im globalen Scope gefunden.");
-      }
-
-      const prompt = window.baueGeminiPrompt(data);
-      const rohAntwort = await rufeGemini(prompt);
-      texte = window.parseGeminiFazitAntwort(rohAntwort);
-      
-      // Globalen State für fazit.js setzen (die "Brücke")
-      window.lastParsedFazit = texte;
-      console.log("KI-Daten erfolgreich verarbeitet.");
-    } catch (apiError) {
-      console.error("Fehler bei der KI-Analyse, nutze Fallback:", apiError);
-      texte = {
-        gesamtsituation: "Analyse konnte nicht dynamisch geladen werden.",
-        actions: [] // Fallback wird in fazit.js geladen
-      };
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(`API Fehler: ${res.status} - ${errorData.error?.message || 'Unbekannt'}`);
     }
-
-    // 3. Fazit & Dynamische Actions rendern
-    // Wir übergeben texte.actions direkt; falls undefined, greift fazit.js auf window.lastParsedFazit zu
-    const fazitHtml = buildFazitDuForm(
-        status.bfStatus, 
-        status.sfColor, 
-        status.welleDesc, 
-        data.score, 
-        data.previous_close, 
-        texte.gesamtsituation, 
-        texte.actions 
-    );
-
-    const container = document.getElementById('fazitInhalt');
-    if (container) {
-      container.innerHTML = fazitHtml;
-    } else {
-      console.error("Element #fazitInhalt nicht gefunden!");
-    }
-
+    
+    const json = await res.json();
+    return json.candidates[0].content.parts[0].text;
   } catch (error) {
-    console.error("Kritischer Fehler im Render-Prozess:", error);
+    console.error("Fehler in rufeGemini:", error);
+    throw error;
   }
 }
 
-/**
- * Hilfsfunktion zum Aufruf der Gemini-API
- */
-async function rufeGemini(prompt) {
-  // Stellt sicher, dass die API-Funktion korrekt aufgerufen wird
-  if (typeof rufeGeminiAPI !== 'function') {
-    throw new Error("API-Verbindungsfunktion 'rufeGeminiAPI' nicht definiert.");
-  }
-  return await rufeGeminiAPI(prompt); 
-}
+// Globale Registrierung unter dem korrekten Namen
+window.rufeGemini = rufeGemini;
+console.log("gemini-client.js: rufeGemini wurde global registriert.");
