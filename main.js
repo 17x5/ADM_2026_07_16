@@ -13,11 +13,14 @@ async function render(data) {
     }
     const status = window.berechneMarktStatus(data);
     
-    // 2. KI-Analyse mit korrekter Funktionsbezeichnung 'rufeGemini'
+    // 2. KI-Analyse
     let texte;
     try {
       console.log("Starte KI-Abfrage...");
-      // Verwende hier den in gemini-client.js definierten Funktionsnamen 'rufeGemini'
+      // Zugriff explizit auf die globale Funktion aus gemini-client.js
+      if (typeof window.rufeGemini !== 'function') {
+        throw new Error("window.rufeGemini ist nicht definiert!");
+      }
       const rohAntwort = await window.rufeGemini(window.baueGeminiPrompt(data));
       texte = window.parseGeminiFazitAntwort(rohAntwort);
     } catch (apiError) {
@@ -49,15 +52,13 @@ async function render(data) {
   }
 }
 
-// Globaler Wrapper für die API-Funktion, falls main.js diese erwartet
-window.rufeGeminiAPI = window.rufeGemini;
-
 window.addEventListener('load', () => {
   const checkInterval = setInterval(() => {
-    // Wir prüfen nun, ob alle benötigten Abhängigkeiten geladen sind
+    // Prüfung auf alle benötigten globalen Funktionen
     if (typeof window.starteDashboard === 'function' && 
         typeof window.buildFazitDuForm === 'function' &&
-        typeof window.rufeGemini === 'function') {
+        typeof window.rufeGemini === 'function' &&
+        typeof window.berechneMarktStatus === 'function') {
       
       clearInterval(checkInterval);
       console.log("Alle Abhängigkeiten geladen, starte Dashboard...");
