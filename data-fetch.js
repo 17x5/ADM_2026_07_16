@@ -7,7 +7,7 @@ async function ladeDaten(){
   let btcAenderung = FALLBACK.btc_change_24h;
 
   try {
-    const cryptoRes = await fetch('https://api.coingecko.com/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true');
+    const cryptoRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
     if(cryptoRes.ok) {
       const cryptoJson = await cryptoRes.json();
       if(cryptoJson.bitcoin) {
