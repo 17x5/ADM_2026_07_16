@@ -13,6 +13,7 @@ async function render(data) {
   try {
     const prompt = baueGeminiPrompt(data, status);
     const antwortText = await rufeGemini(prompt);
+    // WICHTIG: Dein Parser muss ein Objekt mit .actions (Array) zurückgeben!
     const texte = parseGeminiFazitAntwort(antwortText);
 
     document.getElementById('fazitContent1').innerHTML = texte.sentiment;
@@ -20,23 +21,16 @@ async function render(data) {
     document.getElementById('fazitContent3').innerHTML = texte.struktur;
     document.getElementById('fazitContent4').innerHTML = texte.rohstoffe;
     
-    // Aufruf ohne await, da synchron
+    // Einfacher Aufruf: Daten aus dem Parser direkt reinwerfen
     document.getElementById('fazitInhalt').innerHTML = buildFazitDuForm(
         status.bfStatus, status.sfColor, status.welleDesc, 
-        data.score, data.previous_close, texte.gesamtsituation, 
-        texte.actions 
+        data.score, data.previous_close, texte.gesamtsituation, texte.actions 
     );
   } catch (err) {
-    console.error("Fehler:", err);
-    document.getElementById('fazitContent1').innerHTML = fallbackFazitSentiment(data, status.rawVix);
-    document.getElementById('fazitContent2').innerHTML = fallbackFazitTrend(data, status.bfStatus, status.actBreadth);
-    document.getElementById('fazitContent3').innerHTML = fallbackFazitStruktur(data);
-    document.getElementById('fazitContent4').innerHTML = fallbackFazitRohstoffe(data);
-    
+    console.error("Fehler im Rendering:", err);
     document.getElementById('fazitInhalt').innerHTML = buildFazitDuForm(
         status.bfStatus, status.sfColor, status.welleDesc, 
-        data.score, data.previous_close, "Analyse wird geladen...", 
-        ["Marktdaten werden geprüft."]
+        data.score, data.previous_close, "Analyse wird geladen...", ["Warte auf Daten..."]
     );
   }
 }
