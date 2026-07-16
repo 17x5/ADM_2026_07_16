@@ -3,8 +3,8 @@
  * FUNKTION: Lädt Marktdaten von externen APIs und stößt den Render-Prozess in main.js an.
  */
 
-// Wir nutzen window.isLive, um Kollisionen mit anderen 'let isLive' Deklarationen zu vermeiden
-window.isLive = false;
+// Wir setzen isLive direkt am window-Objekt, um Kollisionen mit 'let/const' zu vermeiden
+window.isLive = window.isLive || false;
 
 // Fallback-Daten für den Fehlerfall
 const FALLBACK = {
@@ -98,5 +98,5 @@ async function ladeDaten() {
   }
 }
 
-// Explizite Registrierung im globalen Window-Scope
+// Explizite Registrierung der Funktion am globalen Window-Objekt
 window.starteDashboard = ladeDaten;
