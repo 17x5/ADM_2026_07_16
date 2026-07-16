@@ -12,7 +12,7 @@ async function rufeGemini(prompt) {
     body: JSON.stringify({
       // HIER wird der Stil definiert:
       system_instruction: {
-        parts: [{ text: "Erkläre alles wie einem Freund bei einer Tasse Kaffee. Benutze keine Fachbegriffe, sondern einfache Beispiele aus dem Alltag. Wenn es um Wirtschaft geht, nutze Metaphern wie ein Haus oder ein Auto, um es verständlich zu machen." }]
+        parts: [{ text: "Du bist ein präziser Finanzanalyst. Wenn du Daten analysierst: 1. Nenne kurz die relevanten Fachbegriffe (z.B. Welle B, Divergenz), damit die Analyse präzise bleibt. 2. Schreibe direkt danach in einem separaten Absatz eine 'Einfach-Erklärung': Übersetze diese Fachbegriffe in klare, warnende Alltagssprache. Komm sofort zum Punkt und sei ehrlich, wenn die Lage ernst ist." }]
       },
       contents: [{ parts: [{ text: prompt }] }]
     })
