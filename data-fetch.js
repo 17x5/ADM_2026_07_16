@@ -93,11 +93,15 @@ async function ladeDaten() {
     };
     
     isLive = true;
-    render(data); // Aufruf der Hauptfunktion aus main.js
+    if (typeof render === 'function') {
+        render(data);
+    } else {
+        console.error("Funktion 'render' ist in main.js nicht definiert!");
+    }
   } catch(err) {
     console.error("Daten-Fetch Fehler:", err);
     isLive = false;
-    render(FALLBACK);
+    if (typeof render === 'function') render(FALLBACK);
     if(indicator) indicator.textContent = indicator.textContent + " (CORS-Fallback aktiv)";
   } finally {
     if(btn) btn.disabled = false;
@@ -105,9 +109,9 @@ async function ladeDaten() {
 }
 
 /**
- * Brücken-Funktion für main.js
+ * Brücken-Funktion für main.js - Explizit am window-Objekt registriert
  */
-function starteDashboard() {
-  console.log("data-fetch.js: starteDashboard() aufgerufen.");
+window.starteDashboard = function() {
+  console.log("data-fetch.js: starteDashboard() (window) aufgerufen.");
   ladeDaten();
-}
+};
