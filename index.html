@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Marktsentiment Dashboard - OnePage Final</title>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#0d1117">
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Advanced Marktsentiment Dashboard</h1>
+    <div class="header-right">
+      <button class="refresh-btn" id="refreshBtn" onclick="ladeDaten()">↻ Live-Daten abrufen</button>
+      <div class="status-tag stale" id="statusIndicator">Lade Daten…</div>
+    </div>
+  </header>
+
+  <div class="fazit">
+    <h2>Gesamtfazit &amp; Strategie-Check</h2>
+    <div id="fazitInhalt">Berechne aktuelle Marktlage…</div>
+  </div>
+
+  <div id="sentimentGroup" class="group-box">
+    <div class="group-title">Sentiment &amp; Markt-Nervosität</div>
+    <div id="rowsSection1"></div>
+    <div class="kachel-fazit-box" id="fazitBox1">
+      <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox1')">
+        <h4>📋 Kachel-Fazit: Sentiment &amp; Liquidität</h4>
+        <span class="action-toggle-icon">▶ Anzeigen</span>
+      </div>
+      <div class="kachel-fazit-content" id="fazitContent1">Lade Analyse…</div>
+    </div>
+  </div>
+
+  <div id="trendGroup" class="group-box">
+    <div class="group-title">Trend- &amp; Sicherheits-Schutz</div>
+    <div id="rowsSection2"></div>
+    <div class="kachel-fazit-box" id="fazitBox2">
+      <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox2')">
+        <h4>📋 Kachel-Fazit: Trend &amp; Marktbreite</h4>
+        <span class="action-toggle-icon">▶ Anzeigen</span>
+      </div>
+      <div class="kachel-fazit-content" id="fazitContent2">Lade Analyse…</div>
+    </div>
+  </div>
+
+  <div id="structureGroup" class="group-box">
+    <div class="group-title">Markt-Struktur &amp; Liquidität</div>
+    <div id="rowsSection3"></div>
+    <div class="kachel-fazit-box" id="fazitBox3">
+      <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox3')">
+        <h4>📋 Kachel-Fazit: Struktur &amp; Fremdkapital-Hebel</h4>
+        <span class="action-toggle-icon">▶ Anzeigen</span>
+      </div>
+      <div class="kachel-fazit-content" id="fazitContent3">Lade Analyse…</div>
+    </div>
+  </div>
+
+  <div id="commodityGroup" class="group-box">
+    <div class="group-title">Rohstoffe: Öl &amp; Gold</div>
+    <div id="rowsSection4"></div>
+    <div class="kachel-fazit-box" id="fazitBox4">
+      <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox4')">
+        <h4>📋 Kachel-Fazit: Gold-Öl-Ratio</h4>
+        <span class="action-toggle-icon">▶ Anzeigen</span>
+      </div>
+      <div class="kachel-fazit-content" id="fazitContent4">Lade Analyse…</div>
+    </div>
+  </div>
+
+  <div class="welle-container">
+    <div class="welle-title">Modell-Visualisierung: Der vollständige 8-Wellen-Zyklus</div>
+    <div class="welle-graphic-box">
+      <svg class="welle-svg" viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg">
+        <line x1="0" y1="180" x2="600" y2="180" stroke="#1f242c" stroke-dasharray="3"/>
+        <line x1="0" y1="40" x2="600" y2="40" stroke="#1f242c" stroke-dasharray="3"/>
+        
+        <rect x="470" y="25" width="80" height="110" fill="#2d1315" opacity="0.4" rx="4"/>
+        <text x="510" y="20" fill="#ff7b72" font-family="sans-serif" font-size="8" font-weight="bold" text-anchor="middle">GEFAHRENZONE</text>
+
+        <path d="M 30,180 L 110,110 L 160,140 L 320,50 L 380,115" 
+              fill="none" stroke="#2c3540" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        
+        <path d="M 380,115 L 450,35 L 495,125 L 535,65 L 580,210" 
+              fill="none" stroke="var(--red)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              
+        <circle cx="110" cy="110" r="3" fill="#2c3540"/>
+        <circle cx="160" cy="140" r="3" fill="#2c3540"/>
+        <circle cx="320" cy="50" r="3" fill="#2c3540"/>
+        <circle cx="380" cy="115" r="3" fill="#2c3540"/>
+
+        <circle cx="450" cy="35" r="4.5" fill="var(--purple)"/>
+        <circle cx="495" cy="125" r="4" fill="var(--yellow)"/>
+        <circle cx="580" cy="210" r="5" fill="var(--red)"/>
+        
+        <circle id="wellePunkt" cx="535" cy="65" r="5" fill="var(--red)" class="pulse-node"/> 
+
+        <text x="25" y="195" fill="#485565" font-family="monospace" font-size="10">W1 Start</text>
+        <text x="105" y="95" fill="#485565" font-family="monospace" font-size="10">W1</text>
+        <text x="155" y="155" fill="#485565" font-family="monospace" font-size="10">W2</text>
+        <text x="315" y="35" fill="#8b98a5" font-family="monospace" font-size="10">W3</text>
+        <text x="385" y="130" fill="#485565" font-family="monospace" font-size="10">W4</text>
+        
+        <text x="450" y="22" fill="var(--purple)" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">W5 Top</text>
+        <text x="495" y="142" fill="var(--yellow)" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">Welle A</text>
+        <text id="welleIstLabel" x="535" y="50" fill="var(--red)" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle">Welle B (IST)</text>
+        <text x="580" y="228" fill="var(--red)" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">Welle C 💥</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="legende-kachel">
+    <div class="legende-title">Erläuterung der Marktphasen</div>
+    <div class="legende-grid" id="legendeGrid">
+      <div class="legende-item" id="leg_W1" style="border-left-color: var(--green);">
+        <div class="legende-name" style="color: var(--green);">WELLE 1: DER AUFBRUCH</div>
+        <div class="legende-desc">Erste zaghafte Erholung nach einem harten Bärenmarkt. Meist nur von institutionellen Investoren getragen.</div>
+      </div>
+      <div class="legende-item" id="leg_W2" style="border-left-color: var(--green);">
+        <div class="legende-name" style="color: var(--green);">WELLE 2: DER RÜCKSTAU</div>
+        <div class="legende-desc">Scharfer Rücksetzer, da Anleger noch mit der alten Angst kämpfen. Wichtig: Welle 2 macht niemals neue Tiefs.</div>
+      </div>
+      <div class="legende-item" id="leg_W3" style="border-left-color: var(--green);">
+        <div class="legende-name" style="color: var(--green);">WELLE 3: DIE BREITE MASSE</div>
+        <div class="legende-desc">Die längste, stärkste und profitabelste Aufwärtsbewegung. Fundamentaldaten drehen, exzellente Marktbreite stützt den Aufstieg.</div>
+      </div>
+      <div class="legende-item" id="leg_W4" style="border-left-color: var(--green);">
+        <div class="legende-name" style="color: var(--green);">WELLE 4: DIE KONSOLIDIERUNG</div>
+        <div class="legende-desc">Gewinnmitnahmen führen zu einer unruhigen Seitwärts- oder Abwärtsphase. Bietet die letzte gesunde Kaufgelegenheit.</div>
+      </div>
+      <div class="legende-item" id="leg_W5" style="border-left-color: var(--purple);">
+        <div class="legende-name" style="color: var(--purple);">WELLE 5: DIE EUPHORIE</div>
+        <div class="legende-desc">Finale Übertreibung angetrieben durch FOMO und Kleinanleger. Indizes erreichen Allzeithochs, während Grossanleger bereits unbemerkt verkaufen.</div>
+      </div>
+      <div class="legende-item" id="leg_WelleA" style="border-left-color: var(--yellow);">
+        <div class="legende-name" style="color: var(--yellow);">WELLE A: DER WARNSCHUSS</div>
+        <div class="legende-desc">Der erste abrupte Kurseinbruch. Wird von der Masse unterschätzt und fälschlicherweise als günstige Nachkaufchance bewertet.</div>
+      </div>
+      <div class="legende-item" id="leg_WelleB" style="border-left-color: var(--red);">
+        <div class="legende-name" style="color: var(--red);">WELLE B: MARKT-ILLUSION</div>
+        <div class="legende-desc">Die gefährlichste Bullenfalle im Zyklus. Die Kurse steigen noch mal an, täuschen Stabilität vor, aber die Marktbreite (A/D &lt; 35) ist kollabiert. Notausstieg vor Welle C!</div>
+      </div>
+      <div class="legende-item" id="leg_WelleC" style="border-left-color: var(--red);">
+        <div class="legende-name" style="color: var(--red);">WELLE C: DIE KAPITULATION</div>
+        <div class="legende-desc">Die zerstörerische Panikphase. Ein scharfer, rücksichtsloser Abverkauf weit unter das Niveau der Welle A. Erst danach startet der neue Zyklus.</div>
+      </div>
+    </div>
+  </div>
+
+  <a class="link-kachel" href="https://de.tradingview.com/script/9iof2PC9/" target="_blank">
+    <div class="link-kachel-header">
+      <div class="link-kachel-title">🌐 S&P 500 Bottom Finder, von Eric Ludwig</div>
+      <div class="link-kachel-arrow">↗ Script öffnen</div>
+    </div>
+    
+    <div class="eingebettete-analyse">
+      <div class="eingebettete-analyse-title">🔎 Modell-Kurzanalyse (Bottom Finder Status)</div>
+      <div class="eingebettete-analyse-p">
+        🔴 <strong>Status: WELLE B (Markt-Illusion / Bullenfalle)</strong><br>
+        Die gefährlichste Phase: Während die grossen Indizes optisch stabil wirken (CNN Score: 42), bricht die fundamentale Marktbreite im Untergrund massiv ein (A/D-Linie: 19/100). Dies signalisiert eine klassische Bullenfalle vor dem Einsetzen der Welle C.
+      </div>
+    </div>
+
+    <div class="link-kachel-grid">
+      <div class="kachel-section">
+        <h4>1. Pre-Bottom-Signal (Blau)</h4>
+        <ul>
+          <li><strong>Bedingung:</strong> S5FI &lt; 20 (Weniger als 20% der S&P 500 Aktien über ihrem 50-Tage-Schnitt)</li>
+          <li><strong>Interpretation:</strong> Extrem schwache Marktbreite – Gegenbewegung könnte bevorstehen.</li>
+        </ul>
+      </div>
+      <div class="kachel-section">
+        <h4>2. Bottom-Signal (Grün)</h4>
+        <ul>
+          <li><strong>Basis:</strong> Advance Decline Differenz der NYSE (Ticker: NSHF)</li>
+          <li><strong>Bedingung:</strong> 50-Tage-SMA heute &gt; vor 10 Tagen + blaues Signal innerhalb der letzten 10 Bars.</li>
+          <li><strong>Interpretation:</strong> Mittelfristige Marktbreite dreht nachhaltig nach oben.</li>
+        </ul>
+      </div>
+      <div class="kachel-section">
+        <h4>Darstellung &amp; Handhabung</h4>
+        <ul>
+          <li><strong>Overlays:</strong> Blau signalisiert Pre-Bottom, Grün signalisiert das bestätigte Bottom.</li>
+          <li><strong>Fehlausbrüche:</strong> Kein Signal ist perfekt; falsche Ausbrüche kommen vor.</li>
+        </ul>
+      </div>
+      <div class="kachel-section">
+        <h4>Tipps &amp; Hinweise</h4>
+        <ul>
+          <li><strong>Bestätigung:</strong> Nutze zusätzlich Momentum (RSI/MACD) oder Volumen.</li>
+          <li><strong>Risiko:</strong> Immer striktes Stop-Loss- &amp; Positionsmanagement anwenden.</li>
+          <li><strong>Praxis:</strong> Vor dem Live-Einsatz im präferierten Zeitrahmen backtesten.</li>
+        </ul>
+      </div>
+    </div>
+  </a>
+
+  <footer>
+    Quelle: <a href="https://production.dataviz.cnn.io/index/fearandgreed/graphdata" target="_blank">production.dataviz.cnn.io</a> &bull; Keine Anlageberatung.
+  </footer>
+</div>
+
+<script src="config.js"></script>
+<script src="helpers.js"></script>
+<script src="utils.js"></script>
+<script src="ampel-logik.js"></script>
+<script src="fazit.js"></script>
+<script src="kachel-sentiment.js"></script>
+<script src="kachel-trend.js"></script>
+<script src="kachel-struktur.js"></script>
+<script src="kachel-rohstoffe.js"></script>
+<script src="data-fetch.js"></script>
+<script src="gemini-client.js"></script>
+<script src="gemini-prompts.js"></script>
+<script src="main.js"></script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("service-worker.js");
+    });
+  }
+</script>
+</body>
+</html>
