@@ -1,6 +1,3 @@
-// Kachel 4: Rohstoffe – Gold, Öl, Gold-Öl-Ratio
-// -> Hier anpassen, wenn sich Schwellenwerte für Gold/Öl ändern sollen. Fazit-Text kommt jetzt
-//    von Gemini, fallbackFazitRohstoffe() ist die Notlösung falls die API mal nicht antwortet.
 function renderKachelRohstoffe(data) {
   let html = "";
   let goldPreisWert = data.gold_usd;
@@ -15,7 +12,7 @@ function renderKachelRohstoffe(data) {
 
   let goldPercent = Math.min(100, Math.max(0, ((goldPreisWert - 1800) / (4500 - 1800)) * 100));
   let formattedGoldPreis = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(goldPreisWert);
-  html += buildQuickRowHTML("orange", "Goldpreis (Unze)", "Feinunze Gold, Spotpreis in US-Dollar", goldPercent, formattedGoldPreis);
+  html += buildQuickRowHTML("gelb", "Goldpreis (Unze)", "Feinunze Gold, Spotpreis in US-Dollar", goldPercent, formattedGoldPreis);
 
   let oelColor = oelPreisWert > 90 ? "rot" : (oelPreisWert < 60 ? "gruen" : "gelb");
   let oelPercent = Math.min(100, Math.max(0, ((oelPreisWert - 40) / (120 - 40)) * 100));
@@ -39,7 +36,7 @@ function fallbackFazitRohstoffe(data) {
     <br><br>
     ${ratioColor === 'rot' ? 'Eine Ratio über 22 ist historisch ein klassisches **Warnsignal für Rezessionsangst** oder eine akute Krise – Kapital sucht Sicherheit in Gold, während die Öl-Nachfrage (Konjunktur) einbricht.' : ratioColor === 'gruen' ? 'Eine Ratio unter 16 deutet auf ein **robustes, wachstumsorientiertes Umfeld** hin: Die Öl-Nachfrage ist stark, Gold wird weniger stark als Fluchtwährung nachgefragt.' : 'Die Ratio liegt aktuell im **neutralen Bereich** – weder ausgeprägte Krisenangst noch übermässiger Wachstumsoptimismus.'}
     <br><br>
-    <span style="color:var(--orange); font-weight:bold;">🛢️ Hintergrund:</span>
+    <span style="color:var(--yellow); font-weight:bold;">🛢️ Hintergrund:</span>
     Öl reagiert direkt auf die reale Wirtschaftsaktivität (Transport, Industrie), Gold auf Angst und Liquidität. Die Kombination beider Preise liefert ein Signal, das die reinen Aktienindikatoren oben nicht abdecken.
   `;
 }
