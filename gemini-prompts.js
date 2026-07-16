@@ -1,40 +1,46 @@
 /**
- * Robustes Parsen der KI-Antwort.
- * Entfernt Markdown-Block-Tags und extrahiert exakt den JSON-Bereich.
+ * Erzeugt den Prompt für die KI-Analyse.
+ * Sichergestellt durch explizite Zuweisung an das window-Objekt,
+ * damit main.js global darauf zugreifen kann.
  */
+
+// Funktionen direkt global definieren, ohne IIFE, um Scope-Probleme zu vermeiden
+function baueGeminiPrompt(data) {
+  return `Analysiere den aktuellen Markt basierend auf diesen Daten: ${JSON.stringify(data)}.
+  Antworte ausschließlich im JSON-Format mit folgenden Feldern:
+  {
+    "gesamtsituation": "Erklärung...",
+    "actions": ["Action 1", "Action 2", "Action 3", "Action 4"],
+    "sentiment": "...",
+    "trend": "...",
+    "struktur": "...",
+    "rohstoffe": "..."
+  }`;
+}
+
 function parseGeminiFazitAntwort(antwortText) {
   try {
-    // 1. Markdown-Marker entfernen
-    let cleanText = antwortText.replace(/```json/gi, "").replace(/```/g, "").trim();
-
-    // 2. Extrahiere den reinen JSON-String (von der ersten { bis zur letzten })
+    const cleanText = antwortText.replace(/```json/gi, "").replace(/```/g, "").trim();
     const startIndex = cleanText.indexOf('{');
     const endIndex = cleanText.lastIndexOf('}');
-
+    
     if (startIndex === -1 || endIndex === -1) {
       throw new Error("Kein valider JSON-Strukturblock gefunden.");
     }
-
-    const jsonString = cleanText.substring(startIndex, endIndex + 1);
-
-    // 3. Jetzt sicher parsen
-    return JSON.parse(jsonString);
-
+    
+    return JSON.parse(cleanText.substring(startIndex, endIndex + 1));
   } catch (e) {
     console.error("Parsing-Fehler:", e);
-    
-    // Fallback: Damit die Anwendung nicht abstürzt und die UI nicht leer bleibt
     return {
-      gesamtsituation: "Analyse-Daten konnten aktuell nicht geladen werden.",
-      actions: [
-        "System-Parser-Fehler aufgetreten.",
-        "Versuche bitte einen Refresh.",
-        "KI-Datenformat ist instabil."
-      ],
-      sentiment: "Fehler",
-      trend: "Fehler",
-      struktur: "Fehler",
-      rohstoffe: "Fehler"
+      gesamtsituation: "Fehler beim Laden der Daten.",
+      actions: ["Systemfehler", "Bitte Refresh durchführen"],
+      sentiment: "Fehler", trend: "Fehler", struktur: "Fehler", rohstoffe: "Fehler"
     };
   }
 }
+
+// Explizite Zuweisung an das window-Objekt
+window.baueGeminiPrompt = baueGeminiPrompt;
+window.parseGeminiFazitAntwort = parseGeminiFazitAntwort;
+
+console.log("gemini-prompts.js: Funktionen global registriert.");
