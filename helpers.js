@@ -28,7 +28,6 @@ function getEmojiColor(color) {
   if (color === 'gelb') return '🟡';
   if (color === 'rot') return '🔴';
   if (color === 'purple') return '🟣';
-  if (color === 'orange') return '🟠';
   return '⚪';
 }
 
