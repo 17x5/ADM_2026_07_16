@@ -6,7 +6,7 @@
 // Globale Absicherung: Wir nutzen window-Properties, um Kollisionen zu vermeiden
 window.isLive = window.isLive || false;
 
-// Wir definieren FALLBACK nur, falls es nicht schon existiert, um "Identifier already declared"-Fehler zu vermeiden
+// Wir definieren FALLBACK nur, falls es nicht schon existiert
 if (typeof window.FALLBACK === 'undefined') {
   window.FALLBACK = {
     timestamp: Date.now(),
@@ -54,7 +54,7 @@ async function ladeDaten() {
       previous_close: json.fear_and_greed.previous_close,
       btc_usd: btcPreis,
       btc_change_24h: btcAenderung,
-      gold_usd: 2000, // Platzhalter bei API-Fehler
+      gold_usd: 2000,
       oil_usd: 75,
       subs: [
         {key:"market_momentum_sp500", name:"Markt-Schwung", score:json.market_momentum_sp500.score},
