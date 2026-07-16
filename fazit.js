@@ -1,8 +1,3 @@
-/**
- * Hilfsfunktion zur Ermittlung des passenden Ampel-Emojis
- * Falls getEmojiColor in den helpers.js definiert ist, wird diese genutzt, 
- * andernfalls greift dieses Fallback.
- */
 function sicheresEmoji(sfColor) {
   if (typeof getEmojiColor === 'function') {
     return getEmojiColor(sfColor);
@@ -15,9 +10,6 @@ function sicheresEmoji(sfColor) {
   return emojis[sfColor] || "🚦";
 }
 
-/**
- * Erstellt das beschreibende Label für die aktuelle Marktphase
- */
 function baueStatusLabel(bfStatus, sfColor, welleDesc) {
   let ampelEmoji = sicheresEmoji(sfColor);
   const labels = {
@@ -30,19 +22,12 @@ function baueStatusLabel(bfStatus, sfColor, welleDesc) {
   return `${ampelEmoji} <b>${label}:</b> `;
 }
 
-/**
- * Bestimmt die passende CSS-Farbe für die Rahmen-Hervorhebung
- */
 function accentColorFuerStatus(bfStatus) {
   if (bfStatus === "MARKT-ILLUSION" || bfStatus === "ÜBERHITZT") return "var(--red)";
   if (bfStatus === "FALLENDES MESSER" || bfStatus === "KORREKTUR") return "var(--yellow)";
   return "var(--green)";
 }
 
-/**
- * Regelbasiertes Fallback-System für Aktionen, falls die KI-Schnittstelle
- * verzögert reagiert oder keine Daten liefert.
- */
 function getFallbackActions(bfStatus) {
   console.log("fazit.js: Nutze regelbasiertes Fallback-System für Status:", bfStatus);
   if (bfStatus === "MARKT-ILLUSION") {
@@ -80,10 +65,6 @@ function getFallbackActions(bfStatus) {
   ];
 }
 
-/**
- * Steuert das Auf- und Zuklappen der Actions-Box inklusive Icon-Wechsel.
- * Nutzt 'header', um relativ im DOM zu suchen – extrem stabil und resistent gegen Konflikte.
- */
 function toggleActionBox(headerElement) {
   const box = headerElement ? headerElement.closest(".action-box") : document.getElementById("actionBox");
   if (!box) {
@@ -98,66 +79,52 @@ function toggleActionBox(headerElement) {
     if (content.style.display === "none" || content.style.display === "") {
       content.style.display = "block";
       icon.textContent = "▼ Ausblenden";
-      console.log("fazit.js: Actions-Box geöffnet.");
     } else {
       content.style.display = "none";
       icon.textContent = "▶ Anzeigen";
-      console.log("fazit.js: Actions-Box geschlossen.");
     }
-  } else {
-    console.error("fazit.js: .action-content oder .action-toggle-icon fehlt innerhalb der Box.");
   }
 }
 
-/**
- * Hauptfunktion: Erstellt das HTML für das Gesamtfazit im Original-Layout.
- * Befüllt die Actions-Liste dynamisch aus den KI-Daten oder nutzt das Fallback.
- */
 function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousClose, situationErklaerung, actionList) {
-  console.log("fazit.js: buildFazitDuForm aufgerufen mit:", { bfStatus, sfColor, welleDesc, currentScore, previousClose });
-  console.log("fazit.js: Erhaltene raw actionList von KI:", actionList);
+  console.log("fazit.js: buildFazitDuForm gestartet.");
+
+  // DEFENSIEVER CHECK 1: Falls das 6. Argument ein ganzes Objekt ist (weil main.js es so übergibt)
+  if (typeof situationErklaerung === 'object' && situationErklaerung !== null) {
+    actionList = situationErklaerung.actions || actionList;
+    situationErklaerung = situationErklaerung.gesamtsituation || "Analyse geladen.";
+  }
+
+  // DEFENSIEVER CHECK 2: Falls das 6. Argument ein roher JSON-String ist
+  if (typeof situationErklaerung === 'string' && situationErklaerung.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(situationErklaerung);
+      actionList = parsed.actions || actionList;
+      situationErklaerung = parsed.gesamtsituation || situationErklaerung;
+    } catch (e) {}
+  }
+
+  // DEFENSIEVER CHECK 3 (DIE BRÜCKE): Falls actionList undefined ist, greifen wir auf das globale Backup zu!
+  if ((!actionList || !Array.isArray(actionList) || actionList.length === 0) && window.lastParsedFazit && window.lastParsedFazit.actions) {
+    actionList = window.lastParsedFazit.actions;
+    console.log("fazit.js: Actions erfolgreich über globale State-Brücke geladen!", actionList);
+  }
 
   let accentColor = accentColorFuerStatus(bfStatus);
   let labelHtml = baueStatusLabel(bfStatus, sfColor, welleDesc);
   
-  // Extrem robuster Normalisierungs-Parser für jegliche Formate der Action-List
+  // Normalisierung der Aktionen
   let cleanActions = [];
   if (actionList) {
     if (Array.isArray(actionList)) {
-      // Wenn es ein Array ist, konvertiere jedes Element sauber in Text
-      cleanActions = actionList.map(item => {
-        if (!item) return "";
-        if (typeof item === "string") return item.trim();
-        if (typeof item === "object") {
-          // Falls die KI Objekte wie { text: "Aktion" } liefert
-          return item.text || item.action || item.desc || JSON.stringify(item);
-        }
-        return String(item).trim();
-      }).filter(item => item.length > 0);
-    } else if (typeof actionList === "object") {
-      // Falls ein Objekt mit Keys { "1": "Aktion", "2": "Aktion" } geliefert wird
-      cleanActions = Object.values(actionList).map(item => {
-        if (!item) return "";
-        return typeof item === "string" ? item.trim() : String(item).trim();
-      }).filter(item => item.length > 0);
+      cleanActions = actionList.map(item => String(item).trim()).filter(s => s.length > 0);
     } else if (typeof actionList === "string" && actionList.trim().length > 0) {
-      // Falls ein einziger langer String geliefert wird, versuche ihn an Zeilenumbrüchen oder Aufzählungen zu splitten
-      const lines = actionList.split(/\n|- |• /).map(s => s.trim()).filter(s => s.length > 5);
-      if (lines.length > 1) {
-        cleanActions = lines;
-      } else {
-        cleanActions = [actionList.trim()];
-      }
+      cleanActions = actionList.split(/\n|- |• /).map(s => s.trim()).filter(s => s.length > 5);
     }
   }
 
-  // Nutzen der bereinigten KI-Actions, sonst Aktivierung des passgenauen Fallback-Systems
-  let finalActions = (cleanActions.length > 0) 
-    ? cleanActions 
-    : getFallbackActions(bfStatus);
-
-  console.log("fazit.js: Finale verarbeitete Actions zur Anzeige:", finalActions);
-
+  // Nutzen der bereinigten KI-Actions oder Aktivierung des regelbasierten Fallback-Systems
+  let finalActions = (cleanActions.length > 0) ? cleanActions : getFallbackActions(bfStatus);
   let items = finalActions.map(item => `<li>${item}</li>`).join("");
 
   // Berechnung der Punkte-Differenz zum Vortag
@@ -178,7 +145,7 @@ function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousCl
         <h3 style="color:${accentColor};">Deine Actions:</h3>
         <span id="actionToggleIcon" class="action-toggle-icon">▶ Anzeigen</span>
       </div>
-      <!-- Durch style="display: none;" standardmäßig beim Start unsichtbar -->
+      <!-- Standardmäßig zugeklappt -->
       <div class="action-content" style="display: none;">
         <ul class="action-list">${items}</ul>
       </div>
@@ -186,8 +153,6 @@ function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousCl
   `;
 }
 
-// EXPLIZITE GLOBALE REGISTRIERUNG:
-// Garantiert, dass inline 'onclick'-Attribute im dynamisch geladenen HTML 
-// die Funktionen unabhängig von Ladezeiten oder Modulscoping immer finden!
+// Global registrieren für inline Event-Handler
 window.toggleActionBox = toggleActionBox;
 window.buildFazitDuForm = buildFazitDuForm;
