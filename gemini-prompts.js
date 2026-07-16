@@ -3,8 +3,6 @@
  * Entfernt Markdown-Block-Tags und extrahiert exakt den JSON-Bereich.
  */
 function parseGeminiFazitAntwort(antwortText) {
-  console.log("gemini-prompts.js: Starte Bereinigung der KI-Antwort...");
-
   try {
     // 1. Markdown-Marker entfernen
     let cleanText = antwortText.replace(/```json/gi, "").replace(/```/g, "").trim();
@@ -20,13 +18,10 @@ function parseGeminiFazitAntwort(antwortText) {
     const jsonString = cleanText.substring(startIndex, endIndex + 1);
 
     // 3. Jetzt sicher parsen
-    const parsedData = JSON.parse(jsonString);
-    console.log("gemini-prompts.js: Parsing erfolgreich!");
-    return parsedData;
+    return JSON.parse(jsonString);
 
   } catch (e) {
-    console.error("gemini-prompts.js: Kritischer Parsing-Fehler!", e);
-    console.error("Roher Text, der fehlgeschlagen ist:", antwortText);
+    console.error("Parsing-Fehler:", e);
     
     // Fallback: Damit die Anwendung nicht abstürzt und die UI nicht leer bleibt
     return {
