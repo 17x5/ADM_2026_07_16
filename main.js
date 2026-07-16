@@ -19,6 +19,7 @@ async function render(data) {
       console.log("Starte KI-Abfrage...");
       // Die Funktionen kommen aus gemini-client.js und gemini-prompts.js
       const prompt = window.baueGeminiPrompt(data);
+      // Hier wird die globale Funktion aus gemini-client.js korrekt aufgerufen
       const rohAntwort = await window.rufeGemini(prompt);
       texte = window.parseGeminiFazitAntwort(rohAntwort);
       console.log("KI-Analyse erfolgreich erhalten und geparst.");
@@ -26,7 +27,7 @@ async function render(data) {
       console.error("Fehler bei der KI-Analyse:", apiError);
       texte = { 
         gesamtsituation: "Die KI-Analyse ist aktuell nicht verfügbar.", 
-        actions: ["Überprüfe die Internetverbindung.", "Versuche es in Kürze erneut."] 
+        actions: ["Überprüfe die API-Verbindung.", "Manuelle Prüfung empfohlen."] 
       };
     }
 
