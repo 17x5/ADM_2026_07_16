@@ -1,3 +1,4 @@
+// Kachel 4: Rohstoffe – Gold, Öl, Gold-Öl-Ratio
 function renderKachelRohstoffe(data) {
   let html = "";
   let goldPreisWert = data.gold_usd;
@@ -12,6 +13,7 @@ function renderKachelRohstoffe(data) {
 
   let goldPercent = Math.min(100, Math.max(0, ((goldPreisWert - 1800) / (4500 - 1800)) * 100));
   let formattedGoldPreis = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(goldPreisWert);
+  // Orange zu Gelb geändert
   html += buildQuickRowHTML("gelb", "Goldpreis (Unze)", "Feinunze Gold, Spotpreis in US-Dollar", goldPercent, formattedGoldPreis);
 
   let oelColor = oelPreisWert > 90 ? "rot" : (oelPreisWert < 60 ? "gruen" : "gelb");
@@ -32,11 +34,11 @@ function fallbackFazitRohstoffe(data) {
   let formattedOelPreis = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(oelPreisWert);
 
   return `
-    Die **Gold-Öl-Ratio steht bei ${goldOelRatio.toFixed(1)} : 1** (Gold ${formattedGoldPreis} / Öl ${formattedOelPreis}). Dieses Verhältnis gilt als Krisenbarometer: Steigt Gold gegenüber Öl stark an, flüchten Anleger in Sicherheit, während gleichzeitig eine schwache Konjunktur (niedrige Öl-Nachfrage) signalisiert wird.
+    Die **Gold-Öl-Ratio steht bei ${goldOelRatio.toFixed(1)} : 1** (Gold ${formattedGoldPreis} / Öl ${formattedOelPreis}). Dieses Verhältnis gilt als Krisenbarometer: Steigt Gold gegenüber Öl stark an, flüchten Anleger in Sicherheit, während gleichzeitig eine schwache Konjunktur signalisiert wird.
     <br><br>
-    ${ratioColor === 'rot' ? 'Eine Ratio über 22 ist historisch ein klassisches **Warnsignal für Rezessionsangst** oder eine akute Krise – Kapital sucht Sicherheit in Gold, während die Öl-Nachfrage (Konjunktur) einbricht.' : ratioColor === 'gruen' ? 'Eine Ratio unter 16 deutet auf ein **robustes, wachstumsorientiertes Umfeld** hin: Die Öl-Nachfrage ist stark, Gold wird weniger stark als Fluchtwährung nachgefragt.' : 'Die Ratio liegt aktuell im **neutralen Bereich** – weder ausgeprägte Krisenangst noch übermässiger Wachstumsoptimismus.'}
+    ${ratioColor === 'rot' ? 'Eine Ratio über 22 ist historisch ein klassisches **Warnsignal für Rezessionsangst**.' : ratioColor === 'gruen' ? 'Eine Ratio unter 16 deutet auf ein **robustes Umfeld** hin.' : 'Die Ratio liegt aktuell im **neutralen Bereich**.'}
     <br><br>
     <span style="color:var(--yellow); font-weight:bold;">🛢️ Hintergrund:</span>
-    Öl reagiert direkt auf die reale Wirtschaftsaktivität (Transport, Industrie), Gold auf Angst und Liquidität. Die Kombination beider Preise liefert ein Signal, das die reinen Aktienindikatoren oben nicht abdecken.
+    Öl reagiert direkt auf die reale Wirtschaftsaktivität, Gold auf Angst und Liquidität.
   `;
 }
