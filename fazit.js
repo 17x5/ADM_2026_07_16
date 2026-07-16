@@ -20,11 +20,12 @@ function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousCl
   let accentColor = accentColorFuerStatus(bfStatus);
   let labelHtml = baueStatusLabel(bfStatus, sfColor, welleDesc);
   
-  let items = (Array.isArray(actionList) && actionList.length > 0) ? actionList : ["Marktlage wird analysiert..."];
+  // Wenn keine Actions geliefert werden, zeigen wir einen Standardtext
+  let items = (Array.isArray(actionList) && actionList.length > 0) ? actionList : ["Analysiere Marktdaten..."];
   let listHtml = items.map(item => `<li>${item}</li>`).join("");
 
   let diff = currentScore - previousClose;
-  let diffText = diff > 0 ? `▲ +${diff.toFixed(1)} Punkte...` : diff < 0 ? `▼ ${diff.toFixed(1)} Punkte...` : `■ Unverändert...`;
+  let diffText = diff > 0 ? `▲ +${diff.toFixed(1)}` : diff < 0 ? `▼ ${diff.toFixed(1)}` : `■ Unverändert`;
   let diffColor = diff > 0 ? "var(--green)" : diff < 0 ? "var(--red)" : "var(--yellow)";
 
   return `
@@ -32,13 +33,12 @@ function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousCl
       <div class="fazit-label">Deine Situation:</div>
       <p class="fazit-p">${labelHtml}${situationErklaerung}</p>
       <div class="fazit-change" style="color: ${diffColor};">
-        <strong>Veränderung:</strong> ${diffText}
+        <strong>Veränderung:</strong> ${diffText} Punkte
       </div>
     </div>
     <div id="actionBox" class="action-box" style="border-left-color:${accentColor};">
       <div class="action-header" onclick="toggleActionBox()">
         <h3 style="color:${accentColor};">Deine Actions:</h3>
-        <span id="actionToggleIcon" class="action-toggle-icon">▶ Anzeigen</span>
       </div>
       <div class="action-content">
         <ul class="action-list">${listHtml}</ul>
