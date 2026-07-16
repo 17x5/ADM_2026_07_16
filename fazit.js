@@ -19,7 +19,6 @@ function accentColorFuerStatus(bfStatus) {
   return "var(--green)";
 }
 
-// Fallback, falls die API nicht erreichbar ist
 function getStaticActionItems(bfStatus) {
   if (bfStatus === "MARKT-ILLUSION") {
     return [
@@ -42,7 +41,6 @@ function getStaticActionItems(bfStatus) {
 
 async function fetchDynamicActions(bfStatus) {
   try {
-    // Hier den Endpunkt deiner API eintragen
     const response = await fetch('/api/get-actions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -59,7 +57,6 @@ async function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, prev
   let accentColor = accentColorFuerStatus(bfStatus);
   let labelHtml = baueStatusLabel(bfStatus, sfColor, welleDesc);
   
-  // Warten auf dynamische Actions
   let actionList = await fetchDynamicActions(bfStatus);
   let listHtml = actionList.map(item => `<li>${item}</li>`).join("");
 
