@@ -1,7 +1,13 @@
-// fazit.js - Erwartet ein Array 'actionList' direkt aus der KI
 function baueStatusLabel(bfStatus, sfColor, welleDesc) {
   let ampelEmoji = getEmojiColor(sfColor);
-  return `${ampelEmoji} <b>${bfStatus} (${welleDesc}):</b> `;
+  const labels = {
+    "MARKT-ILLUSION": `Markt-Illusion in Welle B (${welleDesc})`,
+    "ÜBERHITZT": `Überhitzter Markt (${welleDesc})`,
+    "FALLENDES MESSER": `Kapitulationsphase (${welleDesc})`,
+    "KORREKTUR": `Normale Markt-Korrektur (${welleDesc})`
+  };
+  const label = labels[bfStatus] || `Gesundes Marktumfeld (${welleDesc})`;
+  return `${ampelEmoji} <b>${label}:</b> `;
 }
 
 function accentColorFuerStatus(bfStatus) {
@@ -11,20 +17,31 @@ function accentColorFuerStatus(bfStatus) {
 }
 
 function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousClose, situationErklaerung, actionList) {
-  // Wenn keine KI-Daten kommen, zeigt das System jetzt explizit einen Fehler an,
-  // statt statische Texte aus dem Code zu ziehen.
+  let accentColor = accentColorFuerStatus(bfStatus);
+  let labelHtml = baueStatusLabel(bfStatus, sfColor, welleDesc);
+  
+  // Dynamische Liste aus der KI
   let items = (Array.isArray(actionList) && actionList.length > 0) 
     ? actionList.map(item => `<li>${item}</li>`).join("") 
-    : "<li>KEINE DYNAMISCHEN DATEN EMPFANGEN</li>";
+    : "<li>Keine Aktionen empfangen.</li>";
+
+  let diff = currentScore - previousClose;
+  let diffText = diff > 0 ? `▲ +${diff.toFixed(1)}` : diff < 0 ? `▼ ${diff.toFixed(1)}` : `■ Unverändert`;
 
   return `
     <div class="fazit-section">
-      <p><b>Status:</b> ${bfStatus} (${welleDesc})</p>
-      <p>${situationErklaerung || "Warte auf KI-Analyse..."}</p>
+      <p class="fazit-p">${labelHtml}${situationErklaerung || "Analyse wird geladen..."}</p>
+      <div class="fazit-change"><strong>Veränderung:</strong> ${diffText} Punkte</div>
     </div>
-    <div class="action-box">
-      <h3>Deine dynamischen Actions:</h3>
-      <ul>${items}</ul>
+    <div id="actionBox" class="action-box" style="border-left-color:${accentColor};">
+      <div class="action-header" onclick="toggleActionBox()">
+        <h3 style="color:${accentColor};">Deine Actions:</h3>
+        <span id="actionToggleIcon" class="action-toggle-icon">▶ Anzeigen</span>
+      </div>
+      <!-- HIER: style="display: none;" sorgt dafür, dass es standardmäßig eingeklappt ist! -->
+      <div class="action-content" style="display: none;">
+        <ul class="action-list">${items}</ul>
+      </div>
     </div>
   `;
 }
