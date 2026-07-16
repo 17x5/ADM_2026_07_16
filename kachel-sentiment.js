@@ -1,3 +1,4 @@
+// Kachel 1: Sentiment & Markt-Nervosität
 function renderKachelSentiment(data, vixColor, rawVix, cnnColor) {
   let html = "";
   let vixBarPercent = Math.min(100, Math.max(0, ((rawVix - 10) / 30) * 100));
@@ -5,6 +6,7 @@ function renderKachelSentiment(data, vixColor, rawVix, cnnColor) {
   html += buildQuickRowHTML(cnnColor, "Angst & Gier Index (CNN)", "Aggregiertes Sentiment aus 7 Marktindikatoren", data.score, data.score.toFixed(0) + " / 100");
 
   let btcChange = data.btc_change_24h || 0;
+  // Orange zu Gelb geändert
   let btcColor = btcChange > 2 ? "gruen" : (btcChange < -2 ? "rot" : "gelb");
   let btcBarPercent = Math.min(100, Math.max(0, 50 + btcChange * 5));
   let formattedBtcPrice = new Intl.NumberFormat('de-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(data.btc_usd);
@@ -26,11 +28,11 @@ function fallbackFazitSentiment(data, rawVix) {
   let formattedBtcPrice = new Intl.NumberFormat('de-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(data.btc_usd);
 
   return `
-    Der **CNN-Index steht neutral bei ${data.score.toFixed(0)}** von 100 Punkten. Das bedeutet, an den großen Börsen herrscht aktuell weder nackte Panik noch blinde Euphorie. Die Optionen-Absicherung ist mit **${optScore.toFixed(0)} Punkten** unaufgeregt und der VIX zeigt mit **${rawVix.toFixed(2)} USD** ein normales, leicht unruhiges Grundrauschen. 
+    Der **CNN-Index steht neutral bei ${data.score.toFixed(0)}** von 100 Punkten. 
     <br><br>
-    Interessant wird es bei Bitcoin (**${formattedBtcPrice}**, ${btcChange >= 0 ? '+' : ''}${btcChange.toFixed(2)}% in 24h): Krypto ist der empfindlichste "Fiebermesser" für freies Geld im System. 
+    Interessant wird es bei Bitcoin (**${formattedBtcPrice}**, ${btcChange >= 0 ? '+' : ''}${btcChange.toFixed(2)}%): Krypto ist der empfindlichste Fiebermesser für Liquidität. 
     <br><br>
     <span style="color:var(--yellow); font-weight:bold;">💡 Warum das für dich wichtig ist:</span> 
-    Krypto-Märkte hängen zu 100% am Tropf der weltweiten Dollar-Liquidität. Große Profi-Anleger (TradFi) ziehen ihr Geld bei aufziehendem Gewitter meistens *zuerst* aus den riskantesten, spekulativsten Ecken ab – und das ist Bitcoin. Wenn Bitcoin also plötzlich ohne News oder klaren Grund einbricht, ist das oft das erste Warnsignal, dass den großen Jungs im Hintergrund das Geld knapp wird. Kurze Zeit später erwischt es dann meistens auch den normalen Aktienmarkt.
+    Krypto-Märkte hängen zu 100% am Tropf der weltweiten Dollar-Liquidität. Große Profi-Anleger ziehen ihr Geld bei aufziehendem Gewitter meistens zuerst aus den riskantesten Ecken ab.
   `;
 }
