@@ -32,6 +32,6 @@ async function rufeGemini(prompt) {
   }
 }
 
-// Globale Registrierung unter dem korrekten Namen
+// Globale Registrierung
 window.rufeGemini = rufeGemini;
 console.log("gemini-client.js: rufeGemini wurde global registriert.");
