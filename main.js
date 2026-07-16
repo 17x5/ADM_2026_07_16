@@ -13,7 +13,8 @@ async function render(data){
   renderKachelStruktur(data);
   renderKachelRohstoffe(data);
 
-  document.getElementById('fazitInhalt').innerHTML = buildFazitDuForm(status.bfStatus, status.sfColor, status.welleDesc, data.score, data.previous_close, "Analysiere…");
+  // Initiales Laden des Fazits (noch ohne API-Text)
+  document.getElementById('fazitInhalt').innerHTML = await buildFazitDuForm(status.bfStatus, status.sfColor, status.welleDesc, data.score, data.previous_close, "Analysiere…");
 
   const statusIndicator = document.getElementById('statusIndicator');
   statusIndicator.className = isLive ? 'status-tag live' : 'status-tag stale';
@@ -28,15 +29,31 @@ async function render(data){
     document.getElementById('fazitContent2').innerHTML = texte.trend;
     document.getElementById('fazitContent3').innerHTML = texte.struktur;
     document.getElementById('fazitContent4').innerHTML = texte.rohstoffe;
-    document.getElementById('fazitInhalt').innerHTML = buildFazitDuForm(status.bfStatus, status.sfColor, status.welleDesc, data.score, data.previous_close, texte.gesamtsituation);
+    
+    // HIER: Das await ist jetzt zwingend notwendig, da buildFazitDuForm ein Promise zurückgibt
+    document.getElementById('fazitInhalt').innerHTML = await buildFazitDuForm(
+        status.bfStatus, 
+        status.sfColor, 
+        status.welleDesc, 
+        data.score, 
+        data.previous_close, 
+        texte.gesamtsituation
+    );
   } catch(err) {
     console.log("Gemini nicht erreichbar, verwende Fallback-Texte.", err);
     document.getElementById('fazitContent1').innerHTML = fallbackFazitSentiment(data, status.rawVix);
     document.getElementById('fazitContent2').innerHTML = fallbackFazitTrend(data, status.bfStatus, status.actBreadth);
     document.getElementById('fazitContent3').innerHTML = fallbackFazitStruktur(data);
     document.getElementById('fazitContent4').innerHTML = fallbackFazitRohstoffe(data);
-    document.getElementById('fazitInhalt').innerHTML = buildFazitDuForm(status.bfStatus, status.sfColor, status.welleDesc, data.score, data.previous_close, fallbackSituationErklaerung(status.bfStatus, data.score));
+    
+    // Auch hier das await ergänzen!
+    document.getElementById('fazitInhalt').innerHTML = await buildFazitDuForm(
+        status.bfStatus, 
+        status.sfColor, 
+        status.welleDesc, 
+        data.score, 
+        data.previous_close, 
+        "Die Marktlage ist komplex – bitte beachte die allgemeinen Marktsignale."
+    );
   }
 }
-
-ladeDaten();
