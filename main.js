@@ -25,7 +25,7 @@ async function render(data) {
       texte = { gesamtsituation: "Analyse nicht verfügbar.", sentiment: "Keine Daten", trend: "Keine Daten", struktur: "Keine Daten", rohstoffe: "Keine Daten" };
     }
 
-    // 3. Gesamtfazit rendern (mit kurzem Timeout, um sicherzustellen, dass das DOM steht)
+    // 3. Gesamtfazit rendern (mit kurzem Timeout für DOM-Stabilität)
     setTimeout(() => {
         if (typeof window.buildFazitDuForm === 'function') {
             const container = document.getElementById('fazitInhalt');
@@ -39,19 +39,25 @@ async function render(data) {
     }, 200);
 
     // 4. KI-Text in die Kacheln injizieren
-    // Wir nutzen eine explizite Verzögerung, damit die Kachel-Skripte 
-    // ihre Strukturen (wie kachel-fazit-content) vorher erstellen konnten.
+    // Wir nutzen eine Verzögerung, damit alle Kachel-Skripte initialisiert sind.
     setTimeout(() => {
         const updateKachel = (id, text) => {
           const box = document.getElementById(id);
           if (box) {
+            // Wir suchen nach dem spezifischen Inhaltsbereich.
+            // Sollte dieser nicht vorhanden sein, nutzen wir eine sicherere Methode,
+            // um den Text anzuhängen, ohne das Box-Layout zu zerstören.
             let contentArea = box.querySelector('.kachel-fazit-content');
+            
             if (!contentArea) {
+               // Erstelle Container nur, wenn absolut nötig
                contentArea = document.createElement('div');
                contentArea.className = 'kachel-fazit-content';
                box.appendChild(contentArea);
             }
-            contentArea.innerHTML = `<div style="padding:15px; font-size: 0.9rem; line-height: 1.4; color: #e2e8f0;">${text}</div>`;
+            
+            // Text als sauberes HTML einfügen
+            contentArea.innerHTML = `<div style="padding:15px; font-size: 0.9rem; line-height: 1.4; color: #e2e8f0; border-top: 1px solid #444; margin-top: 10px;">${text}</div>`;
             console.log("Kachel", id, "erfolgreich befüllt.");
           } else {
             console.warn("Kachel-Box nicht gefunden:", id);
@@ -64,7 +70,7 @@ async function render(data) {
         updateKachel('fazitBox4', texte.rohstoffe);
         
         console.log("Rendering komplett abgeschlossen.");
-    }, 500);
+    }, 800);
 
   } catch (error) {
     console.error("Kritischer Fehler im Render-Prozess:", error);
