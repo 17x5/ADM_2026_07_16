@@ -13,6 +13,11 @@ async function render(data) {
     let texte;
     try {
       // Zugriff auf die global registrierten Funktionen aus gemini-prompts.js
+      // Wir stellen sicher, dass die Funktionen im Window-Objekt vorhanden sind
+      if (typeof window.baueGeminiPrompt !== 'function' || typeof window.parseGeminiFazitAntwort !== 'function') {
+        throw new Error("KI-Hilfsfunktionen nicht im globalen Scope gefunden.");
+      }
+
       const prompt = window.baueGeminiPrompt(data);
       const rohAntwort = await rufeGemini(prompt);
       texte = window.parseGeminiFazitAntwort(rohAntwort);
@@ -54,10 +59,11 @@ async function render(data) {
 
 /**
  * Hilfsfunktion zum Aufruf der Gemini-API
- * (Stellt sicher, dass das promise-handling stabil bleibt)
  */
 async function rufeGemini(prompt) {
-  // Dein vorhandener API-Aufruf-Code hier...
-  // (Stelle sicher, dass er den Text-Inhalt zurückgibt)
+  // Stellt sicher, dass die API-Funktion korrekt aufgerufen wird
+  if (typeof rufeGeminiAPI !== 'function') {
+    throw new Error("API-Verbindungsfunktion 'rufeGeminiAPI' nicht definiert.");
+  }
   return await rufeGeminiAPI(prompt); 
 }
