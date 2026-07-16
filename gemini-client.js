@@ -12,7 +12,7 @@ async function rufeGemini(prompt) {
     body: JSON.stringify({
       // HIER wird der Stil definiert:
       system_instruction: {
-        parts: [{ text: "Antworte immer kurz, freundlich, in einfacher Sprache und vermeide technisches Fachchinesisch." }]
+        parts: [{ text: "Erkläre alles wie einem Freund bei einer Tasse Kaffee. Benutze keine Fachbegriffe, sondern einfache Beispiele aus dem Alltag. Wenn es um Wirtschaft geht, nutze Metaphern wie ein Haus oder ein Auto, um es verständlich zu machen." }]
       },
       contents: [{ parts: [{ text: prompt }] }]
     })
