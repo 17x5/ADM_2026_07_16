@@ -13,24 +13,23 @@ async function render(data) {
   try {
     const prompt = baueGeminiPrompt(data, status);
     const antwortText = await rufeGemini(prompt);
-    // WICHTIG: Dein Parser muss ein Objekt mit .actions (Array) zurückgeben!
     const texte = parseGeminiFazitAntwort(antwortText);
 
     document.getElementById('fazitContent1').innerHTML = texte.sentiment;
     document.getElementById('fazitContent2').innerHTML = texte.trend;
     document.getElementById('fazitContent3').innerHTML = texte.struktur;
     document.getElementById('fazitContent4').innerHTML = texte.rohstoffe;
-    
-    // Einfacher Aufruf: Daten aus dem Parser direkt reinwerfen
+
+    // Synchroner Aufruf:
     document.getElementById('fazitInhalt').innerHTML = buildFazitDuForm(
         status.bfStatus, status.sfColor, status.welleDesc, 
         data.score, data.previous_close, texte.gesamtsituation, texte.actions 
     );
   } catch (err) {
-    console.error("Fehler im Rendering:", err);
+    console.error("Render-Fehler:", err);
     document.getElementById('fazitInhalt').innerHTML = buildFazitDuForm(
         status.bfStatus, status.sfColor, status.welleDesc, 
-        data.score, data.previous_close, "Analyse wird geladen...", ["Warte auf Daten..."]
+        data.score, data.previous_close, "Fehler bei der Analyse.", ["Warte auf Daten..."]
     );
   }
 }
