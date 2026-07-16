@@ -53,13 +53,33 @@ function getFallbackActions(bfStatus) {
   ];
 }
 
+// Integrierte, ausfallsichere Toggle-Funktion für die Action-Box
+function toggleActionBox() {
+  const content = document.querySelector(".action-content");
+  const icon = document.getElementById("actionToggleIcon");
+  if (content && icon) {
+    if (content.style.display === "none" || content.style.display === "") {
+      content.style.display = "block";
+      icon.textContent = "▼ Ausblenden";
+    } else {
+      content.style.display = "none";
+      icon.textContent = "▶ Anzeigen";
+    }
+  }
+}
+
 function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousClose, situationErklaerung, actionList) {
   let accentColor = accentColorFuerStatus(bfStatus);
   let labelHtml = baueStatusLabel(bfStatus, sfColor, welleDesc);
   
-  // ECHTE DYNAMIK: Nutzt die KI-Aktionen, weicht bei Fehlen aber auf die passgenauen Marktphasen-Aktionen aus
-  let finalActions = (Array.isArray(actionList) && actionList.length > 0) 
-    ? actionList 
+  // Validierung: Filtere leere Einträge oder ungültige Werte heraus
+  let cleanActions = Array.isArray(actionList) 
+    ? actionList.filter(item => item && typeof item === "string" && item.trim().length > 0) 
+    : [];
+
+  // Falls keine gültigen KI-Aktionen da sind, greift das Fallback-System
+  let finalActions = (cleanActions.length > 0) 
+    ? cleanActions 
     : getFallbackActions(bfStatus);
 
   let items = finalActions.map(item => `<li>${item}</li>`).join("");
