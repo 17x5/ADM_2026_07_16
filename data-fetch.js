@@ -1,13 +1,39 @@
-async function ladeDaten(){
+/**
+ * DATEI: data-fetch.js
+ * FUNKTION: Lädt Marktdaten von externen APIs (Crypto, Metalle, Fear & Greed)
+ * und stößt den Render-Prozess in main.js an.
+ */
+
+// Globale Variable für den Live-Status
+let isLive = false;
+
+// Fallback-Daten für den Fehlerfall
+const FALLBACK = {
+  timestamp: Date.now(),
+  score: 50,
+  rating: "Neutral",
+  previous_close: 50,
+  btc_usd: 60000,
+  btc_change_24h: 0,
+  gold_usd: 2000,
+  oil_usd: 75
+};
+
+/**
+ * Lädt alle benötigten Marktdaten und startet die Analyse.
+ */
+async function ladeDaten() {
   const btn = document.getElementById('refreshBtn');
   const indicator = document.getElementById('statusIndicator');
-  btn.disabled = true;
+  
+  if (btn) btn.disabled = true;
 
   let btcPreis = FALLBACK.btc_usd;
   let btcAenderung = FALLBACK.btc_change_24h;
 
+  // 1. Krypto-Daten laden
   try {
-    const cryptoRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+    const cryptoRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true');
     if(cryptoRes.ok) {
       const cryptoJson = await cryptoRes.json();
       if(cryptoJson.bitcoin) {
@@ -16,9 +42,10 @@ async function ladeDaten(){
       }
     }
   } catch(e) {
-    console.log("Krypto-API konnte nicht geladen werden, verwende Fallback.");
+    console.warn("Krypto-API konnte nicht geladen werden, verwende Fallback.");
   }
 
+  // 2. Rohstoff-Daten laden
   let goldPreis = FALLBACK.gold_usd;
   let oelPreis = FALLBACK.oil_usd;
   try {
@@ -31,12 +58,13 @@ async function ladeDaten(){
       }
     }
   } catch(e) {
-    console.log("MetalpriceAPI nicht erreichbar, verwende Fallback.");
+    console.warn("MetalpriceAPI nicht erreichbar, verwende Fallback.");
   }
 
-  try{
+  // 3. Fear & Greed Index laden
+  try {
     const res = await fetch('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', { headers: {'Accept':'application/json'} });
-    if(!res.ok) throw new Error();
+    if(!res.ok) throw new Error("CNN API nicht verfügbar");
     const json = await res.json();
 
     let extrahierterVixUSD = null;
@@ -63,11 +91,23 @@ async function ladeDaten(){
         {key:"finra_margin_debt", name:"Kredit-Hebelung am Markt", sub:"FINRA Margin Debt Dynamik", score: json.fear_and_greed.score > 78 ? 85 : 35}
       ]
     };
-    isLive = true; render(data);
-  }catch(err){
-    isLive = false; render(FALLBACK);
-    indicator.textContent = indicator.textContent + " (CORS-Fallback aktiv)";
-  }finally{
-    btn.disabled = false;
+    
+    isLive = true;
+    render(data); // Aufruf der Hauptfunktion aus main.js
+  } catch(err) {
+    console.error("Daten-Fetch Fehler:", err);
+    isLive = false;
+    render(FALLBACK);
+    if(indicator) indicator.textContent = indicator.textContent + " (CORS-Fallback aktiv)";
+  } finally {
+    if(btn) btn.disabled = false;
   }
+}
+
+/**
+ * Brücken-Funktion für main.js
+ */
+function starteDashboard() {
+  console.log("data-fetch.js: starteDashboard() aufgerufen.");
+  ladeDaten();
 }
