@@ -5,7 +5,6 @@ async function render(data) {
 
   const status = berechneMarktStatus(data, vix, breadth, marginDebt);
 
-  // Kacheln rendern
   renderKachelSentiment(data, status.vixColor, status.rawVix, status.cnnColor);
   renderKachelTrend(data, status.sfColor, status.bfStatus, status.welleDesc, status.actBreadth);
   renderKachelStruktur(data);
@@ -14,7 +13,6 @@ async function render(data) {
   try {
     const prompt = baueGeminiPrompt(data, status);
     const antwortText = await rufeGemini(prompt);
-    // HINWEIS: Dein Parser muss hier ein Objekt liefern: { gesamtsituation: "...", actions: [...] }
     const texte = parseGeminiFazitAntwort(antwortText);
 
     document.getElementById('fazitContent1').innerHTML = texte.sentiment;
@@ -22,22 +20,23 @@ async function render(data) {
     document.getElementById('fazitContent3').innerHTML = texte.struktur;
     document.getElementById('fazitContent4').innerHTML = texte.rohstoffe;
     
-    // Übergabe der dynamischen Actions an die Funktion
-    const fazitHtml = await buildFazitDuForm(
+    // Aufruf ohne await, da synchron
+    document.getElementById('fazitInhalt').innerHTML = buildFazitDuForm(
         status.bfStatus, status.sfColor, status.welleDesc, 
         data.score, data.previous_close, texte.gesamtsituation, 
-        texte.actions // Hier kommen die KI-Actions rein!
+        texte.actions 
     );
-    document.getElementById('fazitInhalt').innerHTML = fazitHtml;
-
   } catch (err) {
-    console.error("KI-Fehler, Fallback aktiv:", err);
-    // ... (Hier deine Fallback-Logik mit statischen Arrays) ...
-    const fallbackHtml = await buildFazitDuForm(
+    console.error("Fehler:", err);
+    document.getElementById('fazitContent1').innerHTML = fallbackFazitSentiment(data, status.rawVix);
+    document.getElementById('fazitContent2').innerHTML = fallbackFazitTrend(data, status.bfStatus, status.actBreadth);
+    document.getElementById('fazitContent3').innerHTML = fallbackFazitStruktur(data);
+    document.getElementById('fazitContent4').innerHTML = fallbackFazitRohstoffe(data);
+    
+    document.getElementById('fazitInhalt').innerHTML = buildFazitDuForm(
         status.bfStatus, status.sfColor, status.welleDesc, 
-        data.score, data.previous_close, "Analyse derzeit nicht verfügbar.", 
-        ["Beobachte den Markt aktiv.", "Halte Liquidität bereit."]
+        data.score, data.previous_close, "Analyse wird geladen...", 
+        ["Marktdaten werden geprüft."]
     );
-    document.getElementById('fazitInhalt').innerHTML = fallbackHtml;
   }
 }
