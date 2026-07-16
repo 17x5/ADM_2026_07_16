@@ -1,5 +1,4 @@
-// Gesamtfazit-Box: Statuslabel bleibt regelbasiert, 
-// Actions kommen jetzt direkt aus dem Fallback (da keine API vorhanden).
+// fazit.js: Erhält dynamische Inhalte direkt vom Hauptskript
 
 function baueStatusLabel(bfStatus, sfColor, welleDesc) {
   let ampelEmoji = getEmojiColor(sfColor);
@@ -19,37 +18,14 @@ function accentColorFuerStatus(bfStatus) {
   return "var(--green)";
 }
 
-function getStaticActionItems(bfStatus) {
-  if (bfStatus === "MARKT-ILLUSION") {
-    return [
-      "Reduziere riskante Nebenwerte und spekulative Hebelpositionen konsequent.",
-      "Sichere deine Kernpositionen mit engen, strikten Stop-Loss-Marken ab.",
-      "Schichte frei werdendes Kapital vorübergehend in Cash oder hochdefensive Werte um."
-    ];
-  }
-  if (bfStatus === "ÜBERHITZT") {
-    return ["Nimm strategische Teilgewinne bei stark gelaufenen Positionen mit.", "Vermeide FOMO-Nachkäufe auf Allzeithochs."];
-  }
-  if (bfStatus === "FALLENDES MESSER") {
-    return ["Halte die Füsse still und warte auf die Bodenbestätigung.", "Lasse langfristige Sparpläne stur weiterlaufen."];
-  }
-  if (bfStatus === "KORREKTUR") {
-    return ["Keine Panikverkäufe. Der Markt atmet lediglich kurz durch.", "Bereite deine Watchlist für gezielte Schnäppchenkauf vor."];
-  }
-  return ["Bleibe entspannt voll investiert.", "Nutze temporäre Dips als Nachkaufchance."];
-}
-
-// Hier wird nun direkt die statische Liste zurückgegeben
-function fetchDynamicActions(bfStatus) {
-  return getStaticActionItems(bfStatus);
-}
-
-async function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousClose, situationErklaerung) {
+// Diese Funktion nimmt jetzt ein Array (actionList) als Argument entgegen
+async function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousClose, situationErklaerung, actionList) {
   let accentColor = accentColorFuerStatus(bfStatus);
   let labelHtml = baueStatusLabel(bfStatus, sfColor, welleDesc);
   
-  let actionList = fetchDynamicActions(bfStatus);
-  let listHtml = actionList.map(item => `<li>${item}</li>`).join("");
+  // Falls actionList leer ist, Fallback zeigen
+  let items = (Array.isArray(actionList) && actionList.length > 0) ? actionList : ["Analysiere Marktlage..."];
+  let listHtml = items.map(item => `<li>${item}</li>`).join("");
 
   let diff = currentScore - previousClose;
   let diffText = diff > 0 ? `▲ +${diff.toFixed(1)} Punkte...` : diff < 0 ? `▼ ${diff.toFixed(1)} Punkte...` : `■ Unverändert...`;
@@ -60,7 +36,7 @@ async function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, prev
       <div class="fazit-label">Deine Situation:</div>
       <p class="fazit-p">${labelHtml}${situationErklaerung}</p>
       <div class="fazit-change" style="color: ${diffColor};">
-        <strong>Veränderung zum letzten Handelstag:</strong> ${diffText}
+        <strong>Veränderung:</strong> ${diffText}
       </div>
     </div>
     <div id="actionBox" class="action-box" style="border-left-color:${accentColor};">
