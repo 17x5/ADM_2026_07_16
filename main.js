@@ -1,87 +1,66 @@
 /**
  * DATEI: main.js
- * FUNKTION: Koordiniert den Start des Dashboards und verteilt die KI-Daten auf die Kacheln.
+ * FUNKTION: Übergibt die KI-Daten an die existierenden Kachel-Container.
  */
 
 async function render(data) {
   console.log("RENDER START: Daten empfangen", data);
 
   try {
-    // 1. Marktstatus berechnen
-    if (typeof window.berechneMarktStatus !== 'function') {
-      throw new Error("window.berechneMarktStatus ist nicht definiert!");
-    }
     const status = window.berechneMarktStatus(data);
     
-    // 2. KI-Analyse durchführen
+    // 1. KI-Daten abrufen
     let texte;
     try {
-      console.log("Starte KI-Abfrage...");
       const prompt = window.baueGeminiPrompt(data);
       const rohAntwort = await window.rufeGemini(prompt);
       texte = window.parseGeminiFazitAntwort(rohAntwort);
-      console.log("KI-Analyse erfolgreich erhalten:", texte);
     } catch (apiError) {
-      console.error("Fehler bei der KI-Analyse:", apiError);
-      texte = { 
-        gesamtsituation: "Die KI-Analyse ist aktuell nicht verfügbar.", 
-        actions: ["Überprüfe die API-Verbindung."],
-        sentiment: "Keine Daten verfügbar", 
-        trend: "Keine Daten verfügbar", 
-        struktur: "Keine Daten verfügbar", 
-        rohstoffe: "Keine Daten verfügbar"
-      };
+      console.error("KI-Fehler:", apiError);
+      texte = { gesamtsituation: "Analyse nicht verfügbar.", sentiment: "Keine Daten", trend: "Keine Daten", struktur: "Keine Daten", rohstoffe: "Keine Daten" };
     }
 
-    // 3. Gesamtfazit rendern (fazitInhalt aus index.html)
+    // 2. Gesamtfazit rendern
     if (typeof window.buildFazitDuForm === 'function') {
-      const fazitHtml = window.buildFazitDuForm(
-        status.bfStatus, status.sfColor, status.welleDesc, data.score, 
-        data.previous_close, texte.gesamtsituation, texte.actions 
-      );
       const container = document.getElementById('fazitInhalt');
-      if (container) container.innerHTML = fazitHtml;
+      if (container) {
+        container.innerHTML = window.buildFazitDuForm(
+          status.bfStatus, status.sfColor, status.welleDesc, data.score, 
+          data.previous_close, texte.gesamtsituation, texte.actions || [] 
+        );
+      }
     }
 
-    // 4. Kachel-Inhalte verteilen (sentimentGroup, trendGroup, etc.)
-    const kacheln = [
-      { id: 'fazitContent1', content: texte.sentiment },
-      { id: 'fazitContent2', content: texte.trend },
-      { id: 'fazitContent3', content: texte.struktur },
-      { id: 'fazitContent4', content: texte.rohstoffe }
-    ];
-
-    kacheln.forEach(k => {
-      const el = document.getElementById(k.id);
-      if (el) {
-        el.innerHTML = `<p class="kachel-text">${k.content || "Analyse wird geladen..."}</p>`;
+    // 3. KI-Text sicher in die Kacheln injizieren
+    // Wir suchen innerhalb von fazitBoxX nach der Klasse 'kachel-fazit-content'
+    const updateKachel = (id, text) => {
+      const box = document.getElementById(id);
+      if (box) {
+        // Suche den Inhaltsbereich innerhalb der Box
+        let contentArea = box.querySelector('.kachel-fazit-content');
+        
+        // Falls dieser Bereich noch nicht existiert, erstellen wir ihn
+        if (!contentArea) {
+          contentArea = document.createElement('div');
+          contentArea.className = 'kachel-fazit-content';
+          box.appendChild(contentArea);
+        }
+        
+        contentArea.innerHTML = `<div class="p-4 text-sm text-gray-200">${text}</div>`;
+      } else {
+        console.warn("Kachel-Box nicht gefunden:", id);
       }
-    });
+    };
 
-    console.log("Rendering erfolgreich abgeschlossen.");
+    updateKachel('fazitBox1', texte.sentiment);
+    updateKachel('fazitBox2', texte.trend);
+    updateKachel('fazitBox3', texte.struktur);
+    updateKachel('fazitBox4', texte.rohstoffe);
+
+    console.log("Rendering abgeschlossen.");
   } catch (error) {
-    console.error("Kritischer Fehler im Render-Prozess:", error);
+    console.error("Kritischer Fehler:", error);
   }
 }
 
-// Global für externe Aufrufe registrieren
 window.render = render;
-
-// Warteraum für Abhängigkeiten
-window.addEventListener('load', () => {
-  const checkInterval = setInterval(() => {
-    const allesDa = (
-        typeof window.starteDashboard === 'function' && 
-        typeof window.rufeGemini === 'function' &&
-        typeof window.baueGeminiPrompt === 'function' &&
-        typeof window.parseGeminiFazitAntwort === 'function' &&
-        typeof window.berechneMarktStatus === 'function'
-    );
-    
-    if (allesDa) {
-      clearInterval(checkInterval);
-      console.log("ALLES GELADEN - Starte Dashboard");
-      window.starteDashboard();
-    }
-  }, 500);
-});
