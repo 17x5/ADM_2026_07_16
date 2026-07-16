@@ -7,20 +7,28 @@ async function render(data) {
   console.log("RENDER START: Daten empfangen", data);
 
   try {
+    // 1. Marktstatus berechnen
+    if (typeof window.berechneMarktStatus !== 'function') {
+      console.error("KRITISCH: berechneMarktStatus ist nicht definiert!");
+      return;
+    }
     const status = window.berechneMarktStatus(data);
+    console.log("Status berechnet:", status);
     
-    // 1. KI-Daten abrufen
+    // 2. KI-Daten abrufen
     let texte;
     try {
+      console.log("Versuche KI-Daten abzurufen...");
       const prompt = window.baueGeminiPrompt(data);
       const rohAntwort = await window.rufeGemini(prompt);
       texte = window.parseGeminiFazitAntwort(rohAntwort);
+      console.log("KI-Antwort erhalten:", texte);
     } catch (apiError) {
       console.error("KI-Fehler:", apiError);
       texte = { gesamtsituation: "Analyse nicht verfügbar.", sentiment: "Keine Daten", trend: "Keine Daten", struktur: "Keine Daten", rohstoffe: "Keine Daten" };
     }
 
-    // 2. Gesamtfazit rendern
+    // 3. Gesamtfazit rendern
     if (typeof window.buildFazitDuForm === 'function') {
       const container = document.getElementById('fazitInhalt');
       if (container) {
@@ -28,28 +36,23 @@ async function render(data) {
           status.bfStatus, status.sfColor, status.welleDesc, data.score, 
           data.previous_close, texte.gesamtsituation, texte.actions || [] 
         );
+        console.log("Gesamtfazit gerendert.");
       }
     }
 
-    // 3. KI-Text sicher in die Kacheln injizieren
-    // Da deine Kacheln die Klasse 'kachel-fazit-box' haben und per toggleKachelFazit gesteuert werden,
-    // suchen wir nach einem Bereich innerhalb dieser Box, der die KI-Analyse aufnimmt.
+    // 4. KI-Text in die Kacheln injizieren
     const updateKachel = (id, text) => {
+      console.log("Versuche Kachel zu updaten:", id);
       const box = document.getElementById(id);
       if (box) {
-        // Suche nach dem Inhaltsbereich für das Fazit
-        // Laut index.html Snippet haben die Kacheln eine kachel-fazit-box Struktur
         let contentArea = box.querySelector('.kachel-fazit-content');
-        
         if (!contentArea) {
-          // Falls kein expliziter Container da ist, erstellen wir einen in der Box
           contentArea = document.createElement('div');
           contentArea.className = 'kachel-fazit-content';
           box.appendChild(contentArea);
         }
-        
-        // Füge den Text mit etwas Padding hinzu
-        contentArea.innerHTML = `<div class="p-3 text-sm text-gray-200" style="padding:10px; font-size: 0.85rem;">${text}</div>`;
+        contentArea.innerHTML = `<div style="padding:10px; font-size: 0.85rem; color: #ccc;">${text}</div>`;
+        console.log("Kachel", id, "erfolgreich aktualisiert.");
       } else {
         console.warn("Kachel-Box nicht gefunden:", id);
       }
@@ -60,9 +63,9 @@ async function render(data) {
     updateKachel('fazitBox3', texte.struktur);
     updateKachel('fazitBox4', texte.rohstoffe);
 
-    console.log("Rendering abgeschlossen.");
+    console.log("Rendering komplett abgeschlossen.");
   } catch (error) {
-    console.error("Kritischer Fehler:", error);
+    console.error("Kritischer Fehler im Render-Prozess:", error);
   }
 }
 
