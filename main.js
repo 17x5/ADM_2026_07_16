@@ -1,44 +1,44 @@
 /**
  * DATEI: main.js
- * FUNKTION: Koordiniert das Laden der Marktdaten, die KI-Analyse und das Rendering des Fazits.
+ * FUNKTION: Koordiniert das Laden der Marktdaten, die KI-Analyse und das Rendering.
  */
+
 async function render(data) {
   console.log("RENDER START: Daten empfangen", data);
 
   try {
     // 1. Marktstatus berechnen
     if (typeof berechneMarktStatus !== 'function') {
-        throw new Error("berechneMarktStatus ist nicht definiert!");
+      throw new Error("berechneMarktStatus ist nicht definiert!");
     }
     const status = berechneMarktStatus(data);
-    console.log("Status berechnet:", status);
     
-    // 2. Fazit-Texte via KI abrufen
+    // 2. KI-Fazit abrufen (mit Timeout-Absicherung)
     let texte;
     try {
       console.log("Starte KI-Abfrage...");
-      if (typeof window.baueGeminiPrompt !== 'function' || typeof window.parseGeminiFazitAntwort !== 'function') {
-        throw new Error("KI-Hilfsfunktionen nicht im globalen Scope gefunden.");
-      }
-
-      const prompt = window.baueGeminiPrompt(data);
-      const rohAntwort = await rufeGemini(prompt);
-      console.log("KI-Antwort erhalten, parse nun...");
-      texte = window.parseGeminiFazitAntwort(rohAntwort);
       
-      window.lastParsedFazit = texte;
+      // Promise.race sorgt dafür, dass wir nicht ewig warten, wenn Gemini hängt
+      const kiAbfrage = rufeGemini(window.baueGeminiPrompt(data));
+      const timeout = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Timeout bei KI-Abfrage")), 8000)
+      );
+      
+      const rohAntwort = await Promise.race([kiAbfrage, timeout]);
+      texte = window.parseGeminiFazitAntwort(rohAntwort);
       console.log("KI-Daten erfolgreich verarbeitet.");
+      
     } catch (apiError) {
-      console.error("Fehler bei der KI-Analyse, nutze Fallback:", apiError);
+      console.error("Fehler oder Timeout bei der KI-Analyse, nutze Fallback:", apiError);
       texte = {
-        gesamtsituation: "Analyse konnte nicht dynamisch geladen werden.",
-        actions: []
+        gesamtsituation: "Die KI-Analyse ist aktuell nicht verfügbar. Bitte lade die Seite später neu.",
+        actions: ["Überprüfe den Marktstatus manuell.", "Aktualisiere die Seite für einen neuen Versuch."]
       };
     }
 
-    // 3. Fazit & Dynamische Actions rendern
-    console.log("Starte Rendering des Fazit-HTMLs...");
-    const fazitHtml = buildFazitDuForm(
+    // 3. Rendering des Fazits
+    console.log("Starte Rendering...");
+    const fazitHtml = window.buildFazitDuForm(
         status.bfStatus, 
         status.sfColor, 
         status.welleDesc, 
@@ -51,33 +51,30 @@ async function render(data) {
     const container = document.getElementById('fazitInhalt');
     if (container) {
       container.innerHTML = fazitHtml;
-      console.log("Rendering abgeschlossen: HTML in #fazitInhalt geschrieben.");
-    } else {
-      console.error("Element #fazitInhalt nicht gefunden!");
+      console.log("Rendering erfolgreich abgeschlossen.");
     }
 
   } catch (error) {
     console.error("Kritischer Fehler im Render-Prozess:", error);
-    const container = document.getElementById('fazitInhalt');
-    if (container) container.innerHTML = "Fehler beim Laden des Fazits. Bitte F12-Konsole prüfen.";
   }
 }
 
+// Hilfsfunktion: Aufruf der globalen Gemini-Funktion
 async function rufeGemini(prompt) {
-  if (typeof rufeGeminiAPI !== 'function') {
-    throw new Error("API-Verbindungsfunktion 'rufeGeminiAPI' nicht definiert.");
+  if (typeof window.rufeGeminiAPI !== 'function') {
+    throw new Error("rufeGeminiAPI ist nicht global verfügbar.");
   }
-  return await rufeGeminiAPI(prompt); 
+  return await window.rufeGeminiAPI(prompt); 
 }
 
-// Event-Listener mit einem kurzen Timeout, um sicherzustellen, dass alles geladen ist
+// Sicherer Start-Trigger
 window.addEventListener('load', () => {
-  console.log("Seite geladen, starte Dashboard-Datenabfrage mit kurzem Delay...");
+  console.log("Seite geladen, warte auf Datenabfrage...");
   setTimeout(() => {
-    if (typeof starteDashboard === 'function') {
-      starteDashboard();
+    if (typeof window.starteDashboard === 'function') {
+      window.starteDashboard();
     } else {
-      console.error("Funktion 'starteDashboard' nicht gefunden. Prüfe data-fetch.js");
+      console.error("FEHLER: 'starteDashboard' ist immer noch nicht global verfügbar.");
     }
-  }, 500);
+  }, 1000);
 });
