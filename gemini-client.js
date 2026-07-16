@@ -1,6 +1,6 @@
 // Reine Technik: schickt einen Prompt an die Gemini API, gibt den Antworttext zurück.
 // -> Hier den API-Key eintragen und ggf. das Modell wechseln.
-const GEMINI_API_KEY = "HIER_DEINEN_GEMINI_API_KEY_EINTRAGEN";
+const GEMINI_API_KEY = "AQ.Ab8RN6I6i117jvqUVBPcgca7S0HTxD_EpYI1WFplok3q4qDhQg.txt";
 const GEMINI_MODEL = "gemini-3.1-flash-lite";
 
 async function rufeGemini(prompt) {
