@@ -17,7 +17,6 @@ async function render(data) {
     let texte;
     try {
       console.log("Starte KI-Abfrage...");
-      // Aufruf der globalen Funktionen (definiert in gemini-prompts.js und gemini-client.js)
       const prompt = window.baueGeminiPrompt(data);
       const rohAntwort = await window.rufeGemini(prompt);
       texte = window.parseGeminiFazitAntwort(rohAntwort);
@@ -45,7 +44,6 @@ async function render(data) {
     }
 
     // 4. Kachel-Inhalte verteilen (sentimentGroup, trendGroup, etc.)
-    // Diese IDs (fazitContent1-4) sind in der index.html definiert
     const kacheln = [
       { id: 'fazitContent1', content: texte.sentiment },
       { id: 'fazitContent2', content: texte.trend },
@@ -56,7 +54,6 @@ async function render(data) {
     kacheln.forEach(k => {
       const el = document.getElementById(k.id);
       if (el) {
-        // Wir setzen hier den Inhalt, die CSS-Klassen kommen aus style.css
         el.innerHTML = `<p class="kachel-text">${k.content || "Analyse wird geladen..."}</p>`;
       }
     });
@@ -70,7 +67,7 @@ async function render(data) {
 // Global für externe Aufrufe registrieren
 window.render = render;
 
-// Initialisierung bei Ladevorgang
+// Warteraum für Abhängigkeiten
 window.addEventListener('load', () => {
   const checkInterval = setInterval(() => {
     const allesDa = (
