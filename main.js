@@ -32,21 +32,24 @@ async function render(data) {
     }
 
     // 3. KI-Text sicher in die Kacheln injizieren
-    // Wir suchen innerhalb von fazitBoxX nach der Klasse 'kachel-fazit-content'
+    // Da deine Kacheln die Klasse 'kachel-fazit-box' haben und per toggleKachelFazit gesteuert werden,
+    // suchen wir nach einem Bereich innerhalb dieser Box, der die KI-Analyse aufnimmt.
     const updateKachel = (id, text) => {
       const box = document.getElementById(id);
       if (box) {
-        // Suche den Inhaltsbereich innerhalb der Box
+        // Suche nach dem Inhaltsbereich für das Fazit
+        // Laut index.html Snippet haben die Kacheln eine kachel-fazit-box Struktur
         let contentArea = box.querySelector('.kachel-fazit-content');
         
-        // Falls dieser Bereich noch nicht existiert, erstellen wir ihn
         if (!contentArea) {
+          // Falls kein expliziter Container da ist, erstellen wir einen in der Box
           contentArea = document.createElement('div');
           contentArea.className = 'kachel-fazit-content';
           box.appendChild(contentArea);
         }
         
-        contentArea.innerHTML = `<div class="p-4 text-sm text-gray-200">${text}</div>`;
+        // Füge den Text mit etwas Padding hinzu
+        contentArea.innerHTML = `<div class="p-3 text-sm text-gray-200" style="padding:10px; font-size: 0.85rem;">${text}</div>`;
       } else {
         console.warn("Kachel-Box nicht gefunden:", id);
       }
