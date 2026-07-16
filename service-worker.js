@@ -24,11 +24,27 @@ const APP_DATEIEN = [
   "./icon-512.png"
 ];
 
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_DATEIEN))
+self.addEventListener("fetch", (event) => {
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        // Falls die API einen Fehlercode liefert (z.B. 401),
+        // geben wir die Antwort normal zurück, damit die App darauf reagieren kann.
+        return response;
+      })
+      .catch((error) => {
+        // Hier landen wir, wenn das Netzwerk komplett down ist.
+        // Wir versuchen, die Datei aus dem Cache zu laden.
+        return caches.match(event.request).then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          // Wenn auch im Cache nichts ist, werfen wir keinen Fehler, 
+          // sondern könnten eine Fallback-Seite zurückgeben.
+          throw error;
+        });
+      })
   );
-  self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
