@@ -10,9 +10,10 @@ async function rufeGemini(prompt) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      // HIER wird der Stil definiert:
       system_instruction: {
-        parts: [{ text: "Du bist ein präziser Finanzanalyst. Wenn du Daten analysierst: 1. Nenne kurz die relevanten Fachbegriffe (z.B. Welle B, Divergenz), damit die Analyse präzise bleibt. 2. Schreibe direkt danach in einem separaten Absatz eine 'Einfach-Erklärung': Übersetze diese Fachbegriffe in klare, warnende Alltagssprache. Komm sofort zum Punkt und sei ehrlich, wenn die Lage ernst ist." }]
+        parts: [{ 
+          text: "Du bist ein präziser Finanzanalyst. Antworte AUSSCHLIESSLICH im validen JSON-Format. Deine Antwort muss zwingend folgende Struktur haben: { \"gesamtsituation\": \"Erklärung...\", \"actions\": [\"Action 1\", \"Action 2\"], \"sentiment\": \"...\", \"trend\": \"...\", \"struktur\": \"...\", \"rohstoffe\": \"...\" }. Kein zusätzlicher Text vor oder nach dem JSON." 
+        }]
       },
       contents: [{ parts: [{ text: prompt }] }]
     })
@@ -31,4 +32,24 @@ async function rufeGemini(prompt) {
     throw new Error("Gemini: leere oder unerwartete Antwort");
   }
   return text;
+}
+
+// Der Parser wandelt den KI-Text in ein echtes JavaScript-Objekt um
+function parseGeminiFazitAntwort(antwortText) {
+  try {
+    // Entfernt mögliche Markdown-Reste (z.B. ```json)
+    const cleanText = antwortText.replace(/```json/g, "").replace(/```/g, "").trim();
+    return JSON.parse(cleanText);
+  } catch (e) {
+    console.error("Parser Fehler:", e);
+    // Rückgabe eines Fallback-Objekts, um den Programmablauf nicht zu stoppen
+    return {
+      gesamtsituation: "Analyse-Format fehlerhaft.",
+      actions: ["KI-Antwort konnte nicht als JSON geladen werden."],
+      sentiment: "Fehler beim Parsen",
+      trend: "Fehler beim Parsen",
+      struktur: "Fehler beim Parsen",
+      rohstoffe: "Fehler beim Parsen"
+    };
+  }
 }
