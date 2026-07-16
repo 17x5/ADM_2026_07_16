@@ -40,6 +40,7 @@ function accentColorFuerStatus(bfStatus) {
   return "var(--green)";
 }
 
+
 /**
  * Regelbasiertes Fallback-System für Aktionen, falls die KI-Schnittstelle
  * verzögert reagiert oder keine Daten liefert.
@@ -84,7 +85,7 @@ function getFallbackActions(bfStatus) {
 
 /**
  * Steuert das Auf- und Zuklappen der Actions-Box inklusive Icon-Wechsel.
- * Nutzt 'header', um relativ im DOM zu suchen – extrem stabil und resistent gegen Konflikte.
+ * Nutzt 'is-visible'-Klassentoggle für maximale Stabilität und CSS-Resistenz.
  */
 function toggleActionBox(headerElement) {
   console.log("fazit.js: toggleActionBox wurde geklickt!");
@@ -98,14 +99,14 @@ function toggleActionBox(headerElement) {
   const icon = box.querySelector(".action-toggle-icon");
   
   if (content && icon) {
-    if (content.style.display === "none" || content.style.display === "") {
-      content.style.display = "block";
+    content.classList.toggle("is-visible");
+    
+    if (content.classList.contains("is-visible")) {
       icon.textContent = "▼ Ausblenden";
-      console.log("fazit.js: Klick verarbeitet -> Actions-Box auf SICHBAR gestellt.");
+      console.log("fazit.js: Klick verarbeitet -> Actions-Box sichtbar gemacht.");
     } else {
-      content.style.display = "none";
       icon.textContent = "▶ Anzeigen";
-      console.log("fazit.js: Klick verarbeitet -> Actions-Box auf UNSICHTBAR gestellt.");
+      console.log("fazit.js: Klick verarbeitet -> Actions-Box unsichtbar gemacht.");
     }
   } else {
     console.error("fazit.js: .action-content oder .action-toggle-icon fehlt innerhalb der Box.");
@@ -185,6 +186,66 @@ function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousCl
   }, 500);
 
   return `
+    <!-- ULTRA-GEHÄRTETES CSS-SICHERHEITSNETZ (Neutralisiert alle störenden externen Stylesheet-Regeln) -->
+    <style>
+      #actionBox.action-box {
+        margin-top: 15px !important;
+        border-left: 4px solid !important;
+        background-color: rgba(255, 255, 255, 0.04) !important;
+        border-radius: 6px !important;
+        padding: 12px 15px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+      }
+      #actionBox .action-header {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        cursor: pointer !important;
+        user-select: none !important;
+      }
+      #actionBox .action-header h3 {
+        margin: 0 !important;
+        font-size: 1.1rem !important;
+        font-weight: 600 !important;
+      }
+      #actionBox .action-toggle-icon {
+        font-size: 0.9rem !important;
+        color: #8b98a5 !important;
+        font-weight: bold !important;
+      }
+      /* Standardmäßig geschlossen & absolut abgesichert gegen CSS-Overwrites */
+      #actionBox .action-content {
+        display: none !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        height: auto !important;
+        overflow: visible !important;
+        margin-top: 10px !important;
+      }
+      /* Klasse zum Einblenden bei Klick */
+      #actionBox .action-content.is-visible {
+        display: block !important;
+      }
+      #actionBox .action-list {
+        margin: 0 !important;
+        padding-left: 20px !important;
+        list-style-type: disc !important;
+        display: block !important;
+      }
+      #actionBox .action-list li {
+        margin-bottom: 8px !important;
+        color: var(--text-color, inherit) !important; /* Passt sich an Dark- & Lightmode an */
+        font-size: 0.95rem !important;
+        line-height: 1.5 !important;
+        display: list-item !important; /* Erzwingt die Standard-Listenanzeige */
+        list-style-type: disc !important; /* Erzwingt den Aufzählungspunkt */
+        visibility: visible !important;
+        opacity: 1 !important;
+      }
+    </style>
+
     <div class="fazit-section">
       <div class="fazit-label">Deine Situation:</div>
       <p class="fazit-p">${labelHtml}${situationErklaerung || "Analyse wird geladen..."}</p>
@@ -197,8 +258,7 @@ function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousCl
         <h3 style="color:${accentColor};">Deine Actions:</h3>
         <span id="actionToggleIcon" class="action-toggle-icon">▶ Anzeigen</span>
       </div>
-      <!-- Durch style="display: none;" standardmäßig beim Start unsichtbar -->
-      <div class="action-content" style="display: none;">
+      <div class="action-content">
         <ul class="action-list">${items}</ul>
       </div>
     </div>
