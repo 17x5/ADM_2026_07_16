@@ -1,5 +1,3 @@
-// Reine Technik: schickt einen Prompt an die Gemini API, gibt den Antworttext zurück.
-// -> Hier den API-Key eintragen und ggf. das Modell wechseln.
 const GEMINI_API_KEY = "AQ.Ab8RN6I6i117jvqUVBPcgca7S0HTxD_EpYI1WFplok3q4qDhQg";
 // Hinweis: "gemini-2.5-flash-preview-09-2025" oder "gemini-1.5-flash" sind die stabilsten Modelle für JSON-Outputs.
 const GEMINI_MODEL = "gemini-3.1-flash-lite";
@@ -21,9 +19,9 @@ async function rufeGemini(prompt) {
           parts: [{ 
             text: "Du bist ein präziser Finanzanalyst. Du antwortest AUSSCHLIESSLICH im validen JSON-Format. Deine Antwort MUSS exakt diese JSON-Struktur einhalten: { \"gesamtsituation\": \"...\", \"actions\": [\"Action 1\", \"Action 2\"], \"sentiment\": \"...\", \"trend\": \"...\", \"struktur\": \"...\", \"rohstoffe\": \"...\" }. \n\n" +
                   "FORMATIERUNGS-REGELN FÜR DIE TEXTE IN DEN JSON-FELDERN:\n" +
-                  "1. Nutze HTML-Tags (wie `<strong>`, `<br>`, `<p>`, `<ul>`, `<li>` und Emojis) innerhalb der JSON-Strings, um eine wunderschöne, übersichtliche und lesbare Formatierung zu erzeugen.\n" +
+                  "1. Nutze HTML-Tags (wie `<strong>`, `<br>`, `<p>`, `<ul>`, `<li>` und Emojis) intensiv innerhalb der JSON-Strings, um eine wunderschöne, übersichtliche, fette und lesbare Formatierung zu erzeugen.\n" +
                   "2. ACHTUNG: Verwende innerhalb der HTML-Tags niemals doppelte Anführungszeichen (\"), sondern nur einfache (') oder gar keine (z.B. `<span style='color:red;'>`), um das JSON-Format nicht zu beschädigen.\n" +
-                  "3. ANALYSE-STIL: Nenne in den Feldern immer zuerst kurz die relevanten Fachbegriffe (z.B. Welle B, Divergenz) für die Präzision. Schreibe direkt danach einen separaten Absatz (abgetrennt mit `<br><br>`) als 'Einfach-Erklärung': Übersetze die Fachbegriffe in klare, warnende Alltagssprache. Sei ehrlich, wenn die Lage ernst ist."
+                  "3. ANALYSE-STIL: Nenne in den Feldern immer zuerst kurz die relevanten Fachbegriffe (z.B. Welle B, Divergenz) für die Präzision. Schreibe direkt danach einen separaten Absatz (abgetrennt mit `<br><br>`) als 'Einfach-Erklärung': Übersetze die Fachbegriffe in klare, warnende Alltagssprache. Sei ehrlich und direkt, wenn die Lage ernst ist."
           }]
         },
         contents: [{ parts: [{ text: prompt }] }],
