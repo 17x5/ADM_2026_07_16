@@ -17,14 +17,16 @@ async function rufeGemini(prompt) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        // WICHTIG: "systemInstruction" (camelCase) ist der korrekte Key für die Google API!
         systemInstruction: {
           parts: [{ 
-            text: "Du bist ein präziser Finanzanalyst. Du antwortest AUSSCHLIESSLICH im validen JSON-Format. Deine Antwort MUSS exakt diese JSON-Struktur einhalten und darf keine Abweichungen haben: { \"gesamtsituation\": \"Erklärung...\", \"actions\": [\"Action 1\", \"Action 2\", \"Action 3\"], \"sentiment\": \"...\", \"trend\": \"...\", \"struktur\": \"...\", \"rohstoffe\": \"...\" }. Schreibe absolut keinen Text vor oder nach dem JSON, keine Markdown-Formatierung wie ```json." 
+            text: "Du bist ein präziser Finanzanalyst. Du antwortest AUSSCHLIESSLICH im validen JSON-Format. Deine Antwort MUSS exakt diese JSON-Struktur einhalten: { \"gesamtsituation\": \"...\", \"actions\": [\"Action 1\", \"Action 2\"], \"sentiment\": \"...\", \"trend\": \"...\", \"struktur\": \"...\", \"rohstoffe\": \"...\" }. \n\n" +
+                  "FORMATIERUNGS-REGELN FÜR DIE TEXTE IN DEN JSON-FELDERN:\n" +
+                  "1. Nutze HTML-Tags (wie `<strong>`, `<br>`, `<p>`, `<ul>`, `<li>` und Emojis) innerhalb der JSON-Strings, um eine wunderschöne, übersichtliche und lesbare Formatierung zu erzeugen.\n" +
+                  "2. ACHTUNG: Verwende innerhalb der HTML-Tags niemals doppelte Anführungszeichen (\"), sondern nur einfache (') oder gar keine (z.B. `<span style='color:red;'>`), um das JSON-Format nicht zu beschädigen.\n" +
+                  "3. ANALYSE-STIL: Nenne in den Feldern immer zuerst kurz die relevanten Fachbegriffe (z.B. Welle B, Divergenz) für die Präzision. Schreibe direkt danach einen separaten Absatz (abgetrennt mit `<br><br>`) als 'Einfach-Erklärung': Übersetze die Fachbegriffe in klare, warnende Alltagssprache. Sei ehrlich, wenn die Lage ernst ist."
           }]
         },
         contents: [{ parts: [{ text: prompt }] }],
-        // WICHTIG: Erzwingt, dass die API nur reines JSON zurückgibt!
         generationConfig: {
           responseMimeType: "application/json"
         }
@@ -87,14 +89,12 @@ function parseGeminiFazitAntwort(antwortText) {
     if (!result.actions || !Array.isArray(result.actions) || result.actions.length === 0) {
       console.warn("Warnung: 'actions' Key fehlt oder ist leer im KI-Response. Erstelle automatische Actions...");
       
-      // Sucht nach Sätzen in der Gesamtsituation, die wie Handlungsaufforderungen klingen
       if (result.gesamtsituation) {
         // Trenne Sätze auf und nimm bis zu 3 prägnante Sätze als Not-Aktionen
         const saetze = result.gesamtsituation.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 15);
         result.actions = saetze.slice(0, 3);
       }
       
-      // Falls immer noch leer, setzen wir solide Notfall-Aktionen ein
       if (!result.actions || result.actions.length === 0) {
         result.actions = [
           "Analysiere die Kacheldaten manuell auf Divergenzen.",
