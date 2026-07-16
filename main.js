@@ -9,20 +9,30 @@ async function render(data) {
   try {
     // 1. Prüfen, ob die Berechnungslogik da ist
     if (typeof window.berechneMarktStatus !== 'function') {
-      throw new Error("berechneMarktStatus ist global nicht definiert!");
+      console.error("KRITISCH: berechneMarktStatus ist nicht definiert.");
+      return;
     }
+    
+    console.log("Berechne Marktstatus...");
     const status = window.berechneMarktStatus(data);
     
     // 2. KI-Analyse
     let texte;
     try {
       console.log("Starte KI-Abfrage...");
-      // Zugriff explizit auf die globale Funktion aus gemini-client.js
       if (typeof window.rufeGemini !== 'function') {
         throw new Error("window.rufeGemini ist nicht definiert!");
       }
-      const rohAntwort = await window.rufeGemini(window.baueGeminiPrompt(data));
+      
+      const prompt = window.baueGeminiPrompt(data);
+      console.log("Prompt generiert, sende an Gemini...");
+      
+      const rohAntwort = await window.rufeGemini(prompt);
+      console.log("Antwort von Gemini erhalten:", rohAntwort);
+      
       texte = window.parseGeminiFazitAntwort(rohAntwort);
+      console.log("Antwort erfolgreich geparst:", texte);
+      
     } catch (apiError) {
       console.error("Fehler bei der KI-Analyse:", apiError);
       texte = {
@@ -33,9 +43,11 @@ async function render(data) {
 
     // 3. UI-Komponente rendern
     if (typeof window.buildFazitDuForm !== 'function') {
-      throw new Error("window.buildFazitDuForm ist nicht definiert! Prüfe fazit.js");
+      console.error("KRITISCH: window.buildFazitDuForm ist nicht definiert!");
+      return;
     }
 
+    console.log("Baue Fazit HTML...");
     const fazitHtml = window.buildFazitDuForm(
         status.bfStatus, status.sfColor, status.welleDesc, data.score, 
         data.previous_close, texte.gesamtsituation, texte.actions 
@@ -44,6 +56,7 @@ async function render(data) {
     const container = document.getElementById('fazitInhalt');
     if (container) {
       container.innerHTML = fazitHtml;
+      console.log("Rendering abgeschlossen.");
     } else {
       console.error("Element 'fazitInhalt' nicht im DOM gefunden.");
     }
@@ -54,7 +67,9 @@ async function render(data) {
 
 window.addEventListener('load', () => {
   const checkInterval = setInterval(() => {
-    // Prüfung auf alle benötigten globalen Funktionen
+    // Debug-Log, um zu sehen, ob das Intervall läuft
+    console.log("Warte auf Abhängigkeiten...");
+    
     if (typeof window.starteDashboard === 'function' && 
         typeof window.buildFazitDuForm === 'function' &&
         typeof window.rufeGemini === 'function' &&
@@ -64,5 +79,5 @@ window.addEventListener('load', () => {
       console.log("Alle Abhängigkeiten geladen, starte Dashboard...");
       window.starteDashboard();
     }
-  }, 300);
+  }, 500);
 });
