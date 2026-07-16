@@ -25,7 +25,7 @@ function toggleKachelFazit(boxId) {
 
 function getEmojiColor(color) {
   if (color === 'gruen') return '🟢';
-  if (color === 'gelb') return '🟡';
+  if (color === 'gelb' || color === 'orange') return '🟡';
   if (color === 'rot') return '🔴';
   if (color === 'purple') return '🟣';
   return '⚪';
@@ -33,10 +33,9 @@ function getEmojiColor(color) {
 
 function getHexColor(color) {
   if (color === 'gruen') return 'var(--green)';
-  if (color === 'gelb') return 'var(--yellow)';
+  if (color === 'gelb' || color === 'orange') return 'var(--yellow)';
   if (color === 'rot') return 'var(--red)';
   if (color === 'purple') return 'var(--purple)';
-  if (color === 'orange') return 'var(--orange)';
   return '#8b98a5';
 }
 
