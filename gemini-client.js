@@ -1,5 +1,4 @@
 const GEMINI_API_KEY = "AQ.Ab8RN6I6i117jvqUVBPcgca7S0HTxD_EpYI1WFplok3q4qDhQg";
-// Hinweis: "gemini-2.5-flash-preview-09-2025" oder "gemini-1.5-flash" sind die stabilsten Modelle für JSON-Outputs.
 const GEMINI_MODEL = "gemini-3.1-flash-lite";
 
 async function rufeGemini(prompt) {
@@ -17,11 +16,11 @@ async function rufeGemini(prompt) {
       body: JSON.stringify({
         systemInstruction: {
           parts: [{ 
-            text: "Du bist ein präziser Finanzanalyst. Du antwortest AUSSCHLIESSLICH im validen JSON-Format. Deine Antwort MUSS exakt diese JSON-Struktur einhalten: { \"gesamtsituation\": \"...\", \"actions\": [\"Action 1\", \"Action 2\"], \"sentiment\": \"...\", \"trend\": \"...\", \"struktur\": \"...\", \"rohstoffe\": \"...\" }. \n\n" +
-                  "FORMATIERUNGS-REGELN FÜR DIE TEXTE IN DEN JSON-FELDERN:\n" +
-                  "1. Nutze HTML-Tags (wie `<strong>`, `<br>`, `<p>`, `<ul>`, `<li>` und Emojis) intensiv innerhalb der JSON-Strings, um eine wunderschöne, übersichtliche, fette und lesbare Formatierung zu erzeugen.\n" +
-                  "2. ACHTUNG: Verwende innerhalb der HTML-Tags niemals doppelte Anführungszeichen (\"), sondern nur einfache (') oder gar keine (z.B. `<span style='color:red;'>`), um das JSON-Format nicht zu beschädigen.\n" +
-                  "3. ANALYSE-STIL: Nenne in den Feldern immer zuerst kurz die relevanten Fachbegriffe (z.B. Welle B, Divergenz) für die Präzision. Schreibe direkt danach einen separaten Absatz (abgetrennt mit `<br><br>`) als 'Einfach-Erklärung': Übersetze die Fachbegriffe in klare, warnende Alltagssprache. Sei ehrlich und direkt, wenn die Lage ernst ist."
+            text: "Du bist ein präziser Finanzanalyst. Du antwortest AUSSCHLIESSLICH im validen JSON-Format. Deine Antwort MUSS exakt diese JSON-Struktur einhalten: { \"gesamtsituation\": \"...\", \"actions\": [\"Action 1\", \"Action 2\"], \"sentiment\": \"...\", \"trend\": \"...\", \"struktur\": \"...\", \"rohstoffe\": \"...\" }.\n\n" +
+                  "FORMATIERUNGS-REGELN FÜR DIE JSON-FELDER:\n" +
+                  "1. FELD 'gesamtsituation': Nutze hier intensiv HTML-Tags (wie `<strong>`, `<br>`, `<p>`, Emojis) für eine wunderschöne, fette und lesbare Formatierung. Verwende niemals doppelte Anführungszeichen (\") innerhalb des HTMLs, sondern nur einfache (') oder gar keine (z.B. `<span style='color:red;'>`), um das JSON-Format nicht zu beschädigen.\n" +
+                  "2. ANALYSE-STIL FÜR 'gesamtsituation': Nenne zuerst kurz die relevanten Fachbegriffe (z.B. Welle B, Divergenz) für die Präzision. Schreibe direkt danach einen separaten Absatz (abgetrennt mit `<br><br>`) als 'Einfach-Erklärung': Übersetze die Fachbegriffe in klare, warnende Alltagssprache. Sei ehrlich und direkt, wenn die Lage ernst ist.\n" +
+                  "3. FELD 'actions': Dieses Feld MUSS zwingend ein einfaches Array aus 3 bis 5 kurzen, prägnanten, handlungsorientierten Sätzen (als reine Text-Strings) sein (z.B. [\"Sichere Kernpositionen ab.\", \"Erhöhe Cash-Quote.\"]). Verwende im 'actions'-Array KEINE HTML-Tags oder komplexe Strukturen."
           }]
         },
         contents: [{ parts: [{ text: prompt }] }],
@@ -33,18 +32,15 @@ async function rufeGemini(prompt) {
     });
     
     clearTimeout(timeoutId);
-
     console.log("3. API hat geantwortet. Status:", res.status);
 
     if (!res.ok) {
       const errorText = await res.text();
       console.error("API Fehler Details:", errorText);
-      throw new Error(`Gemini API Fehler: HTTP ${res.status} - ${errorText}`);
+      throw new Error(`Gemini API Fehler: HTTP ${res.status}`);
     }
 
     const json = await res.json();
-    console.log("4. JSON Response geparst.");
-
     const text = json.candidates && json.candidates[0] && json.candidates[0].content
       ? json.candidates[0].content.parts[0].text
       : null;
@@ -53,7 +49,7 @@ async function rufeGemini(prompt) {
       throw new Error("Gemini: leere oder unerwartete Antwort");
     }
     
-    console.log("5. Roher Text aus KI extrahiert:\n", text);
+    console.log("4. Roher Text aus KI extrahiert.");
     return text;
 
   } catch (error) {
@@ -66,14 +62,11 @@ async function rufeGemini(prompt) {
   }
 }
 
-// Der Parser wandelt den KI-Text in ein echtes JavaScript-Objekt um
 function parseGeminiFazitAntwort(antwortText) {
-  console.log("6. Starte Parsing des Textes...");
+  console.log("5. Starte Parsing des Textes...");
+  let cleanText = antwortText.replace(/```json/gi, "").replace(/```/g, "").trim();
+  
   try {
-    // 1. Bereinige eventuelle Markdown-Reste, falls die KI sie trotz Verbot mitschickt
-    let cleanText = antwortText.replace(/```json/gi, "").replace(/```/g, "").trim();
-    
-    // 2. Extrahiere nur den JSON-Körper
     const startIndex = cleanText.indexOf('{');
     const endIndex = cleanText.lastIndexOf('}');
     if (startIndex !== -1 && endIndex !== -1) {
@@ -81,44 +74,66 @@ function parseGeminiFazitAntwort(antwortText) {
     }
 
     const result = JSON.parse(cleanText);
-    console.log("7. Parsing erfolgreich!", result);
+    console.log("6. Parsing erfolgreich!", result);
 
-    // 3. ABSOLUTES SICHERHEITS-NETZ: Falls "actions" fehlt oder kein Array ist, füllen wir es intelligent!
+    // ABSOLUTES SICHERHEITS-NETZ: Falls "actions" fehlt oder leer ist, füllen wir es aus der Gesamtsituation
     if (!result.actions || !Array.isArray(result.actions) || result.actions.length === 0) {
-      console.warn("Warnung: 'actions' Key fehlt oder ist leer im KI-Response. Erstelle automatische Actions...");
-      
+      console.warn("Actions-Array leer oder fehlt. Generiere automatische Actions...");
       if (result.gesamtsituation) {
-        // Trenne Sätze auf und nimm bis zu 3 prägnante Sätze als Not-Aktionen
-        const saetze = result.gesamtsituation.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 15);
+        const saetze = result.gesamtsituation.replace(/<[^>]*>/g, '').split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 15);
         result.actions = saetze.slice(0, 3);
-      }
-      
-      if (!result.actions || result.actions.length === 0) {
-        result.actions = [
-          "Analysiere die Kacheldaten manuell auf Divergenzen.",
-          "Sichere bestehende Positionen vorsorglich mit engen Stopps ab.",
-          "Halte ausreichend Liquidität für neue Marktchancen bereit."
-        ];
       }
     }
 
+    // GLOBALE STATE-BRÜCKE: Speichert das Ergebnis für die fazit.js ab!
+    window.lastParsedFazit = result;
     return result;
 
   } catch (e) {
-    console.error("8. Parser Fehler! Nutze Notfall-Objekt.");
-    console.error("Fehlerdetails:", e);
+    console.error("7. Parser Fehler! Versuche manuelle Regex-Rettung...");
     
-    return {
-      gesamtsituation: "Die KI-Antwort konnte nicht verarbeitet werden. Bitte lade die Seite neu.",
+    // Manuelle Notfall-Extraktion bei leicht beschädigtem JSON
+    try {
+      const result = {
+        gesamtsituation: "Analyse wurde geladen.",
+        actions: [],
+        sentiment: "Neutral", trend: "Neutral", struktur: "Neutral", rohstoffe: "Neutral"
+      };
+
+      const sitMatch = cleanText.match(/"gesamtsituation"\s*:\s*"([\s\S]*?)"\s*(?:,|\})/);
+      if (sitMatch) {
+        result.gesamtsituation = sitMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '<br>');
+      }
+
+      const actionsMatch = cleanText.match(/"actions"\s*:\s*\[([\s\S]*?)\]/);
+      if (actionsMatch) {
+        const items = actionsMatch[1].match(/"([\s\S]*?)"/g);
+        if (items) {
+          result.actions = items.map(item => item.slice(1, -1).replace(/\\"/g, '"'));
+        }
+      }
+
+      if (result.gesamtsituation || result.actions.length > 0) {
+        window.lastParsedFazit = result;
+        return result;
+      }
+    } catch (err) {
+      console.error("Regex-Rettung ebenfalls fehlgeschlagen:", err);
+    }
+
+    // Rücksturz auf solides Fallback-Objekt
+    const fallback = {
+      gesamtsituation: "Die KI-Antwort konnte nicht verarbeitet werden.",
       actions: [
         "Überprüfe die Internetverbindung.",
         "Lade das Dashboard mit Strg + F5 neu.",
         "Prüfe das Konsolen-Log auf API-Verbindungsfehler."
       ],
-      sentiment: "Fehler beim Parsen",
-      trend: "Fehler beim Parsen",
-      struktur: "Fehler beim Parsen",
-      rohstoffe: "Fehler beim Parsen"
+      sentiment: "Fehler", trend: "Fehler", struktur: "Fehler", rohstoffe: "Fehler"
     };
+    window.lastParsedFazit = fallback;
+    return fallback;
   }
 }
+
+window.parseGeminiFazitAntwort = parseGeminiFazitAntwort;
