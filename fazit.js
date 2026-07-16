@@ -16,11 +16,12 @@ function accentColorFuerStatus(bfStatus) {
   return "var(--green)";
 }
 
+// KEIN async, KEIN await: So bleibt die Seite nicht hängen!
 function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousClose, situationErklaerung, actionList) {
   let accentColor = accentColorFuerStatus(bfStatus);
   let labelHtml = baueStatusLabel(bfStatus, sfColor, welleDesc);
   
-  // Wenn keine Actions geliefert werden, zeigen wir einen Standardtext
+  // Falls actionList kein Array ist, nutzen wir ein Fallback
   let items = (Array.isArray(actionList) && actionList.length > 0) ? actionList : ["Analysiere Marktdaten..."];
   let listHtml = items.map(item => `<li>${item}</li>`).join("");
 
