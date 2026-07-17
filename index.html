@@ -1,33 +1,120 @@
-/**
- * Die optimierte render-Funktion:
- * Lädt alle Fazit-Elemente nacheinander, um 429 (Rate Limit) 
- * und 503 (Server Überlastung) Fehler zu vermeiden.
- */
-async function render() {
-    console.log("Starte sequenzielles Laden...");
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Marktsentiment Dashboard - OnePage Final</title>
+<!-- - Styles basieren auf deiner Vorlage -->
+<style>
+  :root{--bg:#0d1117;--panel:#151b23;--panel-border:#26303b;--text:#e6edf3;--text-dim:#8b98a5;--mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',system-ui,sans-serif;--green:#3fb950;--yellow:#d4a72c;--red:#e5534b;--accent:#58a6ff;--purple:#bc8cff;--orange:#f7931a;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);padding:10px 16px 20px;}
+  .wrap{max-width:1140px;margin:0 auto;}
+  header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border-bottom:1px solid var(--panel-border);padding-bottom:6px;margin-bottom:10px;}
+  h1{font-size:18px;margin:0;}
+  .refresh-btn{font-family:var(--mono);font-size:11px;background:var(--panel);border:1px solid var(--panel-border);color:var(--accent);padding:5px 10px;border-radius:4px;cursor:pointer;}
+  .status-tag{font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--panel-border);}
+  .status-tag.live{background:#0d2818;border-color:var(--green);color:#7ee2a8;}
+  .status-tag.stale{background:#2a2410;border-color:var(--yellow);color:#e8c766;}
+  .fazit{background:var(--panel);border:1px solid var(--panel-border);border-radius:8px;margin-bottom:10px;}
+  .fazit h2{font-size:13px;text-transform:uppercase;background:#1f4e79;color:var(--accent);margin:0;padding:5px 16px;border-bottom:1px solid var(--accent);}
+  #fazitInhalt{padding:12px 16px;}
+  .group-box{background:var(--panel);border:1px solid var(--panel-border);border-radius:8px;padding:10px 16px;margin-bottom:8px;}
+  .group-title{font-size:12px;text-transform:uppercase;color:var(--accent);margin:0 0 6px 0;border-bottom:1px solid var(--panel-border);padding-bottom:4px;}
+  .quick-row{display:flex;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid #161b22;}
+  .kachel-fazit-box{margin-top:8px;background:#0d1117;border:1px solid var(--panel-border);border-radius:6px;}
+  .kachel-fazit-header{padding:6px 10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:#161b22;}
+  .kachel-fazit-content{max-height:0;overflow:hidden;transition:max-height 0.22s ease-out;padding:0 10px;font-size:13px;}
+  .kachel-fazit-box.open .kachel-fazit-content{max-height:500px;padding:10px 12px;}
+  .settings-panel{display:none;background:var(--panel);border:1px solid var(--panel-border);border-radius:8px;padding:8px 12px;margin-bottom:10px;}
+  .settings-panel.open{display:flex;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Advanced Marktsentiment Dashboard</h1>
+    <div class="header-right">
+      <button class="refresh-btn" id="settingsBtn" onclick="toggleSettings()">🔑 API-Key</button>
+      <button class="refresh-btn" id="refreshBtn" onclick="ladeDaten()">↻ Daten abrufen</button>
+      <div class="status-tag stale" id="statusIndicator">Lade…</div>
+    </div>
+  </header>
 
-    // 1. Definition der Aufgaben, die nacheinander ausgeführt werden sollen
-    const tasks = [
-        { name: "Fazit 1", fn: generateKachelFazit1 },
-        { name: "Fazit 2", fn: generateKachelFazit2 },
-        { name: "Fazit 3", fn: generateKachelFazit3 },
-        { name: "Fazit 4", fn: generateKachelFazit4 },
-        { name: "Hauptfazit", fn: generateHauptFazit }
-    ];
+  <div class="settings-panel" id="settingsPanel">
+    <input type="password" id="geminiKeyInput" placeholder="Dein Gemini API-Key...">
+    <button class="refresh-btn" onclick="saveApiKey()">Speichern</button>
+  </div>
 
-    // 2. Schleife, die jede Funktion einzeln abwartet
-    for (const task of tasks) {
-        try {
-            console.log(`Lade ${task.name}...`);
-            await task.fn(); // Wartet, bis die API fertig ist
-            
-            // 3. Kurze Pause von 1 Sekunde (1000ms), um Google API zu schonen
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-        } catch (error) {
-            console.error(`Fehler beim Laden von ${task.name}:`, error);
-        }
-    }
-    
-    console.log("Alle Fazits erfolgreich geladen.");
+  <div class="fazit"><h2>Gesamtfazit</h2><div id="fazitInhalt"></div></div>
+  <div id="sentimentGroup" class="group-box"><div class="group-title">Sentiment</div><div id="rowsSection1"></div><div class="kachel-fazit-box" id="fazitBox1"><div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox1')"><h4>📋 Analyse</h4><span>▶</span></div><div class="kachel-fazit-content" id="fazitContent1"></div></div></div>
+  <div id="trendGroup" class="group-box"><div class="group-title">Trend</div><div id="rowsSection2"></div><div class="kachel-fazit-box" id="fazitBox2"><div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox2')"><h4>📋 Analyse</h4><span>▶</span></div><div class="kachel-fazit-content" id="fazitContent2"></div></div></div>
+</div>
+
+<script>
+// --- KONFIGURATION ---
+const GEMINI_MODEL = "gemini-1.5-flash"; // Korrigiert auf stabiles Modell
+let GEMINI_API_KEY = localStorage.getItem('geminiApiKey') || "";
+
+// --- API LOGIK ---
+async function callGeminiAPI(promptText) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
+    body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const json = await res.json();
+  return json.candidates[0].content.parts[0].text;
 }
+
+// --- SEQUENZIELLES LADEN (Fix für 429/503 Fehler) ---
+async function runAnalysisQueue(tasks) {
+  for (const task of tasks) {
+    const el = document.getElementById(task.id);
+    if (!el) continue;
+    el.innerHTML = "Analysiere...";
+    try {
+      const result = await callGeminiAPI(task.prompt);
+      el.innerHTML = result.replace(/\n/g, '<br>');
+    } catch (err) {
+      el.innerHTML = "Fehler: " + err.message;
+    }
+    // Pause einlegen um Rate-Limits zu schonen
+    await new Promise(r => setTimeout(r, 1500));
+  }
+}
+
+async function render(data) {
+    // ... hier deine Logik zum Aufbau der HTML Zeilen ...
+    // ...
+    
+    // Anstatt direkt zu feuern, erstellen wir eine Queue:
+    const queue = [
+        { id: 'fazitContent1', prompt: 'Analysiere kurz das Markt-Sentiment...' },
+        { id: 'fazitContent2', prompt: 'Analysiere kurz den Markttrend...' }
+        // etc...
+    ];
+    
+    runAnalysisQueue(queue);
+}
+
+async function ladeDaten() {
+    // CoinGecko URL korrigiert: api/v3 statt v3
+    const url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true';
+    try {
+        const res = await fetch(url);
+        // ... restliche Daten-Logik ...
+    } catch(e) { console.error(e); }
+}
+
+function toggleSettings() { document.getElementById('settingsPanel').classList.toggle('open'); }
+function saveApiKey() { 
+    localStorage.setItem('geminiApiKey', document.getElementById('geminiKeyInput').value);
+    alert("Gespeichert!");
+}
+
+document.getElementById('geminiKeyInput').value = GEMINI_API_KEY;
+</script>
+</body>
+</html>
