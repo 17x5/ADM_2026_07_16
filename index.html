@@ -4,11 +4,383 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Advanced Marktsentiment Dashboard - OnePage Final</title>
-<link rel="stylesheet" href="style.css">
-<link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
-<meta name="theme-color" content="#0d1117">
+<style>
+  :root{
+    --bg:#0d1117;
+    --panel:#151b23;
+    --panel-border:#26303b;
+    --text:#e6edf3;
+    --text-dim:#8b98a5;
+    --mono:'IBM Plex Mono','SF Mono',Consolas,monospace;
+    --sans:'IBM Plex Sans',system-ui,sans-serif;
+    --green:#3fb950;
+    --yellow:#d4a72c;
+    --red:#e5534b;
+    --accent:#58a6ff;
+    --purple:#bc8cff;
+    --orange:#f7931a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    padding:10px 16px 20px;
+  }
+  .wrap{max-width:1140px;margin:0 auto;}
+
+  header{
+    display:flex;justify-content:space-between;align-items:center;
+    flex-wrap:wrap;gap:10px;
+    border-bottom:1px solid var(--panel-border);
+    padding-bottom:6px;margin-bottom:10px;
+  }
+  h1{font-size:18px;margin:0;letter-spacing:0.02em;}
+  
+  .header-right {
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  }
+  .refresh-btn{
+    font-family:var(--mono);font-size:11px;background:var(--panel);
+    border:1px solid var(--panel-border);color:var(--accent);
+    padding:5px 10px;border-radius:4px;cursor:pointer;
+  }
+  .refresh-btn:hover{border-color:var(--accent);}
+
+  .status-tag {
+    font-family:var(--mono);font-size:11px;line-height:1.4;
+    padding:4px 10px;border-radius:4px;border:1px solid var(--panel-border);
+  }
+  .status-tag.live{background:#0d2818;border-color:var(--green);color:#7ee2a8;}
+  .status-tag.stale{background:#2a2410;border-color:var(--yellow);color:#e8c766;}
+
+  .fazit{
+    background:var(--panel);border:1px solid var(--panel-border);
+    border-radius:8px;margin-bottom:10px;overflow:hidden;
+  }
+  .fazit h2{
+    font-size:13px;text-transform:uppercase;letter-spacing:0.06em;
+    background:#1f4e79;color:var(--accent);margin:0;
+    padding:5px 16px;font-weight:bold;border-bottom:1px solid var(--accent);
+  }
+  #fazitInhalt {
+    padding:12px 16px;
+  }
+  .fazit-section { margin-bottom: 6px; }
+  .fazit-section:last-child { margin-bottom: 0; }
+  .fazit-label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); margin-bottom: 2px; }
+  .fazit-p { margin: 0; font-size: 14px; line-height: 1.4; }
+  
+  .fazit-change { font-family: var(--mono); font-size: 12px; margin-top: 6px; padding-top: 4px; border-top: 1px dashed var(--panel-border); }
+
+  .action-box {
+    margin-top: 10px;
+    background: #0d1117;
+    border-left: 4px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    overflow: hidden;
+  }
+  .action-header {
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+  }
+  .action-header h3 {
+    margin: 0;
+    font-size: 12px;
+    text-transform: uppercase;
+    font-family: var(--mono);
+    letter-spacing: 0.05em;
+  }
+  .action-toggle-icon {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .action-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.22s ease-out, padding 0.22s ease-out;
+    padding: 0 12px;
+  }
+  .action-box.open .action-content {
+    max-height: 250px;
+    padding-bottom: 10px;
+  }
+  .action-list { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.4; }
+  .action-list li { margin-bottom: 4px; }
+  .action-list li:last-child { margin-bottom: 0; }
+
+  .kachel-fazit-box {
+    margin-top: 8px;
+    background: #0d1117;
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .kachel-fazit-header {
+    padding: 6px 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    background: #161b22;
+  }
+  .kachel-fazit-header h4 {
+    margin: 0;
+    font-size: 11px;
+    text-transform: uppercase;
+    font-family: var(--mono);
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+  .kachel-fazit-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.22s ease-out, padding 0.22s ease-out;
+    padding: 0 10px;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .kachel-fazit-box.open .kachel-fazit-content {
+    max-height: 450px;
+    padding: 10px 12px;
+  }
+
+  .group-box {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    margin-bottom: 8px;
+  }
+  .group-box:last-child { margin-bottom: 0; }
+  .group-title {
+    font-family: var(--sans);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    margin: 0 0 6px 0;
+    border-bottom: 1px solid var(--panel-border);
+    padding-bottom: 4px;
+    font-weight: 600;
+  }
+
+  .quick-row {
+    display: flex;
+    align-items: center;
+    font-family: var(--sans);
+    font-size: 13px;
+    line-height: 1.4;
+    padding: 6px 0;
+    border-bottom: 1px solid #161b22;
+  }
+  .quick-row:last-child { border-bottom: none; }
+  
+  .q-ampel { width: 24px; flex-shrink: 0; font-size: 13px; }
+  
+  .q-bar-container { width: 70px; background: #21262d; height: 6px; border-radius: 3px; margin-right: 10px; flex-shrink: 0; overflow: hidden; }
+  .q-bar-fill { height: 100%; width: 0%; transition: width 0.4s, background-color 0.4s; }
+  
+  .q-val { width: 110px; text-align: left; flex-shrink: 0; font-weight: 600; font-family: var(--mono); font-size: 12px; }
+  
+  /* Neuer Style für den Pfeil */
+  .q-arrow { width: 20px; text-align: center; font-size: 10px; margin-right: 6px; flex-shrink: 0; }
+
+  .q-text { flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .q-text b { font-size: 13px; color: var(--text); }
+  .q-desc { color: var(--text-dim); font-size: 11px; margin-left: 6px; }
+
+  .welle-container {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 10px;
+  }
+  .welle-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin: 0 0 10px 0;
+    font-weight: 600;
+  }
+  .welle-graphic-box {
+    display: flex;
+    justify-content: center;
+    padding: 16px 0;
+    background: #0d1117;
+    border-radius: 6px;
+    overflow-x: auto;
+  }
+  .welle-svg {
+    width: 100%;
+    max-width: 600px;
+    height: auto;
+  }
+
+  @keyframes pulse-red {
+    0% { r: 5px; opacity: 1; stroke-width: 0; }
+    50% { r: 9px; opacity: 0.6; stroke-width: 3px; }
+    100% { r: 5px; opacity: 1; stroke-width: 0; }
+  }
+  .pulse-node {
+    animation: pulse-red 2s infinite ease-in-out;
+    stroke: var(--red);
+  }
+
+  .legende-kachel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 10px;
+  }
+  .legende-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin: 0 0 10px 0;
+    font-weight: 600;
+  }
+  .legende-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 10px;
+  }
+  .legende-item {
+    background: #0d1117;
+    border-left: 3px solid var(--panel-border);
+    padding: 8px 12px;
+    border-radius: 0 4px 4px 0;
+    opacity: 0.45;
+    transition: opacity 0.3s;
+  }
+  .legende-item.active {
+    opacity: 1;
+    border-left-width: 4px;
+    background: #1c1618;
+  }
+  .legende-name {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: bold;
+    margin-bottom: 2px;
+  }
+  .legende-desc {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.4;
+  }
+  .legende-item.active .legende-desc {
+    color: var(--text);
+  }
+
+  .link-kachel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 10px;
+    display: block;
+    text-decoration: none;
+    transition: border-color 0.2s, background-color 0.2s;
+  }
+  .link-kachel:hover {
+    border-color: var(--accent);
+    background: #171f29;
+  }
+  .link-kachel-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    border-bottom: 1px solid var(--panel-border);
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+  }
+  .link-kachel-title {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--text);
+  }
+  .link-kachel-arrow {
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: bold;
+    background: #1c2635;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #263850;
+    white-space: nowrap;
+  }
+  .link-kachel:hover .link-kachel-arrow {
+    background: var(--accent);
+    color: var(--bg);
+  }
+
+  .eingebettete-analyse {
+    background: #0d1117;
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--text);
+  }
+  .eingebettete-analyse-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+  .eingebettete-analyse-p {
+    margin: 0;
+  }
+
+  .link-kachel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+  }
+  .kachel-section h4 {
+    margin: 0 0 4px 0;
+    font-size: 11px;
+    text-transform: uppercase;
+    font-family: var(--mono);
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+  .kachel-section ul {
+    margin: 0;
+    padding-left: 14px;
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.4;
+  }
+  .kachel-section li {
+    margin-bottom: 3px;
+  }
+  .kachel-section li:last-child {
+    margin-bottom: 0;
+  }
+  .kachel-section li strong {
+    color: var(--text);
+  }
+
+  footer{margin-top:16px;font-size:11px;color:var(--text-dim);text-align:center;line-height:1.6;}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -23,7 +395,7 @@
 
   <div class="fazit">
     <h2>Gesamtfazit &amp; Strategie-Check</h2>
-    <div id="fazitInhalt">Berechne aktuelle Marktlage…</div>
+    <div id="fazitInhalt"></div>
   </div>
 
   <div id="sentimentGroup" class="group-box">
@@ -206,33 +578,383 @@
   </footer>
 </div>
 
-<!-- 1. Basis-Konfiguration & Hilfswerkzeuge (keine Abhängigkeiten) -->
-<script src="config.js"></script>
-<script src="helpers.js"></script>
-<script src="utils.js"></script>
-<script src="ampel-logik.js"></script>
+<script>
+const FALLBACK = {
+  timestamp: "2026-07-09T08:00:00+00:00",
+  score: 42.0, 
+  rating: "neutral",
+  previous_close: 45.0,
+  btc_usd: 64250,
+  btc_change_24h: 1.25,
+  gold_usd: 4032.00,
+  oil_usd: 79.57,
+  subs: [
+    {key:"market_momentum_sp500", name:"Markt-Schwung", sub:"S&P 500 relativ zur 200-Tage-Linie", score:45.0},
+    {key:"stock_price_strength", name:"Aktien-Stärke", sub:"Anzahl der 52-Wochen-Hochs vs. Tiefs", score:44.0},
+    {key:"stock_price_breadth", name:"Marktbreite (A/D Basis)", sub:"Volumen steigender vs. fallender Aktien", score:23.0}, 
+    {key:"put_call_options", name:"Absicherungs-Verhältnis", sub:"Put- zu Call-Optionsvolumen", score:53.0},
+    {key:"market_volatility_vix", name:"Markt-Nervosität (VIX)", sub:"Implizite Volatilität S&P 500", score:58.0, raw_vix: 16.90}, 
+    {key:"finra_margin_debt", name:"Kredit-Hebelung am Markt", sub:"FINRA Margin Debt Dynamik", score:45.0},
+    {key:"technical_confirmation", name:"Trend-Bestätigung", sub:"Technische Verkaufserschöpfung", score:55.0}
+  ]
+};
 
-<!-- 2. UI-Komponenten (brauchen helpers.js) -->
-<script src="fazit.js"></script>
-<script src="kachel-sentiment.js"></script>
-<script src="kachel-trend.js"></script>
-<script src="kachel-struktur.js"></script>
-<script src="kachel-rohstoffe.js"></script>
+let isLive = false;
 
-<!-- 3. KI-Logik (muss geladen sein, bevor data-fetch oder main darauf zugreifen) -->
-<script src="gemini-prompts.js"></script>
-<script src="gemini-client.js"></script>
-
-<!-- 4. Daten-Logik (braucht KI-Logik und Helfer) -->
-<script src="data-fetch.js"></script>
-
-<!-- 5. Hauptsteuerung (braucht alles oben) -->
-<script src="main.js"></script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("service-worker.js");
-    });
+function toggleActionBox() {
+  const box = document.getElementById('actionBox');
+  const icon = document.getElementById('actionToggleIcon');
+  if (box.classList.contains('open')) {
+    box.classList.remove('remove');
+    box.classList.remove('open');
+    icon.textContent = '▶ Anzeigen';
+  } else {
+    box.classList.add('open');
+    icon.textContent = '▼ Verbergen';
   }
+}
+
+function toggleKachelFazit(boxId) {
+  const box = document.getElementById(boxId);
+  const icon = box.querySelector('.action-toggle-icon');
+  if (box.classList.contains('open')) {
+    box.classList.remove('open');
+    icon.textContent = '▶ Anzeigen';
+  } else {
+    box.classList.add('open');
+    icon.textContent = '▼ Verbergen';
+  }
+}
+
+function getEmojiColor(color) {
+  if (color === 'gruen') return '🟢';
+  if (color === 'gelb') return '🟡';
+  if (color === 'rot') return '🔴';
+  if (color === 'purple') return '🟣';
+  if (color === 'orange') return '🟠';
+  return '⚪';
+}
+
+function getHexColor(color) {
+  if (color === 'gruen') return 'var(--green)';
+  if (color === 'gelb') return 'var(--yellow)';
+  if (color === 'rot') return 'var(--red)';
+  if (color === 'purple') return 'var(--purple)';
+  if (color === 'orange') return 'var(--orange)';
+  return '#8b98a5';
+}
+
+function buildQuickRowHTML(color, title, sub, valPercent, valString) {
+  return `
+    <div class="quick-row">
+      <div class="q-ampel">${getEmojiColor(color)}</div>
+      <div class="q-bar-container">
+        <div class="q-bar-fill" style="width: ${valPercent}%; background-color: ${getHexColor(color)};"></div>
+      </div>
+      <div class="q-val">${valString}</div>
+      <div class="q-arrow" style="color: ${getHexColor(color)};">▲</div>
+      <div class="q-text"><b>${title}</b><span class="q-desc">${sub}</span></div>
+    </div>
+  `;
+}
+
+function render(data){
+  const vix = data.subs.find(s=>s.key==="market_volatility_vix");
+  const breadth = data.subs.find(s=>s.key==="stock_price_breadth");
+  const momentum = data.subs.find(s=>s.key==="market_momentum_sp500");
+  const strength = data.subs.find(s=>s.key==="stock_price_strength");
+  const options = data.subs.find(s=>s.key==="put_call_options");
+  const marginDebt = data.subs.find(s=>s.key==="finra_margin_debt");
+
+  let rawVix = vix ? (vix.raw_vix || 16.90) : 16.90;
+  let vixColor = "gelb";
+  if (rawVix < 15.5) vixColor = "gruen";
+  else if (rawVix > 24.0) vixColor = "rot";
+
+  let cnnColor = "gelb";
+  if(data.score < 25 || data.score > 75) cnnColor = "rot";
+  else if(data.score >= 45 && data.score <= 55) cnnColor = "gruen";
+
+  let bfStatus = "GESUND";
+  let sfColor = "gruen"; 
+  let welleDesc = "Trend läuft stabil";
+  let activeLegId = "leg_W3";
+
+  let actBreadth = breadth ? breadth.score : 50;
+
+  if (data.score >= 76 || (marginDebt && marginDebt.score > 80)) {
+    bfStatus = "ÜBERHITZT"; 
+    sfColor = "rot"; 
+    welleDesc = "Welle 5 erreicht (Top-Gefahr durch Überhebelung)";
+    activeLegId = "leg_W5";
+    updateSvgNode(450, 35, "var(--purple)", "Welle 5 (IST)");
+  } 
+  else if (actBreadth < 35 && data.score >= 35) {
+    bfStatus = "MARKT-ILLUSION"; 
+    sfColor = "rot"; 
+    welleDesc = "Verdeckte Schwäche in Welle B (Index täuscht Stabilität vor, Fundament bricht ein)";
+    activeLegId = "leg_WelleB";
+    updateSvgNode(535, 65, "var(--red)", "Welle B (IST)");
+  }
+  else if (data.score < 30 && rawVix > 24.0) {
+    bfStatus = "FALLENDES MESSER"; 
+    sfColor = "gelb"; 
+    welleDesc = "Welle C läuft (Panik-Abverkauf ohne Boden)";
+    activeLegId = "leg_WelleC";
+    updateSvgNode(580, 210, "var(--red)", "Welle C (IST)");
+  } 
+  else if (data.score < 45 || actBreadth < 45) {
+    bfStatus = "KORREKTUR"; 
+    sfColor = "gelb"; 
+    welleDesc = "Welle A/B (Gesunder Rücksetzer)";
+    activeLegId = "leg_WelleA";
+    updateSvgNode(495, 125, "var(--yellow)", "Welle A (IST)");
+  } else {
+    updateSvgNode(320, 50, "var(--green)", "Trend (IST)");
+  }
+
+  document.querySelectorAll('.legende-item').forEach(item => {
+    item.classList.remove('active');
+    item.style.backgroundColor = '#0d1117';
+  });
+  const activeItem = document.getElementById(activeLegId);
+  if(activeItem) {
+    activeItem.classList.add('active');
+    activeItem.style.backgroundColor = '#1c1618';
+  }
+
+  // --- KACHEL 1: SENTIMENT & NERVOZITÄT (INKLUSIVE BITCOIN) ---
+  let htmlS1 = "";
+  let vixBarPercent = Math.min(100, Math.max(0, ((rawVix - 10) / 30) * 100));
+  htmlS1 += buildQuickRowHTML(vixColor, "Markt-Nervosität (VIX)", "Schwankungsbreite und implizite Angstkomponente des Aktienmarktes", vixBarPercent, rawVix.toFixed(2) + " USD");
+  htmlS1 += buildQuickRowHTML(cnnColor, "Angst & Gier Index (CNN)", "Aggregiertes Sentiment aus 7 Marktindikatoren", data.score, data.score.toFixed(0) + " / 100");
+  
+  let btcChange = data.btc_change_24h || 0;
+  let btcColor = btcChange > 2 ? "gruen" : (btcChange < -2 ? "rot" : "orange");
+  let btcBarPercent = Math.min(100, Math.max(0, 50 + btcChange * 5));
+  let formattedBtcPrice = new Intl.NumberFormat('de-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(data.btc_usd);
+  htmlS1 += buildQuickRowHTML(btcColor, "Bitcoin (BTC/USD)", "Spekulativer Liquiditäts- & Risk-On-Fiebermesser", btcBarPercent, formattedBtcPrice);
+
+  let optScore = options ? options.score : 50;
+  let optColor = optScore > 75 ? "rot" : (optScore < 35 ? "gruen" : "gelb");
+  htmlS1 += buildQuickRowHTML(optColor, "Absicherungs-Verhältnis", "Put- zu Call-Optionsvolumen an den Terminbörsen", optScore, optScore.toFixed(0) + " / 100");
+  
+  document.getElementById('rowsSection1').innerHTML = htmlS1;
+
+  // Dynamisches Fazit 1
+  document.getElementById('fazitContent1').innerHTML = ``;
+
+  // --- KACHEL 2: TREND ---
+  let htmlS2 = "";
+  let sfPercent = sfColor === 'gruen' ? 100 : (sfColor === 'purple' ? 85 : (sfColor === 'gelb' ? 45 : 15));
+  htmlS2 += buildQuickRowHTML(sfColor, "Sicherheits-Ampel & Markttrend", `Modell 9iof2PC9 &bull; ${welleDesc}`, sfPercent, bfStatus);
+  
+  let momScore = momentum ? momentum.score : 50;
+  let momColor = momScore < 35 ? "rot" : (momScore > 75 ? "purple" : "gruen");
+  htmlS2 += buildQuickRowHTML(momColor, "Markt-Schwung", "S&P 500 relativ zur 200-Tage-Linie", momScore, momScore.toFixed(0) + " / 100");
+  
+  htmlS2 += buildQuickRowHTML(actBreadth < 35 ? "rot" : (actBreadth < 50 ? "gelb" : "gruen"), "Advance-Decline-Linie (A/D-Linie)", "Das fundamentale Verhältnis von steigenden zu fallenden Aktien", actBreadth, actBreadth.toFixed(0) + " / 100");
+  document.getElementById('rowsSection2').innerHTML = htmlS2;
+
+  // Dynamisches Fazit 2
+  document.getElementById('fazitContent2').innerHTML = ``;
+
+  // --- KACHEL 3: STRUKTUR & LIQUIDITÄT ---
+  let htmlS3 = "";
+  let strScore = strength ? strength.score : 50;
+  let strColor = strScore < 35 ? "rot" : (strScore > 75 ? "gruen" : "gelb");
+  htmlS3 += buildQuickRowHTML(strColor, "Aktien-Stärke", "Anzahl der 52-Wochen-Hochs vs. Tiefs am Markt", strScore, strScore.toFixed(0) + " / 100");
+  
+  let debtScore = marginDebt ? marginDebt.score : 50;
+  let debtColor = "gruen";
+  let debtDisplayPercent = 100 - debtScore;
+
+  if (debtScore > 75) {
+    debtColor = "rot";
+  } else if (debtScore > 50) {
+    debtColor = "gelb";
+  }
+  htmlS3 += buildQuickRowHTML(debtColor, "Kredit-Hebelung am Markt", "Aktienkäufe mit geliehenem Geld (FINRA)", debtDisplayPercent, debtScore.toFixed(0) + " / 100");
+  document.getElementById('rowsSection3').innerHTML = htmlS3;
+
+  // Dynamisches Fazit 3
+  document.getElementById('fazitContent3').innerHTML = ``;
+
+  // --- KACHEL 4: ROHSTOFFE (GOLD & ÖL) ---
+  let htmlS4 = "";
+  let goldPreisWert = data.gold_usd;
+  let oelPreisWert = data.oil_usd;
+  let goldOelRatio = oelPreisWert > 0 ? (goldPreisWert / oelPreisWert) : 0;
+
+  let ratioColor = "gelb";
+  if (goldOelRatio > 22) ratioColor = "rot";
+  else if (goldOelRatio < 16) ratioColor = "gruen";
+  let ratioPercent = Math.min(100, Math.max(0, ((goldOelRatio - 5) / 25) * 100));
+  htmlS4 += buildQuickRowHTML(ratioColor, "Gold-Öl-Ratio", "Krisen- &amp; Risikobarometer: Unzenpreis Gold geteilt durch Fasspreis Öl", ratioPercent, goldOelRatio.toFixed(1) + " : 1");
+
+  let goldPercent = Math.min(100, Math.max(0, ((goldPreisWert - 1800) / (4500 - 1800)) * 100));
+  let formattedGoldPreis = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(goldPreisWert);
+  htmlS4 += buildQuickRowHTML("orange", "Goldpreis (Unze)", "Feinunze Gold, Spotpreis in US-Dollar", goldPercent, formattedGoldPreis);
+
+  let oelColor = oelPreisWert > 90 ? "rot" : (oelPreisWert < 60 ? "gruen" : "gelb");
+  let oelPercent = Math.min(100, Math.max(0, ((oelPreisWert - 40) / (120 - 40)) * 100));
+  let formattedOelPreis = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(oelPreisWert);
+  htmlS4 += buildQuickRowHTML(oelColor, "Ölpreis (WTI)", "US-Rohöl-Fasspreis (West Texas Intermediate) in US-Dollar", oelPercent, formattedOelPreis);
+
+  document.getElementById('rowsSection4').innerHTML = htmlS4;
+
+  // Dynamisches Fazit 4
+  document.getElementById('fazitContent4').innerHTML = ``;
+
+  document.getElementById('fazitInhalt').innerHTML = buildFazitDuForm(bfStatus, sfColor, welleDesc, data.score, data.previous_close);
+  
+  const statusIndicator = document.getElementById('statusIndicator');
+  statusIndicator.className = isLive ? 'status-tag live' : 'status-tag stale';
+  statusIndicator.textContent = fmtDate(data.timestamp) + (isLive ? " · Live" : " · Lokal");
+}
+
+function updateSvgNode(cx, cy, color, text) {
+  const node = document.getElementById('wellePunkt');
+  const label = document.getElementById('welleIstLabel');
+  if(node && label) {
+    node.setAttribute('cx', cx);
+    node.setAttribute('cy', cy);
+    node.style.fill = color;
+    node.style.stroke = color;
+    
+    label.setAttribute('x', cx);
+    label.setAttribute('y', cy - 15);
+    label.style.fill = color;
+    label.textContent = text;
+  }
+}
+
+function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousClose){
+  let situationText = "";
+  let actionItems = [];
+  let accentColor = "var(--accent)";
+  let ampelEmoji = getEmojiColor(sfColor);
+
+  situationText = "";
+  actionItems = [];
+
+  let listHtml = actionItems.map(item => `<li>${item}</li>`).join("");
+
+  let diff = currentScore - previousClose;
+  let diffText = "";
+  let diffColor = "var(--text-dim)";
+  
+  if (diff > 0) {
+    diffText = `▲ +${diff.toFixed(1)} Punkte im Vergleich zum Vortag (${previousClose.toFixed(0)})`;
+    diffColor = "var(--green)";
+  } else if (diff < 0) {
+    diffText = `▼ ${diff.toFixed(1)} Punkte im Vergleich zum Vortag (${previousClose.toFixed(0)})`;
+    diffColor = "var(--red)";
+  } else {
+    diffText = `■ Unverändert zum Vortag (${previousClose.toFixed(0)})`;
+    diffColor = "var(--yellow)";
+  }
+
+  return `
+    <div class="fazit-section">
+      <div class="fazit-label">Deine Situation:</div>
+      <p class="fazit-p">${situationText}</p>
+      <div class="fazit-change" style="color: ${diffColor};">
+        <strong>Veränderung zum letzten Handelstag:</strong> ${diffText}
+      </div>
+    </div>
+    <div id="actionBox" class="action-box" style="border-left-color:${accentColor};">
+      <div class="action-header" onclick="toggleActionBox()">
+        <h3 style="color:${accentColor};">Deine Actions:</h3>
+        <span id="actionToggleIcon" class="action-toggle-icon">▶ Anzeigen</span>
+      </div>
+      <div class="action-content">
+        <ul class="action-list">${listHtml}</ul>
+      </div>
+    </div>
+  `;
+}
+
+function fmtDate(iso){
+  const d = new Date(iso);
+  return d.toLocaleString('de-CH', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) + " Uhr";
+}
+
+async function ladeDaten(){
+  const btn = document.getElementById('refreshBtn');
+  const indicator = document.getElementById('statusIndicator');
+  btn.disabled = true;
+
+  let btcPreis = FALLBACK.btc_usd;
+  let btcAenderung = FALLBACK.btc_change_24h;
+
+  try {
+    const cryptoRes = await fetch('https://api.coingecko.com/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true');
+    if(cryptoRes.ok) {
+      const cryptoJson = await cryptoRes.json();
+      if(cryptoJson.bitcoin) {
+        btcPreis = cryptoJson.bitcoin.usd;
+        btcAenderung = cryptoJson.bitcoin.usd_24h_change;
+      }
+    }
+  } catch(e) {
+    console.log("Krypto-API konnte nicht geladen werden, verwende Fallback.");
+  }
+
+  let goldPreis = FALLBACK.gold_usd;
+  let oelPreis = FALLBACK.oil_usd;
+  try {
+    const metalRes = await fetch('https://api.metalpriceapi.com/v1/latest?api_key=9ea216f35e8e7a6bab73a5f3c04853f5&base=USD&currencies=XAU,WTI');
+    if(metalRes.ok) {
+      const metalJson = await metalRes.json();
+      if(metalJson && metalJson.success && metalJson.rates) {
+        if(metalJson.rates.XAU) goldPreis = 1 / metalJson.rates.XAU;
+        if(metalJson.rates.WTI) oelPreis = 1 / metalJson.rates.WTI;
+      }
+    }
+  } catch(e) {
+    console.log("MetalpriceAPI nicht erreichbar, verwende Fallback.");
+  }
+
+  try{
+    const res = await fetch('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', { headers: {'Accept':'application/json'} });
+    if(!res.ok) throw new Error();
+    const json = await res.json();
+
+    let extrahierterVixUSD = null;
+    if(json.market_volatility_vix && json.market_volatility_vix.data && json.market_volatility_vix.data.length > 0){
+      const ndp = json.market_volatility_vix.data[json.market_volatility_vix.data.length - 1];
+      if(ndp && ndp.y) extrahierterVixUSD = ndp.y; 
+    }
+
+    const data = {
+      timestamp: json.fear_and_greed.timestamp,
+      score: json.fear_and_greed.score,
+      rating: json.fear_and_greed.rating,
+      previous_close: json.fear_and_greed.previous_close,
+      btc_usd: btcPreis,
+      btc_change_24h: btcAenderung,
+      gold_usd: goldPreis,
+      oil_usd: oelPreis,
+      subs: [
+        {key:"market_momentum_sp500", name:"Markt-Schwung", sub:"S&P 500 relativ zur 200-Tage-Linie", score:json.market_momentum_sp500.score},
+        {key:"stock_price_strength", name:"Aktien-Stärke", sub:"Anzahl der 52-Wochen-Hochs vs. Tiefs", score:json.stock_price_strength.score},
+        {key:"stock_price_breadth", name:"Marktbreite (A/D Basis)", sub:"Volumen steigender vs. fallender Aktien", score:json.stock_price_breadth.score},
+        {key:"put_call_options", name:"Absicherungs-Verhältnis", sub:"Put- zu Call-Optionsvolumen", score:json.put_call_options.score},
+        {key:"market_volatility_vix", name:"Markt-Nervosität (VIX)", sub:"Implizite Volatilität S&P 500", score:json.market_volatility_vix.score, raw_vix: extrahierterVixUSD},
+        {key:"finra_margin_debt", name:"Kredit-Hebelung am Markt", sub:"FINRA Margin Debt Dynamik", score: json.fear_and_greed.score > 78 ? 85 : 35}
+      ]
+    };
+    isLive = true; render(data);
+  }catch(err){
+    isLive = false; render(FALLBACK);
+    indicator.textContent = indicator.textContent + " (CORS-Fallback aktiv)";
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+ladeDaten();
 </script>
 </body>
 </html>
