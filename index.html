@@ -411,7 +411,7 @@
 
   <div class="settings-panel" id="settingsPanel">
     <label for="geminiKeyInput">Gemini API-Key:</label>
-    <input type="password" id="geminiKeyInput" placeholder="AIza...">
+    <input type="password" id="geminiKeyInput" placeholder="AIza... oder AQ...">
     <button class="refresh-btn" onclick="saveApiKey()">Speichern</button>
     <span class="settings-status" id="settingsStatus"></span>
   </div>
@@ -643,17 +643,30 @@ function saveApiKey() {
   setTimeout(() => { status.textContent = ""; }, 2000);
 }
 
+// KORRIGIERTE FUNKTION FÜR BEARER TOKENS (AQ... Keys)
 async function callGeminiAPI(promptText) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  // Wichtig: Ohne ?key= Parameter in der URL
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+  
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      // Übergabe als Bearer Token statt URL-Parameter
+      'Authorization': `Bearer ${GEMINI_API_KEY}` 
+    },
     body: JSON.stringify({
       contents: [{ parts: [{ text: promptText }] }],
       generationConfig: { temperature: 0.6, maxOutputTokens: 400 }
     })
   });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error('API Fehler:', errorText);
+    throw new Error('HTTP ' + res.status);
+  }
+  
   const json = await res.json();
   const candidate = json.candidates && json.candidates[0];
   const text = candidate && candidate.content && candidate.content.parts && candidate.content.parts[0] && candidate.content.parts[0].text;
