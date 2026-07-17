@@ -380,6 +380,21 @@
   }
 
   footer{margin-top:16px;font-size:11px;color:var(--text-dim);text-align:center;line-height:1.6;}
+
+  .settings-panel{
+    display:none;align-items:center;gap:8px;flex-wrap:wrap;
+    background:var(--panel);border:1px solid var(--panel-border);
+    border-radius:8px;padding:8px 12px;margin-bottom:10px;
+    font-family:var(--mono);font-size:12px;
+  }
+  .settings-panel.open{display:flex;}
+  .settings-panel label{color:var(--text-dim);}
+  .settings-panel input{
+    background:#0d1117;border:1px solid var(--panel-border);color:var(--text);
+    padding:5px 8px;border-radius:4px;font-family:var(--mono);font-size:12px;
+    flex:1;min-width:160px;
+  }
+  .settings-status{font-size:11px;color:var(--green);}
 </style>
 </head>
 <body>
@@ -388,10 +403,18 @@
   <header>
     <h1>Advanced Marktsentiment Dashboard</h1>
     <div class="header-right">
+      <button class="refresh-btn" id="settingsBtn" onclick="toggleSettings()">🔑 API-Key</button>
       <button class="refresh-btn" id="refreshBtn" onclick="ladeDaten()">↻ Live-Daten abrufen</button>
       <div class="status-tag stale" id="statusIndicator">Lade Daten…</div>
     </div>
   </header>
+
+  <div class="settings-panel" id="settingsPanel">
+    <label for="geminiKeyInput">Gemini API-Key:</label>
+    <input type="password" id="geminiKeyInput" placeholder="AIza...">
+    <button class="refresh-btn" onclick="saveApiKey()">Speichern</button>
+    <span class="settings-status" id="settingsStatus"></span>
+  </div>
 
   <div class="fazit">
     <h2>Gesamtfazit &amp; Strategie-Check</h2>
@@ -601,6 +624,141 @@ const FALLBACK = {
 
 let isLive = false;
 
+// ===== GEMINI API INTEGRATION =====
+const GEMINI_MODEL = "gemini-2.5-flash";
+let GEMINI_API_KEY = localStorage.getItem('geminiApiKey') || "";
+
+function toggleSettings() {
+  document.getElementById('settingsPanel').classList.toggle('open');
+}
+
+function saveApiKey() {
+  const input = document.getElementById('geminiKeyInput');
+  const status = document.getElementById('settingsStatus');
+  const val = input.value.trim();
+  if (!val) { status.textContent = "Bitte Key eingeben."; return; }
+  GEMINI_API_KEY = val;
+  localStorage.setItem('geminiApiKey', val);
+  status.textContent = "✓ Gespeichert";
+  setTimeout(() => { status.textContent = ""; }, 2000);
+}
+
+async function callGeminiAPI(promptText) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: promptText }] }],
+      generationConfig: { temperature: 0.6, maxOutputTokens: 400 }
+    })
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const json = await res.json();
+  const candidate = json.candidates && json.candidates[0];
+  const text = candidate && candidate.content && candidate.content.parts && candidate.content.parts[0] && candidate.content.parts[0].text;
+  if (!text) throw new Error('Keine Antwort erhalten');
+  return text.trim();
+}
+
+async function generateText(promptText, targetElementId) {
+  const el = document.getElementById(targetElementId);
+  if (!el) return;
+  if (!GEMINI_API_KEY) {
+    el.innerHTML = '<span style="color:var(--text-dim);">⚠️ Gemini API-Key fehlt. Bitte über 🔑 API-Key hinterlegen.</span>';
+    return;
+  }
+  el.innerHTML = 'Analysiere…';
+  try {
+    const text = await callGeminiAPI(promptText);
+    el.innerHTML = text.replace(/\n/g, '<br>');
+  } catch (err) {
+    console.log('Gemini-Fehler:', err);
+    el.innerHTML = '<span style="color:var(--red);">⚠️ Analyse fehlgeschlagen (' + err.message + ')</span>';
+  }
+}
+
+function generateKachelFazit1(vix, vixColorVal, cnnScore, cnnColorVal, btcChange, optScore) {
+  const prompt = `Du bist ein nüchterner Finanzanalyst. Analysiere kurz (max. 3 Sätze, kein Markdown, keine Sternchen) auf Deutsch die aktuelle Markt-Sentiment-Lage für einen Schweizer Privatanleger:
+- VIX (Volatilität): ${vix.toFixed(2)} (Einstufung: ${vixColorVal})
+- CNN Angst&Gier-Index: ${cnnScore.toFixed(0)}/100 (Einstufung: ${cnnColorVal})
+- Bitcoin 24h-Änderung: ${btcChange.toFixed(2)}%
+- Put/Call-Absicherungsverhältnis: ${optScore.toFixed(0)}/100
+Fasse zusammen, was das für die aktuelle Marktstimmung und Risikobereitschaft bedeutet.`;
+  generateText(prompt, 'fazitContent1');
+}
+
+function generateKachelFazit2(bfStatus, welleDesc, momScore, breadthScore) {
+  const prompt = `Du bist ein nüchterner Finanzanalyst. Analysiere kurz (max. 3 Sätze, kein Markdown, keine Sternchen) auf Deutsch die Trend- und Sicherheitslage für einen Schweizer Privatanleger:
+- Sicherheits-Status: ${bfStatus}
+- Aktuelle Marktphase (Elliott-Wellen-Modell): ${welleDesc}
+- Markt-Schwung (Momentum, S&P 500 vs. 200-Tage-Linie): ${momScore.toFixed(0)}/100
+- Marktbreite (Advance/Decline-Linie): ${breadthScore.toFixed(0)}/100
+Erkläre, was diese Kombination für den Trend bedeutet und worauf zu achten ist.`;
+  generateText(prompt, 'fazitContent2');
+}
+
+function generateKachelFazit3(strScore, debtScore) {
+  const prompt = `Du bist ein nüchterner Finanzanalyst. Analysiere kurz (max. 3 Sätze, kein Markdown, keine Sternchen) auf Deutsch die Markt-Struktur- und Liquiditätslage für einen Schweizer Privatanleger:
+- Aktien-Stärke (52-Wochen-Hochs vs. Tiefs): ${strScore.toFixed(0)}/100
+- Kredit-Hebelung am Markt (FINRA Margin Debt): ${debtScore.toFixed(0)}/100
+Erkläre, was diese Kombination über die fundamentale Marktstabilität und mögliche Risiken durch Fremdkapital-Hebel aussagt.`;
+  generateText(prompt, 'fazitContent3');
+}
+
+function generateKachelFazit4(ratio, goldPreis, oelPreis, ratioColorVal, oelColorVal) {
+  const prompt = `Du bist ein nüchterner Finanzanalyst. Analysiere kurz (max. 3 Sätze, kein Markdown, keine Sternchen) auf Deutsch die Rohstoff-Lage für einen Schweizer Privatanleger:
+- Gold-Öl-Ratio: ${ratio.toFixed(1)} (Einstufung: ${ratioColorVal})
+- Goldpreis je Feinunze: ${goldPreis.toFixed(0)} USD
+- Ölpreis (WTI) je Fass: ${oelPreis.toFixed(2)} USD (Einstufung: ${oelColorVal})
+Erkläre kurz, was diese Rohstoff-Konstellation über Krisenstimmung bzw. Risikoappetit am Markt aussagt.`;
+  generateText(prompt, 'fazitContent4');
+}
+
+async function generateHauptFazit(score, previousClose, bfStatus, sfColor, welleDesc) {
+  const situationEl = document.getElementById('situationText');
+  const actionsEl = document.getElementById('actionListItems');
+  if (!situationEl || !actionsEl) return;
+
+  if (!GEMINI_API_KEY) {
+    situationEl.innerHTML = '⚠️ Gemini API-Key fehlt. Bitte über 🔑 API-Key hinterlegen.';
+    actionsEl.innerHTML = '<li>Kein API-Key hinterlegt.</li>';
+    return;
+  }
+
+  const diff = score - previousClose;
+  const prompt = `Du bist ein nüchterner Finanzanalyst für einen Schweizer Privatanleger mit Elektronik-/IT-Hintergrund. Antworte NUR mit einem JSON-Objekt ohne Markdown-Codeblock, exakt in diesem Format:
+{"situation": "2-3 Sätze Fliesstext auf Deutsch zur aktuellen Marktlage", "actions": ["Action 1", "Action 2", "Action 3"]}
+
+Daten:
+- CNN Angst&Gier-Score: ${score.toFixed(1)}/100 (Vortag: ${previousClose.toFixed(1)})
+- Sicherheits-Status: ${bfStatus}
+- Marktphase: ${welleDesc}
+- Veränderung zum Vortag: ${diff >= 0 ? '+' : ''}${diff.toFixed(1)} Punkte
+
+Die "actions" sind je maximal 12 Wörter, konkret und umsetzbar (z.B. Rebalancing, Cash-Quote, Stop-Loss prüfen). Keine Anlageberatung, nur beobachtende Einschätzung.`;
+
+  situationEl.innerHTML = 'Analysiere…';
+  actionsEl.innerHTML = '<li>Analysiere…</li>';
+
+  try {
+    const raw = await callGeminiAPI(prompt);
+    const cleaned = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(cleaned);
+    situationEl.innerHTML = parsed.situation || 'Keine Analyse verfügbar.';
+    if (Array.isArray(parsed.actions) && parsed.actions.length > 0) {
+      actionsEl.innerHTML = parsed.actions.map(a => `<li>${a}</li>`).join('');
+    } else {
+      actionsEl.innerHTML = '<li>Keine Actions verfügbar.</li>';
+    }
+  } catch (err) {
+    console.log('Gemini-Fehler (Hauptfazit):', err);
+    situationEl.innerHTML = '⚠️ Analyse fehlgeschlagen (' + err.message + ')';
+    actionsEl.innerHTML = '<li>⚠️ Fehler beim Laden.</li>';
+  }
+}
+// ===== ENDE GEMINI API INTEGRATION =====
+
 function toggleActionBox() {
   const box = document.getElementById('actionBox');
   const icon = document.getElementById('actionToggleIcon');
@@ -741,8 +899,8 @@ function render(data){
   
   document.getElementById('rowsSection1').innerHTML = htmlS1;
 
-  // Dynamisches Fazit 1
-  document.getElementById('fazitContent1').innerHTML = ``;
+  // Dynamisches Fazit 1 (Gemini)
+  generateKachelFazit1(rawVix, vixColor, data.score, cnnColor, btcChange, optScore);
 
   // --- KACHEL 2: TREND ---
   let htmlS2 = "";
@@ -756,8 +914,8 @@ function render(data){
   htmlS2 += buildQuickRowHTML(actBreadth < 35 ? "rot" : (actBreadth < 50 ? "gelb" : "gruen"), "Advance-Decline-Linie (A/D-Linie)", "Das fundamentale Verhältnis von steigenden zu fallenden Aktien", actBreadth, actBreadth.toFixed(0) + " / 100");
   document.getElementById('rowsSection2').innerHTML = htmlS2;
 
-  // Dynamisches Fazit 2
-  document.getElementById('fazitContent2').innerHTML = ``;
+  // Dynamisches Fazit 2 (Gemini)
+  generateKachelFazit2(bfStatus, welleDesc, momScore, actBreadth);
 
   // --- KACHEL 3: STRUKTUR & LIQUIDITÄT ---
   let htmlS3 = "";
@@ -777,8 +935,8 @@ function render(data){
   htmlS3 += buildQuickRowHTML(debtColor, "Kredit-Hebelung am Markt", "Aktienkäufe mit geliehenem Geld (FINRA)", debtDisplayPercent, debtScore.toFixed(0) + " / 100");
   document.getElementById('rowsSection3').innerHTML = htmlS3;
 
-  // Dynamisches Fazit 3
-  document.getElementById('fazitContent3').innerHTML = ``;
+  // Dynamisches Fazit 3 (Gemini)
+  generateKachelFazit3(strScore, debtScore);
 
   // --- KACHEL 4: ROHSTOFFE (GOLD & ÖL) ---
   let htmlS4 = "";
@@ -803,10 +961,11 @@ function render(data){
 
   document.getElementById('rowsSection4').innerHTML = htmlS4;
 
-  // Dynamisches Fazit 4
-  document.getElementById('fazitContent4').innerHTML = ``;
+  // Dynamisches Fazit 4 (Gemini)
+  generateKachelFazit4(goldOelRatio, goldPreisWert, oelPreisWert, ratioColor, oelColor);
 
   document.getElementById('fazitInhalt').innerHTML = buildFazitDuForm(bfStatus, sfColor, welleDesc, data.score, data.previous_close);
+  generateHauptFazit(data.score, data.previous_close, bfStatus, sfColor, welleDesc);
   
   const statusIndicator = document.getElementById('statusIndicator');
   statusIndicator.className = isLive ? 'status-tag live' : 'status-tag stale';
@@ -858,7 +1017,7 @@ function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousCl
   return `
     <div class="fazit-section">
       <div class="fazit-label">Deine Situation:</div>
-      <p class="fazit-p">${situationText}</p>
+      <p class="fazit-p" id="situationText">Analysiere…</p>
       <div class="fazit-change" style="color: ${diffColor};">
         <strong>Veränderung zum letzten Handelstag:</strong> ${diffText}
       </div>
@@ -869,7 +1028,7 @@ function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousCl
         <span id="actionToggleIcon" class="action-toggle-icon">▶ Anzeigen</span>
       </div>
       <div class="action-content">
-        <ul class="action-list">${listHtml}</ul>
+        <ul class="action-list" id="actionListItems"><li>Analysiere…</li></ul>
       </div>
     </div>
   `;
@@ -953,6 +1112,8 @@ async function ladeDaten(){
     btn.disabled = false;
   }
 }
+
+document.getElementById('geminiKeyInput').value = GEMINI_API_KEY;
 
 ladeDaten();
 </script>
