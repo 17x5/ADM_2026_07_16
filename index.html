@@ -615,7 +615,7 @@ const FALLBACK = {
 // Leer = Ampel bleibt grau, keine Gemini-Texte werden erzeugt.
 // ACHTUNG: Key steht danach im Klartext im HTML -> vor Deploy wieder entfernen.
 // ============================================================
-const GEMINI_API_KEY = "AQ.Ab8RN6I6i117jvqUVBPcgca7S0HTxD_EpYI1WFplok3q4qDhQg";
+const GEMINI_API_KEY = "";
 
 // Gemini-Modell für die Text-Generierung. Bei Bedarf anpassen
 // (z.B. auf ein neueres Modell, falls dieses abgekündigt wird).
@@ -1018,13 +1018,14 @@ function setApiDot(id, state) {
 async function callGemini(prompt) {
   if (!GEMINI_API_KEY) return null;
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`;
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GEMINI_API_KEY}` },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.4 }
+        model: GEMINI_MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.4
       })
     });
     if (!res.ok) {
@@ -1033,7 +1034,7 @@ async function callGemini(prompt) {
       setApiDot('apiDotGemini', false); return null;
     }
     const json = await res.json();
-    const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const text = json?.choices?.[0]?.message?.content;
     setApiDot('apiDotGemini', !!text);
     return text || null;
   } catch(e) {
