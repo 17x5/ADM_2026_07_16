@@ -648,6 +648,8 @@ const THRESHOLDS = {
 };
 
 let isLive = false;
+let metalIstLive = false;
+let cryptoIstLive = false;
 
 function toggleActionBox() {
   const box = document.getElementById('actionBox');
@@ -690,16 +692,18 @@ function getHexColor(color) {
   return '#8b98a5';
 }
 
-function buildQuickRowHTML(color, title, sub, valPercent, valString) {
+function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale) {
+  const staleStyle = isStale ? ' style="opacity:0.45;"' : '';
+  const staleHinweis = isStale ? ' <span style="color:var(--yellow);">⚠ Fallback-Wert, nicht live</span>' : '';
   return `
-    <div class="quick-row">
+    <div class="quick-row"${staleStyle}>
       <div class="q-ampel">${getEmojiColor(color)}</div>
       <div class="q-bar-container">
         <div class="q-bar-fill" style="width: ${valPercent}%; background-color: ${getHexColor(color)};"></div>
       </div>
       <div class="q-val">${valString}</div>
       <div class="q-arrow" style="color: ${getHexColor(color)};">▲</div>
-      <div class="q-text"><b>${title}</b><span class="q-desc">${sub}</span></div>
+      <div class="q-text"><b>${title}</b><span class="q-desc">${sub}${staleHinweis}</span></div>
     </div>
   `;
 }
@@ -780,7 +784,7 @@ function render(data){
   let btcColor = btcChange > THRESHOLDS.bitcoin.gruen ? "gruen" : (btcChange < THRESHOLDS.bitcoin.rot ? "rot" : "gelb");
   let btcBarPercent = Math.min(100, Math.max(0, 50 + btcChange * THRESHOLDS.bitcoin.barFaktor));
   let formattedBtcPrice = new Intl.NumberFormat('de-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(data.btc_usd);
-  htmlS1 += buildQuickRowHTML(btcColor, "Bitcoin (BTC/USD)", "Spekulativer Liquiditäts- & Risk-On-Fiebermesser", btcBarPercent, formattedBtcPrice);
+  htmlS1 += buildQuickRowHTML(btcColor, "Bitcoin (BTC/USD)", "Spekulativer Liquiditäts- & Risk-On-Fiebermesser", btcBarPercent, formattedBtcPrice, !cryptoIstLive);
 
   let optScore = options ? options.score : 50;
   let optColor = optScore > THRESHOLDS.putCall.rot ? "rot" : (optScore < THRESHOLDS.putCall.gruen ? "gruen" : "gelb");
@@ -837,16 +841,16 @@ function render(data){
   if (goldOelRatio > THRESHOLDS.goldOelRatio.rot) ratioColor = "rot";
   else if (goldOelRatio < THRESHOLDS.goldOelRatio.gruen) ratioColor = "gruen";
   let ratioPercent = Math.min(100, Math.max(0, ((goldOelRatio - THRESHOLDS.goldOelRatio.barMin) / THRESHOLDS.goldOelRatio.barSpan) * 100));
-  htmlS4 += buildQuickRowHTML(ratioColor, "Gold-Öl-Ratio", "Krisen- &amp; Risikobarometer: Unzenpreis Gold geteilt durch Fasspreis Öl", ratioPercent, goldOelRatio.toFixed(1) + " : 1");
+  htmlS4 += buildQuickRowHTML(ratioColor, "Gold-Öl-Ratio", "Krisen- &amp; Risikobarometer: Unzenpreis Gold geteilt durch Fasspreis Öl", ratioPercent, goldOelRatio.toFixed(1) + " : 1", !metalIstLive);
 
   let goldPercent = Math.min(100, Math.max(0, ((goldPreisWert - THRESHOLDS.goldPreis.min) / (THRESHOLDS.goldPreis.max - THRESHOLDS.goldPreis.min)) * 100));
   let formattedGoldPreis = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(goldPreisWert);
-  htmlS4 += buildQuickRowHTML("gelb", "Goldpreis (Unze)", "Feinunze Gold, Spotpreis in US-Dollar", goldPercent, formattedGoldPreis);
+  htmlS4 += buildQuickRowHTML("gelb", "Goldpreis (Unze)", "Feinunze Gold, Spotpreis in US-Dollar", goldPercent, formattedGoldPreis, !metalIstLive);
 
   let oelColor = oelPreisWert > THRESHOLDS.oelPreis.rot ? "rot" : (oelPreisWert < THRESHOLDS.oelPreis.gruen ? "gruen" : "gelb");
   let oelPercent = Math.min(100, Math.max(0, ((oelPreisWert - THRESHOLDS.oelPreis.barMin) / (THRESHOLDS.oelPreis.barMax - THRESHOLDS.oelPreis.barMin)) * 100));
   let formattedOelPreis = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(oelPreisWert);
-  htmlS4 += buildQuickRowHTML(oelColor, "Ölpreis (WTI)", "US-Rohöl-Fasspreis (West Texas Intermediate) in US-Dollar", oelPercent, formattedOelPreis);
+  htmlS4 += buildQuickRowHTML(oelColor, "Ölpreis (WTI)", "US-Rohöl-Fasspreis (West Texas Intermediate) in US-Dollar", oelPercent, formattedOelPreis, !metalIstLive);
 
   document.getElementById('rowsSection4').innerHTML = htmlS4;
 
@@ -1072,6 +1076,7 @@ async function ladeDaten(){
 
   let btcPreis = FALLBACK.btc_usd;
   let btcAenderung = FALLBACK.btc_change_24h;
+  cryptoIstLive = false;
 
   try {
     const cryptoRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true');
@@ -1081,6 +1086,7 @@ async function ladeDaten(){
         btcPreis = cryptoJson.bitcoin.usd;
         btcAenderung = cryptoJson.bitcoin.usd_24h_change;
         setApiDot('apiDotCrypto', true);
+        cryptoIstLive = true;
       } else {
         setApiDot('apiDotCrypto', false);
       }
@@ -1094,6 +1100,7 @@ async function ladeDaten(){
 
   let goldPreis = FALLBACK.gold_usd;
   let oelPreis = FALLBACK.oil_usd;
+  metalIstLive = false;
   try {
     const metalRes = await fetch('https://api.metalpriceapi.com/v1/latest?api_key=9ea216f35e8e7a6bab73a5f3c04853f5&base=USD&currencies=XAU,WTI');
     if(metalRes.ok) {
@@ -1102,6 +1109,7 @@ async function ladeDaten(){
         if(metalJson.rates.XAU) goldPreis = 1 / metalJson.rates.XAU;
         if(metalJson.rates.WTI) oelPreis = 1 / metalJson.rates.WTI;
         setApiDot('apiDotMetal', true);
+        metalIstLive = true;
       } else {
         setApiDot('apiDotMetal', false);
       }
