@@ -1070,7 +1070,8 @@ async function ladeDaten(){
   const indicator = document.getElementById('statusIndicator');
   btn.disabled = true;
 
-  pruefeGeminiApi();
+  // Gemini-Verfügbarkeit wird direkt vom echten Analyse-Call unten mit erledigt
+  // (kein separater Test-Call mehr, um das knappe Free-Tier-Limit zu schonen)
 
   let btcPreis = FALLBACK.btc_usd;
   let btcAenderung = FALLBACK.btc_change_24h;
