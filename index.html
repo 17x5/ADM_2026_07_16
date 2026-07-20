@@ -59,6 +59,11 @@
   .api-dot { width:8px; height:8px; border-radius:50%; background:var(--text-dim); flex-shrink:0; transition:background-color 0.2s; }
   .api-dot.ok { background:var(--green); box-shadow:0 0 4px var(--green); }
   .api-dot.fail { background:var(--red); box-shadow:0 0 4px var(--red); }
+  .situation-ampel { display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--text-dim); margin-right:6px; vertical-align:middle; transition:background-color 0.2s, box-shadow 0.2s; }
+  .situation-ampel.gruen { background:var(--green); box-shadow:0 0 5px var(--green); }
+  .situation-ampel.gelb  { background:var(--yellow); box-shadow:0 0 5px var(--yellow); }
+  .situation-ampel.rot   { background:var(--red); box-shadow:0 0 5px var(--red); }
+  .situation-ampel.purple{ background:var(--purple); box-shadow:0 0 5px var(--purple); }
 
   .fazit{
     background:var(--panel);border:1px solid var(--panel-border);
@@ -902,6 +907,7 @@ Erzeuge NUR ein valides JSON-Objekt (keine Markdown-Codeblöcke, kein Fliesstext
   "fazit3": "1-2 Sätze Einschätzung zu Struktur/Kredit-Hebelung (Kachel 3)",
   "fazit4": "1-2 Sätze Einschätzung zu Gold/Öl/Rohstoffen (Kachel 4)",
   "gesamtfazit": "2-3 Sätze Gesamteinschätzung der Marktlage, Bezug zu ${bfStatus}",
+  "ampel": "gruen|gelb|rot (Gesamteinschätzung der Marktlage: gruen=entspannt/unkritisch, gelb=erhöhte Vorsicht, rot=hohes Risiko/Warnsignal)",
   "actions": ["konkrete, kurze Handlungsempfehlung 1", "Handlungsempfehlung 2", "Handlungsempfehlung 3"]
 }
 Sachlich, konkret, keine Übertreibungen, keine Anlageberatung im rechtlichen Sinn, kurze Sätze.`;
@@ -926,6 +932,12 @@ Sachlich, konkret, keine Übertreibungen, keine Anlageberatung im rechtlichen Si
 
     const gesamtEl = document.getElementById('gesamtfazitText');
     if (gesamtEl) gesamtEl.textContent = ergebnis.gesamtfazit || '';
+
+    const ampelDot = document.getElementById('situationAmpelDot');
+    if (ampelDot) {
+      const erlaubteFarben = ['gruen', 'gelb', 'rot', 'purple'];
+      ampelDot.className = 'situation-ampel' + (erlaubteFarben.includes(ergebnis.ampel) ? ' ' + ergebnis.ampel : '');
+    }
 
     const actionEl = document.getElementById('actionListEl');
     if (actionEl && Array.isArray(ergebnis.actions)) {
@@ -981,7 +993,7 @@ function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousCl
 
   return `
     <div class="fazit-section">
-      <div class="fazit-label">Deine Situation:</div>
+      <div class="fazit-label"><span class="situation-ampel" id="situationAmpelDot"></span>Deine Situation:</div>
       <p class="fazit-p" id="gesamtfazitText">${situationText || "⏳ Analyse wird generiert…"}</p>
       <div class="fazit-change" style="color: ${diffColor};">
         <strong>Veränderung zum letzten Handelstag:</strong> ${diffText}
