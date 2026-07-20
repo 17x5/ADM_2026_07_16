@@ -183,6 +183,7 @@
 
   .quick-row {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     font-family: var(--sans);
     font-size: 13px;
@@ -205,6 +206,7 @@
   .q-text { flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .q-text b { font-size: 13px; color: var(--text); }
   .q-desc { color: var(--text-dim); font-size: 11px; margin-left: 6px; }
+  .q-stale-note { flex-basis: 100%; margin-top: 4px; margin-left: 34px; font-size: 11px; }
 
   .welle-container {
     background: var(--panel);
@@ -693,17 +695,17 @@ function getHexColor(color) {
 }
 
 function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale) {
-  const staleStyle = isStale ? ' style="opacity:0.45;"' : '';
-  const staleHinweis = isStale ? ' <span style="color:var(--yellow);">⚠ Fallback-Wert, nicht live</span>' : '';
+  const dim = isStale ? 'opacity:0.45;' : '';
   return `
-    <div class="quick-row"${staleStyle}>
-      <div class="q-ampel">${getEmojiColor(color)}</div>
-      <div class="q-bar-container">
+    <div class="quick-row">
+      <div class="q-ampel" style="${dim}">${getEmojiColor(color)}</div>
+      <div class="q-bar-container" style="${dim}">
         <div class="q-bar-fill" style="width: ${valPercent}%; background-color: ${getHexColor(color)};"></div>
       </div>
-      <div class="q-val">${valString}</div>
-      <div class="q-arrow" style="color: ${getHexColor(color)};">▲</div>
-      <div class="q-text"><b>${title}</b><span class="q-desc">${sub}${staleHinweis}</span></div>
+      <div class="q-val" style="${dim}">${valString}</div>
+      <div class="q-arrow" style="color: ${getHexColor(color)}; ${dim}">▲</div>
+      <div class="q-text" style="${dim}"><b>${title}</b><span class="q-desc">${sub}</span></div>
+      ${isStale ? `<div class="q-stale-note" style="color:var(--yellow); font-weight:600;">⚠ Fallback-Wert, nicht live</div>` : ''}
     </div>
   `;
 }
