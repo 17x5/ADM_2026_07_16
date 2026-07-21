@@ -47,6 +47,26 @@
   }
   .refresh-btn:hover{border-color:var(--accent);}
 
+  .style-slider-wrap{
+    display:flex;align-items:center;gap:6px;
+    font-family:var(--mono);font-size:10px;color:var(--text-dim);
+  }
+  .style-slider-wrap input[type=range]{
+    -webkit-appearance:none;appearance:none;
+    width:54px;height:3px;background:var(--panel-border);
+    border-radius:2px;outline:none;cursor:pointer;
+  }
+  .style-slider-wrap input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;
+    width:12px;height:12px;border-radius:50%;
+    background:var(--accent);cursor:pointer;
+  }
+  .style-slider-wrap input[type=range]::-moz-range-thumb{
+    width:12px;height:12px;border-radius:50%;
+    background:var(--accent);border:none;cursor:pointer;
+  }
+  #styleLevelLabel{color:var(--accent);min-width:58px;display:inline-block;}
+
   .status-tag {
     font-family:var(--mono);font-size:11px;line-height:1.4;
     padding:4px 10px;border-radius:4px;border:1px solid var(--panel-border);
@@ -397,12 +417,17 @@
 <div class="wrap">
 
   <header>
-    <h1>Advanced Marktsentiment Dashboard</h1>
+    <h1>Advanced Marktsentiment Dashboard <span style="font-size:14px;font-weight:normal;color:var(--text);">• Keine Anlageberatung •</span></h1>
     <div class="header-right">
       <div class="api-status" title="Zeigt, ob die externen API-Keys aktuell funktionieren">
         <span class="api-dot" id="apiDotGemini"></span>Gemini
         <span class="api-dot" id="apiDotCrypto"></span>BTC
         <span class="api-dot" id="apiDotMetal"></span>Metal
+      </div>
+      <div class="style-slider-wrap" title="Sprachniveau der KI-Analyse einstellen">
+        <input type="range" id="styleLevelSlider" min="0" max="2" step="1" value="1"
+               oninput="onStyleLevelChange(this.value)">
+        <span id="styleLevelLabel">Erfahrener Anleger</span>
       </div>
       <button class="refresh-btn" id="refreshBtn" onclick="ladeDaten()">↻ Live-Daten abrufen</button>
       <div class="status-tag stale" id="statusIndicator">Lade Daten…</div>
@@ -590,7 +615,7 @@
   </a>
 
   <footer>
-    Quelle: <a href="https://production.dataviz.cnn.io/index/fearandgreed/graphdata" target="_blank">production.dataviz.cnn.io</a> &bull; Keine Anlageberatung.
+    Impressum: Leonardo Curcuruto &copy; 2026, Switzerland
   </footer>
 </div>
 
@@ -873,15 +898,48 @@ function render(data){
   });
 }
 
+// Sprachniveau der KI-Analyse: 0=Börsen-Einsteiger, 1=Erfahrener Anleger, 2=Börsenprofi
+const STYLE_LEVELS = [
+  { key: 'einsteiger',    label: 'Börsen-Einsteiger', anweisung: 'Erkläre sehr einfach und ohne Fachbegriffe, wie für jemanden ohne Börsenvorwissen. Nutze bei Bedarf einen kurzen Alltagsvergleich. Kurze, klare Sätze.' },
+  { key: 'erfahren',      label: 'Erfahrener Anleger', anweisung: 'Erkläre für einen Anleger mit Grundkenntnissen an der Börse. Übliche Fachbegriffe (z.B. Volatilität, Momentum) sind ok, kurz erklärt wenn nötig.' },
+  { key: 'profi',         label: 'Börsenprofi',       anweisung: 'Erkläre knapp und fachlich präzise für einen erfahrenen Börsenprofi. Fachbegriffe ohne Erklärung verwenden, keine Grundlagen erläutern.' }
+];
+
+let lastGeminiCtx = null;
+
+function getStyleLevel() {
+  const gespeichert = parseInt(localStorage.getItem('analyseStyleLevel'), 10);
+  return Number.isInteger(gespeichert) && gespeichert >= 0 && gespeichert <= 2 ? gespeichert : 1;
+}
+
+function onStyleLevelChange(value) {
+  const level = parseInt(value, 10);
+  localStorage.setItem('analyseStyleLevel', level);
+  document.getElementById('styleLevelLabel').textContent = STYLE_LEVELS[level].label;
+  if (lastGeminiCtx) generiereGeminiTexte(lastGeminiCtx); // Texte mit neuem Niveau neu erzeugen
+}
+
+(function initStyleLevel() {
+  const level = getStyleLevel();
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('styleLevelSlider').value = level;
+    document.getElementById('styleLevelLabel').textContent = STYLE_LEVELS[level].label;
+  });
+})();
+
 // Baut EINEN Prompt für alle Texte (Gesamtfazit, 4 Kachel-Fazits, Actions)
 // und verteilt die Antwort auf die jeweiligen DOM-Elemente. Ein Aufruf statt
 // sechs, um API-Kosten/Latenz gering zu halten.
 async function generiereGeminiTexte(ctx) {
   if (!GEMINI_API_KEY) return; // Ampel bleibt grau, Felder bleiben leer
 
+  lastGeminiCtx = ctx;
+
   const { data, bfStatus, sfColor, welleDesc, vixColor, rawVix, cnnColor,
           momentum, strength, marginDebt, options, actBreadth,
           goldPreisWert, oelPreisWert } = ctx;
+
+  const stilAnweisung = STYLE_LEVELS[getStyleLevel()].anweisung;
 
   const kontext = {
     gesamtstatus: bfStatus,
@@ -899,7 +957,8 @@ async function generiereGeminiTexte(ctx) {
     gold_usd: goldPreisWert, oel_usd_wti: oelPreisWert
   };
 
-  const prompt = `Du bist Marktanalyst und kommentierst ein Finanz-Sentiment-Dashboard auf Deutsch (Schweizer Kontext, Privatanleger, Hintergrund Elektronik/IT, kein Finanzprofi).
+  const prompt = `Du bist Marktanalyst und kommentierst ein Finanz-Sentiment-Dashboard auf Deutsch (Schweizer Kontext, Privatanleger).
+Sprachniveau der Antwort: ${stilAnweisung}
 Hier die aktuellen Kennzahlen als JSON:
 ${JSON.stringify(kontext, null, 2)}
 
