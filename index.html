@@ -28,18 +28,18 @@
     font-family:var(--sans);
     padding:10px 16px 20px;
   }
-  .wrap{max-width:1140px;margin:0 auto;}
+  .wrap{max-width:1200px;margin:0 auto;}
 
   header{
     display:flex;justify-content:space-between;align-items:center;
-    flex-wrap:nowrap;gap:15px;
+    flex-wrap:wrap;gap:15px;
     border-bottom:1px solid var(--panel-border);
-    padding-bottom:6px;margin-bottom:10px;
+    padding-bottom:10px;margin-bottom:15px;
   }
   h1{font-size:16px;margin:0;letter-spacing:0.02em;white-space:nowrap;display:flex;align-items:center;gap:10px;}
   
   .header-right {
-    display:flex;align-items:center;gap:10px;flex-wrap:nowrap;
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
   }
   .refresh-btn{
     font-family:var(--mono);font-size:11px;background:var(--panel);
@@ -87,12 +87,12 @@
 
   .fazit{
     background:var(--panel);border:1px solid var(--panel-border);
-    border-radius:8px;margin-bottom:10px;overflow:hidden;
+    border-radius:8px;margin-bottom:15px;overflow:hidden;
   }
   .fazit h2{
     font-size:13px;text-transform:uppercase;letter-spacing:0.06em;
     background:#1f4e79;color:var(--accent);margin:0;
-    padding:5px 16px;font-weight:bold;border-bottom:1px solid var(--accent);
+    padding:6px 16px;font-weight:bold;border-bottom:1px solid var(--accent);
   }
   #fazitInhalt {
     padding:12px 16px;
@@ -145,6 +145,19 @@
   .action-list li { margin-bottom: 4px; }
   .action-list li:last-child { margin-bottom: 0; }
 
+  /* DASHBOARD GRID */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+  }
+  @media (max-width: 600px) {
+    .dashboard-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
   .kachel-fazit-box {
     margin-top: 8px;
     background: #0d1117;
@@ -186,10 +199,9 @@
     background: var(--panel);
     border: 1px solid var(--panel-border);
     border-radius: 8px;
-    padding: 10px 16px;
-    margin-bottom: 8px;
+    padding: 12px 16px;
+    margin-bottom: 0px;
   }
-  .group-box:last-child { margin-bottom: 0; }
   .group-title {
     font-family: var(--sans);
     font-size: 12px;
@@ -204,7 +216,7 @@
 
   .quick-row {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
     font-family: var(--sans);
     font-size: 13px;
@@ -223,7 +235,7 @@
   
   .q-arrow { width: 20px; text-align: center; font-size: 10px; margin-right: 6px; flex-shrink: 0; }
 
-  .q-text { flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .q-text { flex-grow: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .q-text b { font-size: 13px; color: var(--text); }
   .q-desc { color: var(--text-dim); font-size: 11px; margin-left: 6px; }
   .q-stale-note { flex-basis: 100%; margin-top: 4px; margin-left: 34px; font-size: 11px; }
@@ -233,7 +245,7 @@
     border: 1px solid var(--panel-border);
     border-radius: 8px;
     padding: 12px 16px;
-    margin-top: 10px;
+    margin-top: 15px;
   }
   .welle-title {
     font-size: 12px;
@@ -272,7 +284,7 @@
     border: 1px solid var(--panel-border);
     border-radius: 8px;
     padding: 12px 16px;
-    margin-top: 10px;
+    margin-top: 15px;
   }
   .legende-title {
     font-size: 12px;
@@ -320,7 +332,7 @@
     border: 1px solid var(--panel-border);
     border-radius: 8px;
     padding: 14px;
-    margin-top: 10px;
+    margin-top: 15px;
     display: block;
     text-decoration: none;
     transition: border-color 0.2s, background-color 0.2s;
@@ -440,56 +452,58 @@
     <div id="fazitInhalt"></div>
   </div>
 
-  <div id="etfGroup" class="group-box">
+  <div class="group-box" style="margin-bottom: 15px;">
     <div class="group-title">Mein ETF</div>
     <div id="rowsSectionETF"></div>
   </div>
 
-  <div id="sentimentGroup" class="group-box">
-    <div class="group-title">Sentiment &amp; Markt-Nervosität</div>
-    <div id="rowsSection1"></div>
-    <div class="kachel-fazit-box" id="fazitBox1">
-      <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox1')">
-        <h4>📋 Kachel-Fazit: Sentiment &amp; Liquidität</h4>
-        <span class="action-toggle-icon">▶ Anzeigen</span>
+  <div class="dashboard-grid">
+    <div id="sentimentGroup" class="group-box">
+      <div class="group-title">Sentiment &amp; Markt-Nervosität</div>
+      <div id="rowsSection1"></div>
+      <div class="kachel-fazit-box" id="fazitBox1">
+        <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox1')">
+          <h4>📋 Kachel-Fazit: Sentiment &amp; Liquidität</h4>
+          <span class="action-toggle-icon">▶ Anzeigen</span>
+        </div>
+        <div class="kachel-fazit-content" id="fazitContent1">Lade Analyse…</div>
       </div>
-      <div class="kachel-fazit-content" id="fazitContent1">Lade Analyse…</div>
     </div>
-  </div>
 
-  <div id="trendGroup" class="group-box">
-    <div class="group-title">Trend- &amp; Sicherheits-Schutz</div>
-    <div id="rowsSection2"></div>
-    <div class="kachel-fazit-box" id="fazitBox2">
-      <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox2')">
-        <h4>📋 Kachel-Fazit: Trend &amp; Marktbreite</h4>
-        <span class="action-toggle-icon">▶ Anzeigen</span>
+    <div id="trendGroup" class="group-box">
+      <div class="group-title">Trend- &amp; Sicherheits-Schutz</div>
+      <div id="rowsSection2"></div>
+      <div class="kachel-fazit-box" id="fazitBox2">
+        <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox2')">
+          <h4>📋 Kachel-Fazit: Trend &amp; Marktbreite</h4>
+          <span class="action-toggle-icon">▶ Anzeigen</span>
+        </div>
+        <div class="kachel-fazit-content" id="fazitContent2">Lade Analyse…</div>
       </div>
-      <div class="kachel-fazit-content" id="fazitContent2">Lade Analyse…</div>
     </div>
-  </div>
 
-  <div id="structureGroup" class="group-box">
-    <div class="group-title">Markt-Struktur &amp; Liquidität</div>
-    <div id="rowsSection3"></div>
-    <div class="kachel-fazit-box" id="fazitBox3">
-      <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox3')">
-        <h4>📋 Kachel-Fazit: Struktur &amp; Fremdkapital-Hebel</h4>
-        <span class="action-toggle-icon">▶ Anzeigen</span>
+    <div id="structureGroup" class="group-box">
+      <div class="group-title">Markt-Struktur &amp; Liquidität</div>
+      <div id="rowsSection3"></div>
+      <div class="kachel-fazit-box" id="fazitBox3">
+        <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox3')">
+          <h4>📋 Kachel-Fazit: Struktur &amp; Fremdkapital-Hebel</h4>
+          <span class="action-toggle-icon">▶ Anzeigen</span>
+        </div>
+        <div class="kachel-fazit-content" id="fazitContent3">Lade Analyse…</div>
       </div>
-      <div class="kachel-fazit-content" id="fazitContent3">Lade Analyse…</div>
     </div>
-  </div>
 
-  <div id="commodityGroup" class="group-box">
-    <div class="group-title">Rohstoffe: Öl &amp; Gold</div>
-    <div id="rowsSection4"></div>
-    <div class="kachel-fazit-box" id="fazitBox4">
-      <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox4')">
-        <h4>📋 Kachel-Fazit: Gold-Öl-Ratio</h4>
-        <span class="action-toggle-icon">▶ Anzeigen</span>
+    <div id="commodityGroup" class="group-box">
+      <div class="group-title">Rohstoffe: Öl &amp; Gold</div>
+      <div id="rowsSection4"></div>
+      <div class="kachel-fazit-box" id="fazitBox4">
+        <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox4')">
+          <h4>📋 Kachel-Fazit: Gold-Öl-Ratio</h4>
+          <span class="action-toggle-icon">▶ Anzeigen</span>
+        </div>
+        <div class="kachel-fazit-content" id="fazitContent4">Lade Analyse…</div>
       </div>
-      <div class="kachel-fazit-content" id="fazitContent4">Lade Analyse…</div>
     </div>
   </div>
 
@@ -648,20 +662,9 @@ const FALLBACK = {
   ]
 };
 
-// ============================================================
-// GEMINI API-KEY. In AI Studio (https://aistudio.google.com/apikey)
-// auf HTTP-Referrer "17x5.github.io/*" beschränken, dann ist es
-// unkritisch, den Key hier im Klartext zu belassen.
-// Leer = Ampel bleibt grau, keine Gemini-Texte werden erzeugt.
-// ============================================================
 const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
-
-// Gemini-Modell für die Text-Generierung. Bei Bedarf anpassen
-// (z.B. auf ein neueres Modell, falls dieses abgekündigt wird).
 const GEMINI_MODEL = "gemini-3.6-flash";
 
-// Zentrale Schwellwerte für alle Ampel-/Score-Bewertungen.
-// Hier anpassen statt im Code verstreut zu suchen.
 const THRESHOLDS = {
   vix:            { gruen: 15.5, rot: 24.0, barMin: 10, barMax: 40 },
   cnnScore:       { rotUnten: 25, rotOben: 75, gruenUnten: 45, gruenOben: 55 },
@@ -690,25 +693,26 @@ let etfIstLive = false;
 function toggleActionBox() {
   const box = document.getElementById('actionBox');
   const icon = document.getElementById('actionToggleIcon');
+  if (!box) return;
   if (box.classList.contains('open')) {
-    box.classList.remove('remove');
     box.classList.remove('open');
-    icon.textContent = '▶ Anzeigen';
+    if(icon) icon.textContent = '▶ Anzeigen';
   } else {
     box.classList.add('open');
-    icon.textContent = '▼ Verbergen';
+    if(icon) icon.textContent = '▼ Verbergen';
   }
 }
 
 function toggleKachelFazit(boxId) {
   const box = document.getElementById(boxId);
+  if (!box) return;
   const icon = box.querySelector('.action-toggle-icon');
   if (box.classList.contains('open')) {
     box.classList.remove('open');
-    icon.textContent = '▶ Anzeigen';
+    if(icon) icon.textContent = '▶ Anzeigen';
   } else {
     box.classList.add('open');
-    icon.textContent = '▼ Verbergen';
+    if(icon) icon.textContent = '▼ Verbergen';
   }
 }
 
@@ -810,7 +814,6 @@ function render(data){
     activeItem.style.backgroundColor = '#1c1618';
   }
 
-  // --- KACHEL 1: SENTIMENT & NERVOZITÄT (INKLUSIVE BITCOIN) ---
   let htmlS1 = "";
   let vixBarPercent = Math.min(100, Math.max(0, ((rawVix - THRESHOLDS.vix.barMin) / THRESHOLDS.vix.barMax) * 100));
   htmlS1 += buildQuickRowHTML(vixColor, "Markt-Nervosität (VIX)", "Schwankungsbreite und implizite Angstkomponente des Aktienmarktes", vixBarPercent, rawVix.toFixed(2) + " USD");
@@ -827,11 +830,8 @@ function render(data){
   htmlS1 += buildQuickRowHTML(optColor, "Absicherungs-Verhältnis", "Put- zu Call-Optionsvolumen an den Terminbörsen", optScore, optScore.toFixed(0) + " / 100");
   
   document.getElementById('rowsSection1').innerHTML = htmlS1;
-
-  // Dynamisches Fazit 1
   document.getElementById('fazitContent1').innerHTML = GEMINI_API_KEY ? `<span style="color:var(--text-dim);">⏳ Analyse wird generiert…</span>` : ``;
 
-  // --- KACHEL 2: TREND ---
   let htmlS2 = "";
   let sfPercent = sfColor === 'gruen' ? 100 : (sfColor === 'purple' ? 85 : (sfColor === 'gelb' ? 45 : 15));
   htmlS2 += buildQuickRowHTML(sfColor, "Sicherheits-Ampel & Markttrend", `Modell 9iof2PC9 &bull; ${welleDesc}`, sfPercent, bfStatus);
@@ -842,11 +842,8 @@ function render(data){
   
   htmlS2 += buildQuickRowHTML(actBreadth < THRESHOLDS.breadth.rot ? "rot" : (actBreadth < THRESHOLDS.breadth.gelb ? "gelb" : "gruen"), "Advance-Decline-Linie (A/D-Linie)", "Das fundamentale Verhältnis von steigenden zu fallenden Aktien", actBreadth, actBreadth.toFixed(0) + " / 100");
   document.getElementById('rowsSection2').innerHTML = htmlS2;
-
-  // Dynamisches Fazit 2
   document.getElementById('fazitContent2').innerHTML = GEMINI_API_KEY ? `<span style="color:var(--text-dim);">⏳ Analyse wird generiert…</span>` : ``;
 
-  // --- KACHEL 3: STRUKTUR & LIQUIDITÄT ---
   let htmlS3 = "";
   let strScore = strength ? strength.score : 50;
   let strColor = strScore < THRESHOLDS.strength.rot ? "rot" : (strScore > THRESHOLDS.strength.gruen ? "gruen" : "gelb");
@@ -863,11 +860,8 @@ function render(data){
   }
   htmlS3 += buildQuickRowHTML(debtColor, "Kredit-Hebelung am Markt", "Aktienkäufe mit geliehenem Geld (FINRA)", debtDisplayPercent, debtScore.toFixed(0) + " / 100");
   document.getElementById('rowsSection3').innerHTML = htmlS3;
-
-  // Dynamisches Fazit 3
   document.getElementById('fazitContent3').innerHTML = GEMINI_API_KEY ? `<span style="color:var(--text-dim);">⏳ Analyse wird generiert…</span>` : ``;
 
-  // --- KACHEL 4: ROHSTOFFE (GOLD & ÖL) ---
   let htmlS4 = "";
   let goldPreisWert = data.gold_usd;
   let oelPreisWert = data.oil_usd;
@@ -889,8 +883,6 @@ function render(data){
   htmlS4 += buildQuickRowHTML(oelColor, "Ölpreis (WTI)", "US-Rohöl-Fasspreis (West Texas Intermediate) in US-Dollar", oelPercent, formattedOelPreis, !metalIstLive);
 
   document.getElementById('rowsSection4').innerHTML = htmlS4;
-
-  // Dynamisches Fazit 4
   document.getElementById('fazitContent4').innerHTML = GEMINI_API_KEY ? `<span style="color:var(--text-dim);">⏳ Analyse wird generiert…</span>` : ``;
 
   document.getElementById('fazitInhalt').innerHTML = buildFazitDuForm(bfStatus, sfColor, welleDesc, data.score, data.previous_close);
@@ -907,7 +899,6 @@ function render(data){
   });
 }
 
-// Sprachniveau der KI-Analyse: 0=Börsen-Einsteiger, 1=Erfahrener Anleger, 2=Börsenprofi
 const STYLE_LEVELS = [
   { key: 'einsteiger',    label: 'Börsen-Einsteiger', anweisung: 'Erkläre sehr einfach und ohne Fachbegriffe, wie für jemanden ohne Börsenvorwissen. Nutze bei Bedarf einen kurzen Alltagsvergleich. Kurze, klare Sätze.' },
   { key: 'erfahren',      label: 'Erfahrener Anleger', anweisung: 'Erkläre für einen Anleger mit Grundkenntnissen an der Börse. Übliche Fachbegriffe (z.B. Volatilität, Momentum) sind ok, kurz erklärt wenn nötig.' },
@@ -925,7 +916,7 @@ function onStyleLevelChange(value) {
   const level = parseInt(value, 10);
   localStorage.setItem('analyseStyleLevel', level);
   document.getElementById('styleLevelLabel').textContent = STYLE_LEVELS[level].label;
-  if (lastGeminiCtx) generiereGeminiTexte(lastGeminiCtx); // Texte mit neuem Niveau neu erzeugen
+  if (lastGeminiCtx) generiereGeminiTexte(lastGeminiCtx);
 }
 
 (function initStyleLevel() {
@@ -936,11 +927,8 @@ function onStyleLevelChange(value) {
   });
 })();
 
-// Baut EINEN Prompt für alle Texte (Gesamtfazit, 4 Kachel-Fazits, Actions)
-// und verteilt die Antwort auf die jeweiligen DOM-Elemente. Ein Aufruf statt
-// sechs, um API-Kosten/Latenz gering zu halten.
 async function generiereGeminiTexte(ctx) {
-  if (!GEMINI_API_KEY) return; // Ampel bleibt grau, Felder bleiben leer
+  if (!GEMINI_API_KEY) return;
 
   lastGeminiCtx = ctx;
 
@@ -1040,12 +1028,6 @@ function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousCl
   let situationText = "";
   let actionItems = [];
   let accentColor = "var(--accent)";
-  let ampelEmoji = getEmojiColor(sfColor);
-
-  situationText = "";
-  actionItems = [];
-
-  let listHtml = actionItems.map(item => `<li>${item}</li>`).join("");
 
   let diff = currentScore - previousClose;
   let diffText = "";
@@ -1065,7 +1047,7 @@ function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousCl
   return `
     <div class="fazit-section">
       <div class="fazit-label"><span class="situation-ampel" id="situationAmpelDot"></span>Deine Situation:</div>
-      <p class="fazit-p" id="gesamtfazitText">${situationText || "⏳ Analyse wird generiert…"}</p>
+      <p class="fazit-p" id="gesamtfazitText">⏳ Analyse wird generiert…</p>
       <div class="fazit-change" style="color: ${diffColor};">
         <strong>Veränderung zum letzten Handelstag:</strong> ${diffText}
       </div>
@@ -1076,7 +1058,7 @@ function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousCl
         <span id="actionToggleIcon" class="action-toggle-icon">▶ Anzeigen</span>
       </div>
       <div class="action-content">
-        <ul class="action-list" id="actionListEl">${listHtml}</ul>
+        <ul class="action-list" id="actionListEl"><li>⏳ Empfehlungen werden geladen…</li></ul>
       </div>
     </div>
   `;
@@ -1093,11 +1075,8 @@ function setApiDot(id, state) {
   dot.classList.remove('ok', 'fail');
   if (state === true) dot.classList.add('ok');
   else if (state === false) dot.classList.add('fail');
-  // state === 'unset' -> keine Klasse, bleibt grau
 }
 
-// Zentrale Funktion für alle Gemini-Aufrufe. Erwartet einen fertigen Prompt-String,
-// gibt den reinen Antworttext zurück (oder null bei Fehler/fehlendem Key).
 async function callGemini(prompt) {
   if (!GEMINI_API_KEY) return null;
   try {
@@ -1112,8 +1091,6 @@ async function callGemini(prompt) {
       })
     });
     if (!res.ok) {
-      const errBody = await res.text();
-      console.log("Gemini-Fehlerantwort:", res.status, errBody);
       setApiDot('apiDotGemini', false); return null;
     }
     const json = await res.json();
@@ -1121,24 +1098,13 @@ async function callGemini(prompt) {
     setApiDot('apiDotGemini', !!text);
     return text || null;
   } catch(e) {
-    console.log("Gemini-API nicht erreichbar:", e);
     setApiDot('apiDotGemini', false);
     return null;
   }
 }
 
-// Echte Verfügbarkeits-Prüfung mit einem minimalen Test-Prompt.
-async function pruefeGeminiApi() {
-  if (!GEMINI_API_KEY) {
-    setApiDot('apiDotGemini', 'unset');
-    return;
-  }
-  await callGemini("Antworte nur mit: OK");
-}
-
 async function ladeDaten(){
   const btn = document.getElementById('refreshBtn');
-  const indicator = document.getElementById('statusIndicator');
   btn.disabled = true;
 
   let btcPreis = FALLBACK.btc_usd;
@@ -1161,7 +1127,6 @@ async function ladeDaten(){
       setApiDot('apiDotCrypto', false);
     }
   } catch(e) {
-    console.log("Krypto-API konnte nicht geladen werden, verwende Fallback.");
     setApiDot('apiDotCrypto', false);
   }
 
@@ -1184,7 +1149,6 @@ async function ladeDaten(){
       setApiDot('apiDotMetal', false);
     }
   } catch(e) {
-    console.log("MetalpriceAPI nicht erreichbar, verwende Fallback.");
     setApiDot('apiDotMetal', false);
   }
 
@@ -1215,7 +1179,6 @@ async function ladeDaten(){
       setApiDot('apiDotEtf', false);
     }
   } catch (e) {
-    console.log("ETF-Kurs (Stooq) nicht erreichbar, verwende Fallback.");
     setApiDot('apiDotEtf', false);
   }
 
