@@ -1158,7 +1158,7 @@ async function ladeDaten(){
   let etfAenderung = FALLBACK.etf_change;
   etfIstLive = false;
   try {
-    const etfRes = await fetch('/etf.json?t=' + Date.now());
+    const etfRes = await fetch('etf.json?t=' + Date.now());
     if (etfRes.ok) {
       const etfJson = await etfRes.json();
       const close = parseFloat(etfJson.price);
