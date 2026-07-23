@@ -1158,22 +1158,16 @@ async function ladeDaten(){
   let etfAenderung = FALLBACK.etf_change;
   etfIstLive = false;
   try {
-    const etfRes = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://stooq.com/q/l/?s=uetw.de&f=sd2t2ohlcv&h&e=csv'));
+    const etfRes = await fetch('etf.json?t=' + Date.now());
     if (etfRes.ok) {
-      const csv = await etfRes.text();
-      const zeilen = csv.trim().split('\n');
-      if (zeilen.length > 1) {
-        const werte = zeilen[1].split(',');
-        const open = parseFloat(werte[3]);
-        const close = parseFloat(werte[6]);
-        if (!isNaN(open) && !isNaN(close) && open > 0) {
-          etfPreis = close;
-          etfAenderung = ((close - open) / open) * 100;
-          setApiDot('apiDotEtf', true);
-          etfIstLive = true;
-        } else {
-          setApiDot('apiDotEtf', false);
-        }
+      const etfJson = await etfRes.json();
+      const close = parseFloat(etfJson.price);
+      const percentChange = parseFloat(etfJson.change_percent);
+      if (!isNaN(close) && !isNaN(percentChange)) {
+        etfPreis = close;
+        etfAenderung = percentChange;
+        setApiDot('apiDotEtf', true);
+        etfIstLive = true;
       } else {
         setApiDot('apiDotEtf', false);
       }
