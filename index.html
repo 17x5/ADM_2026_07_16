@@ -424,6 +424,7 @@
         <span class="api-dot" id="apiDotGemini"></span>Gemini
         <span class="api-dot" id="apiDotCrypto"></span>BTC
         <span class="api-dot" id="apiDotMetal"></span>Metal
+        <span class="api-dot" id="apiDotEtf"></span>ETF
       </div>
       <div class="style-slider-wrap" title="Sprachniveau der KI-Analyse einstellen">
         <input type="range" id="styleLevelSlider" min="0" max="2" step="1" value="1"
@@ -438,6 +439,11 @@
   <div class="fazit">
     <h2>Gesamtfazit &amp; Strategie-Check</h2>
     <div id="fazitInhalt"></div>
+  </div>
+
+  <div id="etfGroup" class="group-box">
+    <div class="group-title">Mein ETF</div>
+    <div id="rowsSectionETF"></div>
   </div>
 
   <div id="sentimentGroup" class="group-box">
@@ -630,6 +636,8 @@ const FALLBACK = {
   btc_change_24h: 1.25,
   gold_usd: 4032.00,
   oil_usd: 79.57,
+  etf_price: 38.92,
+  etf_change: -0.82,
   subs: [
     {key:"market_momentum_sp500", name:"Markt-Schwung", sub:"S&P 500 relativ zur 200-Tage-Linie", score:45.0},
     {key:"stock_price_strength", name:"Aktien-Stärke", sub:"Anzahl der 52-Wochen-Hochs vs. Tiefs", score:44.0},
@@ -678,6 +686,7 @@ const THRESHOLDS = {
 let isLive = false;
 let metalIstLive = false;
 let cryptoIstLive = false;
+let etfIstLive = false;
 
 function toggleActionBox() {
   const box = document.getElementById('actionBox');
@@ -1182,6 +1191,47 @@ async function ladeDaten(){
     console.log("MetalpriceAPI nicht erreichbar, verwende Fallback.");
     setApiDot('apiDotMetal', false);
   }
+
+  // TODO: sobald Twelve-Data-Key vorhanden ist, hier auf
+  // https://api.twelvedata.com/price?symbol=UETW:XETR&apikey=DEIN_KEY wechseln
+  // (Stooq liefert keinen garantierten CORS-Header, daher nur Übergangslösung
+  // mit striktem Fallback, falls der Request blockiert wird)
+  let etfPreis = FALLBACK.etf_price;
+  let etfAenderung = FALLBACK.etf_change;
+  etfIstLive = false;
+  try {
+    const etfRes = await fetch('https://stooq.com/q/l/?s=uetw.de&f=sd2t2ohlcv&h&e=csv');
+    if (etfRes.ok) {
+      const csv = await etfRes.text();
+      const zeilen = csv.trim().split('\n');
+      if (zeilen.length > 1) {
+        const werte = zeilen[1].split(',');
+        const open = parseFloat(werte[3]);
+        const close = parseFloat(werte[6]);
+        if (!isNaN(open) && !isNaN(close) && open > 0) {
+          etfPreis = close;
+          etfAenderung = ((close - open) / open) * 100;
+          setApiDot('apiDotEtf', true);
+          etfIstLive = true;
+        } else {
+          setApiDot('apiDotEtf', false);
+        }
+      } else {
+        setApiDot('apiDotEtf', false);
+      }
+    } else {
+      setApiDot('apiDotEtf', false);
+    }
+  } catch (e) {
+    console.log("ETF-Kurs (Stooq) nicht erreichbar, verwende Fallback.");
+    setApiDot('apiDotEtf', false);
+  }
+
+  const formattedEtfPreis = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(etfPreis);
+  const etfColor = etfAenderung >= 0 ? "gruen" : "rot";
+  const etfPercent = Math.min(100, Math.abs(etfAenderung) * 20);
+  const etfRowHtml = buildQuickRowHTML(etfColor, "UBS Core MSCI World (UETW.DE)", "Dein ETF-Sparplan-Kurs, Xetra", etfPercent, formattedEtfPreis + " (" + (etfAenderung >= 0 ? "+" : "") + etfAenderung.toFixed(2) + "%)", !etfIstLive);
+  document.getElementById('rowsSectionETF').innerHTML = etfRowHtml;
 
   try{
     const res = await fetch('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', { headers: {'Accept':'application/json'} });
