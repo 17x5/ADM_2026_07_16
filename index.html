@@ -32,14 +32,14 @@
 
   header{
     display:flex;justify-content:space-between;align-items:center;
-    flex-wrap:wrap;gap:10px;
+    flex-wrap:nowrap;gap:15px;
     border-bottom:1px solid var(--panel-border);
     padding-bottom:6px;margin-bottom:10px;
   }
-  h1{font-size:18px;margin:0;letter-spacing:0.02em;}
+  h1{font-size:16px;margin:0;letter-spacing:0.02em;white-space:nowrap;display:flex;align-items:center;gap:10px;}
   
   .header-right {
-    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    display:flex;align-items:center;gap:10px;flex-wrap:nowrap;
   }
   .refresh-btn{
     font-family:var(--mono);font-size:11px;background:var(--panel);
@@ -221,7 +221,6 @@
   
   .q-val { width: 110px; text-align: left; flex-shrink: 0; font-weight: 600; font-family: var(--mono); font-size: 12px; }
   
-  /* Neuer Style für den Pfeil */
   .q-arrow { width: 20px; text-align: center; font-size: 10px; margin-right: 6px; flex-shrink: 0; }
 
   .q-text { flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -422,9 +421,9 @@
     <div class="header-right">
       <div class="api-status" title="Zeigt, ob die externen API-Keys aktuell funktionieren">
         <span class="api-dot" id="apiDotGemini"></span>Gemini
+        <span class="api-dot" id="apiDotEtf"></span>ETF
         <span class="api-dot" id="apiDotCrypto"></span>BTC
         <span class="api-dot" id="apiDotMetal"></span>Metal
-        <span class="api-dot" id="apiDotEtf"></span>ETF
       </div>
       <div class="style-slider-wrap" title="Sprachniveau der KI-Analyse einstellen">
         <input type="range" id="styleLevelSlider" min="0" max="2" step="1" value="1"
@@ -898,7 +897,7 @@ function render(data){
   
   const statusIndicator = document.getElementById('statusIndicator');
   statusIndicator.className = isLive ? 'status-tag live' : 'status-tag stale';
-  statusIndicator.textContent = fmtDate(data.timestamp) + (isLive ? " · Live" : " · Lokal");
+  statusIndicator.textContent = fmtDate(data.timestamp);
 
   generiereGeminiTexte({
     data, bfStatus, sfColor, welleDesc,
@@ -1142,9 +1141,6 @@ async function ladeDaten(){
   const indicator = document.getElementById('statusIndicator');
   btn.disabled = true;
 
-  // Gemini-Verfügbarkeit wird direkt vom echten Analyse-Call unten mit erledigt
-  // (kein separater Test-Call mehr, um das knappe Free-Tier-Limit zu schonen)
-
   let btcPreis = FALLBACK.btc_usd;
   let btcAenderung = FALLBACK.btc_change_24h;
   cryptoIstLive = false;
@@ -1192,10 +1188,6 @@ async function ladeDaten(){
     setApiDot('apiDotMetal', false);
   }
 
-  // TODO: sobald Twelve-Data-Key vorhanden ist, hier auf
-  // https://api.twelvedata.com/price?symbol=UETW:XETR&apikey=DEIN_KEY wechseln
-  // (Stooq liefert keinen garantierten CORS-Header, daher nur Übergangslösung
-  // mit striktem Fallback, falls der Request blockiert wird)
   let etfPreis = FALLBACK.etf_price;
   let etfAenderung = FALLBACK.etf_change;
   etfIstLive = false;
@@ -1265,7 +1257,6 @@ async function ladeDaten(){
     isLive = true; render(data);
   }catch(err){
     isLive = false; render(FALLBACK);
-    indicator.textContent = indicator.textContent + " (CORS-Fallback aktiv)";
   }finally{
     btn.disabled = false;
   }
