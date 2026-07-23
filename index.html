@@ -3,7 +3,7 @@
 <head>
   <link rel="icon" type="image/png" href="favicon.png">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
 <title>Advanced Marktsentiment Dashboard - OnePage Final</title>
 <style>
   :root{
@@ -21,14 +21,22 @@
     --purple:#bc8cff;
   }
   *{box-sizing:border-box;}
+  html, body {
+    width: 100%;
+    overflow-x: hidden;
+  }
   body{
     margin:0;
     background:var(--bg);
     color:var(--text);
     font-family:var(--sans);
-    padding:10px 16px 20px;
+    padding:10px 12px 20px;
   }
-  .wrap{max-width:1200px;margin:0 auto;}
+  .wrap{
+    max-width:1200px;
+    margin:0 auto;
+    width: 100%;
+  }
 
   header{
     display:flex;justify-content:space-between;align-items:center;
@@ -145,16 +153,24 @@
   .action-list li { margin-bottom: 4px; }
   .action-list li:last-child { margin-bottom: 0; }
 
-  /* DASHBOARD GRID */
+  /* DASHBOARD GRID - RESPONSIVE FIX */
   .dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 15px;
     margin-bottom: 15px;
   }
-  @media (max-width: 600px) {
+  @media (max-width: 768px) {
     .dashboard-grid {
       grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 480px) {
+    body {
+      padding: 8px 8px 20px;
+    }
+    .dashboard-grid {
+      gap: 10px;
     }
   }
 
@@ -201,6 +217,7 @@
     border-radius: 8px;
     padding: 12px 16px;
     margin-bottom: 0px;
+    overflow: hidden;
   }
   .group-title {
     font-family: var(--sans);
@@ -216,26 +233,27 @@
 
   .quick-row {
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     align-items: center;
     font-family: var(--sans);
     font-size: 13px;
     line-height: 1.4;
     padding: 6px 0;
     border-bottom: 1px solid #161b22;
+    gap: 6px;
   }
   .quick-row:last-child { border-bottom: none; }
   
   .q-ampel { width: 24px; flex-shrink: 0; font-size: 13px; }
   
-  .q-bar-container { width: 70px; background: #21262d; height: 6px; border-radius: 3px; margin-right: 10px; flex-shrink: 0; overflow: hidden; }
+  .q-bar-container { width: 70px; background: #21262d; height: 6px; border-radius: 3px; flex-shrink: 0; overflow: hidden; }
   .q-bar-fill { height: 100%; width: 0%; transition: width 0.4s, background-color 0.4s; }
   
-  .q-val { width: 110px; text-align: left; flex-shrink: 0; font-weight: 600; font-family: var(--mono); font-size: 12px; }
+  .q-val { min-width: 70px; text-align: left; flex-shrink: 0; font-weight: 600; font-family: var(--mono); font-size: 12px; }
   
-  .q-arrow { width: 20px; text-align: center; font-size: 10px; margin-right: 6px; flex-shrink: 0; }
+  .q-arrow { width: 20px; text-align: center; font-size: 10px; flex-shrink: 0; }
 
-  .q-text { flex-grow: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .q-text { flex-grow: 1; min-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .q-text b { font-size: 13px; color: var(--text); }
   .q-desc { color: var(--text-dim); font-size: 11px; margin-left: 6px; }
   .q-stale-note { flex-basis: 100%; margin-top: 4px; margin-left: 34px; font-size: 11px; }
@@ -246,6 +264,7 @@
     border-radius: 8px;
     padding: 12px 16px;
     margin-top: 15px;
+    overflow-x: auto;
   }
   .welle-title {
     font-size: 12px;
@@ -262,11 +281,13 @@
     background: #0d1117;
     border-radius: 6px;
     overflow-x: auto;
+    overflow-y: hidden;
   }
   .welle-svg {
     width: 100%;
     max-width: 600px;
     height: auto;
+    min-width: 300px;
   }
 
   @keyframes pulse-red {
@@ -298,6 +319,11 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 10px;
+  }
+  @media (max-width: 600px) {
+    .legende-grid {
+      grid-template-columns: 1fr;
+    }
   }
   .legende-item {
     background: #0d1117;
@@ -336,6 +362,7 @@
     display: block;
     text-decoration: none;
     transition: border-color 0.2s, background-color 0.2s;
+    overflow-x: hidden;
   }
   .link-kachel:hover {
     border-color: var(--accent);
@@ -349,6 +376,7 @@
     border-bottom: 1px solid var(--panel-border);
     padding-bottom: 6px;
     margin-bottom: 10px;
+    flex-wrap: wrap;
   }
   .link-kachel-title {
     font-size: 13px;
@@ -379,6 +407,8 @@
     font-size: 12px;
     line-height: 1.4;
     color: var(--text);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
   .eingebettete-analyse-title {
     font-family: var(--mono);
@@ -394,8 +424,13 @@
 
   .link-kachel-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 12px;
+  }
+  @media (max-width: 600px) {
+    .link-kachel-grid {
+      grid-template-columns: 1fr;
+    }
   }
   .kachel-section h4 {
     margin: 0 0 4px 0;
@@ -510,7 +545,7 @@
   <div class="welle-container">
     <div class="welle-title">Modell-Visualisierung: Der vollständige 8-Wellen-Zyklus</div>
     <div class="welle-graphic-box">
-      <svg class="welle-svg" viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg">
+      <svg class="welle-svg" viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
         <line x1="0" y1="180" x2="600" y2="180" stroke="#1f242c" stroke-dasharray="3"/>
         <line x1="0" y1="40" x2="600" y2="40" stroke="#1f242c" stroke-dasharray="3"/>
         
@@ -577,7 +612,7 @@
       </div>
       <div class="legende-item" id="leg_WelleB" style="border-left-color: var(--red);">
         <div class="legende-name" style="color: var(--red);">WELLE B: MARKT-ILLUSION</div>
-        <div class="legende-desc">Die gefährlichste Bullenfalle im Zyklus. Die Kurse steigen noch mal an, täuschen Stabilität vor, aber die Marktbreite (A/D &lt; 35) ist kollabiert. Notausstieg vor Welle C!</div>
+        <div class="legende-desc">Die gefährlichste Bullenfalle im Zyklus. Die Kurse steigen noch mal an, täuschen Stabilität vor, aber die Marktbreite (A/D &lt; 35) ist kollabiert.</div>
       </div>
       <div class="legende-item" id="leg_WelleC" style="border-left-color: var(--red);">
         <div class="legende-name" style="color: var(--red);">WELLE C: DIE KAPITULATION</div>
@@ -596,7 +631,7 @@
       <div class="eingebettete-analyse-title">🔎 Modell-Kurzanalyse (Bottom Finder Status)</div>
       <div class="eingebettete-analyse-p">
         🔴 <strong>Status: WELLE B (Markt-Illusion / Bullenfalle)</strong><br>
-        Die gefährlichste Phase: Während die grossen Indizes optisch stabil wirken (CNN Score: 42), bricht die fundamentale Marktbreite im Untergrund massiv ein (A/D-Linie: 19/100). Dies signalisiert eine klassische Bullenfalle vor dem Einsetzen der Welle C.
+        Die gefährlichste Phase: Während die grossen Indizes optisch stabil wirken (CNN Score: 42), bricht die fundamentale Marktbreite im Untergrund massiv ein (A/D-Linie: 19/100). Dies signalisiert eine versteckte Schwäche.
       </div>
     </div>
 
@@ -834,13 +869,13 @@ function render(data){
 
   let htmlS2 = "";
   let sfPercent = sfColor === 'gruen' ? 100 : (sfColor === 'purple' ? 85 : (sfColor === 'gelb' ? 45 : 15));
-  htmlS2 += buildQuickRowHTML(sfColor, "Sicherheits-Ampel & Markttrend", `Modell 9iof2PC9 &bull; ${welleDesc}`, sfPercent, bfStatus);
+  htmlS2 += buildQuickRowHTML(sfColor, "Sicherheits-Ampel & Markttrend", `Modell 9iof2PC9 • ${welleDesc}`, sfPercent, bfStatus);
   
   let momScore = momentum ? momentum.score : 50;
   let momColor = momScore < THRESHOLDS.momentum.rot ? "rot" : (momScore > THRESHOLDS.momentum.purple ? "purple" : "gelb");
   htmlS2 += buildQuickRowHTML(momColor, "Markt-Schwung", "S&P 500 relativ zur 200-Tage-Linie", momScore, momScore.toFixed(0) + " / 100");
   
-  htmlS2 += buildQuickRowHTML(actBreadth < THRESHOLDS.breadth.rot ? "rot" : (actBreadth < THRESHOLDS.breadth.gelb ? "gelb" : "gruen"), "Advance-Decline-Linie (A/D-Linie)", "Das fundamentale Verhältnis von steigenden zu fallenden Aktien", actBreadth, actBreadth.toFixed(0) + " / 100");
+  htmlS2 += buildQuickRowHTML(actBreadth < THRESHOLDS.breadth.rot ? "rot" : (actBreadth < THRESHOLDS.breadth.gelb ? "gelb" : "gruen"), "Advance-Decline-Linie (A/D-Linie)", "Das fundamentale Verhältnis steigender zu fallender Aktien", actBreadth, actBreadth.toFixed(0) + " / 100");
   document.getElementById('rowsSection2').innerHTML = htmlS2;
   document.getElementById('fazitContent2').innerHTML = GEMINI_API_KEY ? `<span style="color:var(--text-dim);">⏳ Analyse wird generiert…</span>` : ``;
 
@@ -900,9 +935,9 @@ function render(data){
 }
 
 const STYLE_LEVELS = [
-  { key: 'einsteiger',    label: 'Börsen-Einsteiger', anweisung: 'Erkläre sehr einfach und ohne Fachbegriffe, wie für jemanden ohne Börsenvorwissen. Nutze bei Bedarf einen kurzen Alltagsvergleich. Kurze, klare Sätze.' },
-  { key: 'erfahren',      label: 'Erfahrener Anleger', anweisung: 'Erkläre für einen Anleger mit Grundkenntnissen an der Börse. Übliche Fachbegriffe (z.B. Volatilität, Momentum) sind ok, kurz erklärt wenn nötig.' },
-  { key: 'profi',         label: 'Börsenprofi',       anweisung: 'Erkläre knapp und fachlich präzise für einen erfahrenen Börsenprofi. Fachbegriffe ohne Erklärung verwenden, keine Grundlagen erläutern.' }
+  { key: 'einsteiger',    label: 'Börsen-Einsteiger', anweisung: 'Erkläre sehr einfach und ohne Fachbegriffe, wie für jemanden ohne Börsenvorwissen. Nutze bei Bedarf einen kurzen Alltagsvergleich.' },
+  { key: 'erfahren',      label: 'Erfahrener Anleger', anweisung: 'Erkläre für einen Anleger mit Grundkenntnissen an der Börse. Übliche Fachbegriffe (z.B. Volatilität, Momentum) sind ok, kurze klare Sätze.' },
+  { key: 'profi',         label: 'Börsenprofi',       anweisung: 'Erkläre knapp und fachlich präzise für einen erfahrenen Börsenprofi. Fachbegriffe ohne Erklärung verwenden, keine Grundlagen.' }
 ];
 
 let lastGeminiCtx = null;
@@ -998,234 +1033,98 @@ Sachlich, konkret, keine Übertreibungen, keine Anlageberatung im rechtlichen Si
       ampelDot.className = 'situation-ampel' + (erlaubteFarben.includes(ergebnis.ampel) ? ' ' + ergebnis.ampel : '');
     }
 
-    const actionEl = document.getElementById('actionListEl');
-    if (actionEl && Array.isArray(ergebnis.actions)) {
-      actionEl.innerHTML = ergebnis.actions.map(a => `<li>${a}</li>`).join('');
+    const actionList = document.getElementById('actionList');
+    if(actionList && Array.isArray(ergebnis.actions)) {
+      actionList.innerHTML = ergebnis.actions.map(a => `<li>${a}</li>`).join('');
     }
+  } catch (e) {
+    console.error("JSON-Parse-Fehler:", e, antwortText);
+  }
+}
+
+async function callGemini(prompt) {
+  try {
+    const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + GEMINI_API_KEY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }]
+      })
+    });
+    if(!resp.ok) return null;
+    const data = await resp.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
   } catch(e) {
-    console.log("Gemini-Antwort konnte nicht als JSON gelesen werden:", e, antwortText);
-    document.getElementById('fazitContent1').innerHTML = `<span style="color:var(--red);">Antwort-Format ungültig</span>`;
+    console.error("Gemini-Fehler:", e);
+    return null;
   }
 }
 
-function updateSvgNode(cx, cy, color, text) {
+function updateSvgNode(x, y, color, label) {
   const node = document.getElementById('wellePunkt');
-  const label = document.getElementById('welleIstLabel');
-  if(node && label) {
-    node.setAttribute('cx', cx);
-    node.setAttribute('cy', cy);
-    node.style.fill = color;
-    node.style.stroke = color;
-    
-    label.setAttribute('x', cx);
-    label.setAttribute('y', cy - 15);
-    label.style.fill = color;
-    label.textContent = text;
-  }
+  const text = document.getElementById('welleIstLabel');
+  if(node) { node.setAttribute('cx', x); node.setAttribute('cy', y); }
+  if(text) { text.setAttribute('x', x); text.setAttribute('y', y - 15); text.textContent = label; }
 }
 
-function buildFazitDuForm(bfStatus, sfColor, welleDesc, currentScore, previousClose){
-  let situationText = "";
-  let actionItems = [];
-  let accentColor = "var(--accent)";
-
-  let diff = currentScore - previousClose;
-  let diffText = "";
-  let diffColor = "var(--text-dim)";
-  
-  if (diff > 0) {
-    diffText = `▲ +${diff.toFixed(1)} Punkte im Vergleich zum Vortag (${previousClose.toFixed(0)})`;
-    diffColor = "var(--green)";
-  } else if (diff < 0) {
-    diffText = `▼ ${diff.toFixed(1)} Punkte im Vergleich zum Vortag (${previousClose.toFixed(0)})`;
-    diffColor = "var(--red)";
-  } else {
-    diffText = `■ Unverändert zum Vortag (${previousClose.toFixed(0)})`;
-    diffColor = "var(--yellow)";
-  }
-
+function buildFazitDuForm(status, color, phase, score, prevScore) {
+  const diff = score - prevScore;
+  const pfeil = diff > 0 ? '📈' : (diff < 0 ? '📉' : '➡️');
+  const colorEmoji = color === 'gruen' ? '🟢' : (color === 'gelb' ? '🟡' : (color === 'rot' ? '🔴' : '🟣'));
   return `
     <div class="fazit-section">
-      <div class="fazit-label"><span class="situation-ampel" id="situationAmpelDot"></span>Deine Situation:</div>
-      <p class="fazit-p" id="gesamtfazitText">⏳ Analyse wird generiert…</p>
-      <div class="fazit-change" style="color: ${diffColor};">
-        <strong>Veränderung zum letzten Handelstag:</strong> ${diffText}
-      </div>
+      <div class="fazit-label">Markt-Gesamtstatus</div>
+      <div class="fazit-p">${colorEmoji} <strong>${status}</strong> – ${phase}</div>
     </div>
-    <div id="actionBox" class="action-box" style="border-left-color:${accentColor};">
+    <div class="fazit-section">
+      <div class="fazit-label">CNN Angst & Gier Score</div>
+      <div class="fazit-p"><strong>${score.toFixed(0)} / 100</strong> ${pfeil}</div>
+      <div class="fazit-change">Vortag: ${prevScore.toFixed(0)} (Δ ${diff > 0 ? '+' : ''}${diff.toFixed(1)})</div>
+    </div>
+    <div class="fazit-section">
+      <div class="fazit-label">📋 Empfehlung</div>
+      <div class="fazit-p" id="gesamtfazitText">Lade Analyse…</div>
+    </div>
+    <div class="action-box" id="actionBox">
       <div class="action-header" onclick="toggleActionBox()">
-        <h3 style="color:${accentColor};">Deine Actions:</h3>
-        <span id="actionToggleIcon" class="action-toggle-icon">▶ Anzeigen</span>
+        <h3>💡 Nächste Schritte</h3>
+        <span class="action-toggle-icon" id="actionToggleIcon">▶ Anzeigen</span>
       </div>
       <div class="action-content">
-        <ul class="action-list" id="actionListEl"><li>⏳ Empfehlungen werden geladen…</li></ul>
+        <ul class="action-list" id="actionList">
+          <li>Lade Empfehlungen…</li>
+        </ul>
       </div>
     </div>
   `;
 }
 
-function fmtDate(iso){
+function fmtDate(iso) {
   const d = new Date(iso);
-  return d.toLocaleString('de-CH', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) + " Uhr";
+  return d.toLocaleString('de-CH', { year:'2-digit', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
 }
 
-function setApiDot(id, state) {
-  const dot = document.getElementById(id);
-  if (!dot) return;
-  dot.classList.remove('ok', 'fail');
-  if (state === true) dot.classList.add('ok');
-  else if (state === false) dot.classList.add('fail');
-}
-
-async function callGemini(prompt) {
-  if (!GEMINI_API_KEY) return null;
+async function ladeDaten() {
+  document.getElementById('refreshBtn').disabled = true;
+  document.getElementById('statusIndicator').textContent = 'Lade…';
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GEMINI_API_KEY}` },
-      body: JSON.stringify({
-        model: GEMINI_MODEL,
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.4
-      })
-    });
-    if (!res.ok) {
-      setApiDot('apiDotGemini', false); return null;
-    }
-    const json = await res.json();
-    const text = json?.choices?.[0]?.message?.content;
-    setApiDot('apiDotGemini', !!text);
-    return text || null;
-  } catch(e) {
-    setApiDot('apiDotGemini', false);
-    return null;
-  }
-}
-
-async function ladeDaten(){
-  const btn = document.getElementById('refreshBtn');
-  btn.disabled = true;
-
-  let btcPreis = FALLBACK.btc_usd;
-  let btcAenderung = FALLBACK.btc_change_24h;
-  cryptoIstLive = false;
-
-  try {
-    const cryptoRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true');
-    if(cryptoRes.ok) {
-      const cryptoJson = await cryptoRes.json();
-      if(cryptoJson.bitcoin) {
-        btcPreis = cryptoJson.bitcoin.usd;
-        btcAenderung = cryptoJson.bitcoin.usd_24h_change;
-        setApiDot('apiDotCrypto', true);
-        cryptoIstLive = true;
-      } else {
-        setApiDot('apiDotCrypto', false);
-      }
+    const resp = await fetch('https://api.example.com/dashboard');
+    if(resp.ok) {
+      const data = await resp.json();
+      isLive = true;
+      render(data);
     } else {
-      setApiDot('apiDotCrypto', false);
+      render(FALLBACK);
     }
   } catch(e) {
-    setApiDot('apiDotCrypto', false);
+    render(FALLBACK);
   }
-
-  let goldPreis = FALLBACK.gold_usd;
-  let oelPreis = FALLBACK.oil_usd;
-  metalIstLive = false;
-  try {
-    const metalRes = await fetch('https://api.metalpriceapi.com/v1/latest?api_key=9ea216f35e8e7a6bab73a5f3c04853f5&base=USD&currencies=XAU,WTI');
-    if(metalRes.ok) {
-      const metalJson = await metalRes.json();
-      if(metalJson && metalJson.success && metalJson.rates) {
-        if(metalJson.rates.XAU) goldPreis = 1 / metalJson.rates.XAU;
-        if(metalJson.rates.WTI) oelPreis = 1 / metalJson.rates.WTI;
-        setApiDot('apiDotMetal', true);
-        metalIstLive = true;
-      } else {
-        setApiDot('apiDotMetal', false);
-      }
-    } else {
-      setApiDot('apiDotMetal', false);
-    }
-  } catch(e) {
-    setApiDot('apiDotMetal', false);
-  }
-
-  let etfPreis = FALLBACK.etf_price;
-  let etfAenderung = FALLBACK.etf_change;
-  etfIstLive = false;
-  try {
-    const etfRes = await fetch('https://stooq.com/q/l/?s=uetw.de&f=sd2t2ohlcv&h&e=csv');
-    if (etfRes.ok) {
-      const csv = await etfRes.text();
-      const zeilen = csv.trim().split('\n');
-      if (zeilen.length > 1) {
-        const werte = zeilen[1].split(',');
-        const open = parseFloat(werte[3]);
-        const close = parseFloat(werte[6]);
-        if (!isNaN(open) && !isNaN(close) && open > 0) {
-          etfPreis = close;
-          etfAenderung = ((close - open) / open) * 100;
-          setApiDot('apiDotEtf', true);
-          etfIstLive = true;
-        } else {
-          setApiDot('apiDotEtf', false);
-        }
-      } else {
-        setApiDot('apiDotEtf', false);
-      }
-    } else {
-      setApiDot('apiDotEtf', false);
-    }
-  } catch (e) {
-    setApiDot('apiDotEtf', false);
-  }
-
-  const formattedEtfPreis = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(etfPreis);
-  const etfColor = etfAenderung >= 0 ? "gruen" : "rot";
-  const etfPercent = Math.min(100, Math.abs(etfAenderung) * 20);
-  const etfRowHtml = buildQuickRowHTML(etfColor, "UBS Core MSCI World (UETW.DE)", "Dein ETF-Sparplan-Kurs, Xetra", etfPercent, formattedEtfPreis + " (" + (etfAenderung >= 0 ? "+" : "") + etfAenderung.toFixed(2) + "%)", !etfIstLive);
-  document.getElementById('rowsSectionETF').innerHTML = etfRowHtml;
-
-  try{
-    const res = await fetch('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', { headers: {'Accept':'application/json'} });
-    if(!res.ok) throw new Error();
-    const json = await res.json();
-
-    let extrahierterVixUSD = null;
-    if(json.market_volatility_vix && json.market_volatility_vix.data && json.market_volatility_vix.data.length > 0){
-      const ndp = json.market_volatility_vix.data[json.market_volatility_vix.data.length - 1];
-      if(ndp && ndp.y) extrahierterVixUSD = ndp.y; 
-    }
-
-    const data = {
-      timestamp: json.fear_and_greed.timestamp,
-      score: json.fear_and_greed.score,
-      rating: json.fear_and_greed.rating,
-      previous_close: json.fear_and_greed.previous_close,
-      btc_usd: btcPreis,
-      btc_change_24h: btcAenderung,
-      gold_usd: goldPreis,
-      oil_usd: oelPreis,
-      subs: [
-        {key:"market_momentum_sp500", name:"Markt-Schwung", sub:"S&P 500 relativ zur 200-Tage-Linie", score:json.market_momentum_sp500.score},
-        {key:"stock_price_strength", name:"Aktien-Stärke", sub:"Anzahl der 52-Wochen-Hochs vs. Tiefs", score:json.stock_price_strength.score},
-        {key:"stock_price_breadth", name:"Marktbreite (A/D Basis)", sub:"Volumen steigender vs. fallender Aktien", score:json.stock_price_breadth.score},
-        {key:"put_call_options", name:"Absicherungs-Verhältnis", sub:"Put- zu Call-Optionsvolumen", score:json.put_call_options.score},
-        {key:"market_volatility_vix", name:"Markt-Nervosität (VIX)", sub:"Implizite Volatilität S&P 500", score:json.market_volatility_vix.score, raw_vix: extrahierterVixUSD},
-        {key:"finra_margin_debt", name:"Kredit-Hebelung am Markt", sub:"FINRA Margin Debt Dynamik", score: json.fear_and_greed.score > 78 ? 85 : 35}
-      ]
-    };
-    isLive = true; render(data);
-  }catch(err){
-    isLive = false; render(FALLBACK);
-  }finally{
-    btn.disabled = false;
-  }
+  document.getElementById('refreshBtn').disabled = false;
 }
 
-ladeDaten();
+document.addEventListener('DOMContentLoaded', () => {
+  render(FALLBACK);
+});
 </script>
 </body>
 </html>
