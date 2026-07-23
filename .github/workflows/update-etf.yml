@@ -14,31 +14,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Kurs von Stooq holen
+      - name: Kurs von Yahoo Finance holen
         run: |
-          curl -s -A "Mozilla/5.0" "https://stooq.com/q/l/?s=uetw.de&f=sd2t2ohlcv&h&e=csv" -o raw.csv
-          cat raw.csv
+          curl -s -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
+            "https://query1.finance.yahoo.com/v8/finance/chart/UETW.DE" -o raw.json
+          cat raw.json
 
-      - name: CSV in JSON umwandeln
+      - name: JSON auswerten
         run: |
           python3 - <<'EOF'
-          import csv, json
+          import json
 
-          with open('raw.csv') as f:
-              rows = list(csv.reader(f))
+          with open('raw.json') as f:
+              raw = json.load(f)
 
-          if len(rows) < 2:
-              raise SystemExit("Keine Daten von Stooq erhalten")
-
-          werte = rows[1]
-          open_preis = float(werte[3])
-          close_preis = float(werte[6])
-          aenderung = (close_preis - open_preis) / open_preis * 100
+          meta = raw['chart']['result'][0]['meta']
+          close_preis = meta['regularMarketPrice']
+          previous_close = meta['previousClose']
+          aenderung = (close_preis - previous_close) / previous_close * 100
 
           data = {
               "price": close_preis,
-              "change_percent": round(aenderung, 2),
-              "updated_at": werte[1] + " " + werte[2]
+              "change_percent": round(aenderung, 2)
           }
 
           with open('etf.json', 'w') as out:
