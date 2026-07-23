@@ -665,6 +665,7 @@ const FALLBACK = {
 };
 
 const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
+const TWELVEDATA_API_KEY = "f48e84e964d64a8bb2614177eb86a622";
 const GEMINI_MODEL = "gemini-3.6-flash";
 
 const THRESHOLDS = {
@@ -1158,22 +1159,16 @@ async function ladeDaten(){
   let etfAenderung = FALLBACK.etf_change;
   etfIstLive = false;
   try {
-    const etfRes = await fetch('https://stooq.com/q/l/?s=uetw.de&f=sd2t2ohlcv&h&e=csv');
+    const etfRes = await fetch(`https://api.twelvedata.com/quote?symbol=UETW&exchange=XETR&apikey=${TWELVEDATA_API_KEY}`);
     if (etfRes.ok) {
-      const csv = await etfRes.text();
-      const zeilen = csv.trim().split('\n');
-      if (zeilen.length > 1) {
-        const werte = zeilen[1].split(',');
-        const open = parseFloat(werte[3]);
-        const close = parseFloat(werte[6]);
-        if (!isNaN(open) && !isNaN(close) && open > 0) {
-          etfPreis = close;
-          etfAenderung = ((close - open) / open) * 100;
-          setApiDot('apiDotEtf', true);
-          etfIstLive = true;
-        } else {
-          setApiDot('apiDotEtf', false);
-        }
+      const etfJson = await etfRes.json();
+      const close = parseFloat(etfJson.close);
+      const percentChange = parseFloat(etfJson.percent_change);
+      if (!isNaN(close) && !isNaN(percentChange)) {
+        etfPreis = close;
+        etfAenderung = percentChange;
+        setApiDot('apiDotEtf', true);
+        etfIstLive = true;
       } else {
         setApiDot('apiDotEtf', false);
       }
