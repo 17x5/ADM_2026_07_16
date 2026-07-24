@@ -1,693 +1,296 @@
 <!DOCTYPE html>
-<html lang="de"><head>
-<meta http-equiv="content-type" content="text/html; charset=UTF-8">
-  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/17x5/ADM_2026_07_16/main/favicon.png">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Advanced Marktsentiment Dashboard - OnePage Final</title>
-<style>
-  :root{
-    --bg:#0d1117;
-    --panel:#151b23;
-    --panel-border:#26303b;
-    --text:#e6edf3;
-    --text-dim:#8b98a5;
-    --mono:'IBM Plex Mono','SF Mono',Consolas,monospace;
-    --sans:'IBM Plex Sans',system-ui,sans-serif;
-    --green:#3fb950;
-    --yellow:#d4a72c;
-    --red:#e5534b;
-    --accent:#58a6ff;
-    --purple:#bc8cff;
-  }
-  *{box-sizing:border-box;}
-  html, body{overflow-x:hidden;max-width:100%;}
-  body{
-    margin:0;
-    background:var(--bg);
-    color:var(--text);
-    font-family:var(--sans);
-    padding:10px 16px 20px;
-  }
-  .wrap{max-width:1200px;margin:0 auto;}
-
-  header{
-    display:flex;justify-content:space-between;align-items:center;
-    flex-wrap:wrap;gap:15px;
-    border-bottom:1px solid var(--panel-border);
-    padding-bottom:10px;margin-bottom:15px;
-  }
-  h1{font-size:16px;margin:0;letter-spacing:0.02em;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-  h1 span{font-size:14px;font-weight:normal;color:var(--text);flex-basis:100%;}
-  
-  .header-right {
-    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
-  }
-  .refresh-btn{
-    font-family:var(--mono);font-size:11px;background:var(--panel);
-    border:1px solid var(--panel-border);color:var(--accent);
-    padding:5px 10px;border-radius:4px;cursor:pointer;
-  }
-  .refresh-btn:hover{border-color:var(--accent);}
-
-  .style-slider-wrap{
-    display:flex;align-items:center;gap:6px;
-    font-family:var(--mono);font-size:10px;color:var(--text-dim);
-  }
-  .style-slider-wrap input[type=range]{
-    -webkit-appearance:none;appearance:none;
-    width:54px;height:3px;background:var(--panel-border);
-    border-radius:2px;outline:none;cursor:pointer;
-  }
-  .style-slider-wrap input[type=range]::-webkit-slider-thumb{
-    -webkit-appearance:none;appearance:none;
-    width:12px;height:12px;border-radius:50%;
-    background:var(--accent);cursor:pointer;
-  }
-  .style-slider-wrap input[type=range]::-moz-range-thumb{
-    width:12px;height:12px;border-radius:50%;
-    background:var(--accent);border:none;cursor:pointer;
-  }
-  #styleLevelLabel{color:var(--accent);min-width:58px;display:inline-block;}
-
-  .status-tag {
-    font-family:var(--mono);font-size:11px;line-height:1.4;
-    padding:4px 10px;border-radius:4px;border:1px solid var(--panel-border);
-  }
-  .status-tag.live{background:#0d2818;border-color:var(--green);color:#7ee2a8;}
-  .status-tag.stale{background:#2a2410;border-color:var(--yellow);color:#e8c766;}
-
-  .api-status { display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:10px; color:var(--text-dim); }
-  .api-dot { width:8px; height:8px; border-radius:50%; background:var(--text-dim); flex-shrink:0; transition:background-color 0.2s; }
-  .api-dot.ok { background:var(--green); box-shadow:0 0 4px var(--green); }
-  .api-dot.fail { background:var(--red); box-shadow:0 0 4px var(--red); }
-  .situation-ampel { display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--text-dim); margin-right:6px; vertical-align:middle; transition:background-color 0.2s, box-shadow 0.2s; }
-  .situation-ampel.gruen { background:var(--green); box-shadow:0 0 5px var(--green); }
-  .situation-ampel.gelb  { background:var(--yellow); box-shadow:0 0 5px var(--yellow); }
-  .situation-ampel.rot   { background:var(--red); box-shadow:0 0 5px var(--red); }
-  .situation-ampel.purple{ background:var(--purple); box-shadow:0 0 5px var(--purple); }
-
-  .fazit{
-    background:var(--panel);border:1px solid var(--panel-border);
-    border-radius:8px;margin-bottom:15px;overflow:hidden;
-  }
-  .fazit h2{
-    font-size:13px;text-transform:uppercase;letter-spacing:0.06em;
-    background:#1f4e79;color:var(--accent);margin:0;
-    padding:6px 16px;font-weight:bold;border-bottom:1px solid var(--accent);
-  }
-  #fazitInhalt {
-    padding:12px 16px;
-  }
-  .fazit-section { margin-bottom: 6px; }
-  .fazit-section:last-child { margin-bottom: 0; }
-  .fazit-label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); margin-bottom: 2px; }
-  .fazit-p { margin: 0; font-size: 14px; line-height: 1.4; }
-  
-  .fazit-change { font-family: var(--mono); font-size: 12px; margin-top: 6px; padding-top: 4px; border-top: 1px dashed var(--panel-border); }
-
-  .action-box {
-    margin-top: 10px;
-    background: #0d1117;
-    border-left: 4px solid var(--accent);
-    border-radius: 0 6px 6px 0;
-    overflow: hidden;
-  }
-  .action-header {
-    padding: 8px 12px;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    user-select: none;
-  }
-  .action-header h3 {
-    margin: 0;
-    font-size: 12px;
-    text-transform: uppercase;
-    font-family: var(--mono);
-    letter-spacing: 0.05em;
-  }
-  .action-toggle-icon {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text-dim);
-  }
-  .action-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.22s ease-out, padding 0.22s ease-out;
-    padding: 0 12px;
-  }
-  .action-box.open .action-content {
-    max-height: 250px;
-    padding-bottom: 10px;
-  }
-  .action-list { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.4; }
-  .action-list li { margin-bottom: 4px; }
-  .action-list li:last-child { margin-bottom: 0; }
-
-  /* DASHBOARD GRID */
-  .dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-    gap: 15px;
-    margin-bottom: 15px;
-  }
-  @media (max-width: 600px) {
-    .dashboard-grid {
-      grid-template-columns: 1fr;
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finanz-Sentiment Dashboard</title>
+  <style>
+    :root {
+      --bg-dark: #0d1117;
+      --card-bg: #161b22;
+      --card-border: #30363d;
+      --text-main: #c9d1d9;
+      --text-dim: #8b98a5;
+      --green: #238636;
+      --yellow: #d29922;
+      --red: #da3633;
+      --purple: #8957e5;
     }
-  }
 
-  .kachel-fazit-box {
-    margin-top: 8px;
-    background: #0d1117;
-    border: 1px solid var(--panel-border);
-    border-radius: 6px;
-    overflow: hidden;
-  }
-  .kachel-fazit-header {
-    padding: 6px 10px;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    user-select: none;
-    background: #161b22;
-  }
-  .kachel-fazit-header h4 {
-    margin: 0;
-    font-size: 11px;
-    text-transform: uppercase;
-    font-family: var(--mono);
-    color: var(--text-dim);
-    letter-spacing: 0.05em;
-  }
-  .kachel-fazit-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.22s ease-out, padding 0.22s ease-out;
-    padding: 0 10px;
-    font-size: 13px;
-    line-height: 1.45;
-  }
-  .kachel-fazit-box.open .kachel-fazit-content {
-    max-height: 450px;
-    padding: 10px 12px;
-  }
-
-  .group-box {
-    background: var(--panel);
-    border: 1px solid var(--panel-border);
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-bottom: 0px;
-    min-width: 0;
-  }
-  .group-title {
-    font-family: var(--sans);
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--accent);
-    margin: 0 0 6px 0;
-    border-bottom: 1px solid var(--panel-border);
-    padding-bottom: 4px;
-    font-weight: 600;
-  }
-
-  .quick-row {
-    display: flex;
-    flex-wrap: nowrap;
-    align-items: center;
-    font-family: var(--sans);
-    font-size: 13px;
-    line-height: 1.4;
-    padding: 6px 0;
-    border-bottom: 1px solid #161b22;
-  }
-  .quick-row:last-child { border-bottom: none; }
-  
-  .q-ampel { width: 24px; flex-shrink: 0; font-size: 13px; }
-  
-  .q-bar-container { width: 70px; background: #21262d; height: 6px; border-radius: 3px; margin-right: 10px; flex-shrink: 0; overflow: hidden; }
-  .q-bar-fill { height: 100%; width: 0%; transition: width 0.4s, background-color 0.4s; }
-  
-  .q-val { width: 110px; text-align: left; flex-shrink: 0; font-weight: 600; font-family: var(--mono); font-size: 12px; }
-  
-  .q-arrow { width: 20px; text-align: center; font-size: 10px; margin-right: 6px; flex-shrink: 0; }
-
-  .q-text { flex-grow: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .q-text b { font-size: 13px; color: var(--text); }
-  .q-desc { color: var(--text-dim); font-size: 11px; margin-left: 6px; }
-  .q-stale-note { flex-basis: 100%; margin-top: 4px; margin-left: 34px; font-size: 11px; }
-
-  @media (max-width: 600px) {
-    html, body {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
     }
-    html::-webkit-scrollbar, body::-webkit-scrollbar {
-      display: none;
+
+    .dashboard-container {
+      max-width: 900px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
     }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-top: 0;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .btn {
+      background-color: #21262d;
+      color: var(--text-main);
+      border: 1px solid var(--card-border);
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .btn:hover {
+      background-color: #30363d;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .status-tag {
+      font-size: 0.85rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: #21262d;
+    }
+
+    .status-tag.live { color: var(--green); border: 1px solid var(--green); }
+    .status-tag.stale { color: var(--yellow); border: 1px solid var(--yellow); }
+
+    /* Quick Row Design */
     .quick-row {
-      flex-wrap: nowrap;
+      display: grid;
+      grid-template-columns: 30px 100px 110px 30px 1fr;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #21262d;
     }
-    .group-box {
-      width: max-content;
-      min-width: 100%;
+
+    .quick-row:last-child {
+      border-bottom: none;
     }
-    .q-val {
-      width: 90px;
-      font-size: 11px;
+
+    .q-ampel { font-size: 1.2rem; text-align: center; }
+    .q-bar-container { background: #21262d; height: 8px; border-radius: 4px; overflow: hidden; }
+    .q-bar-fill { height: 100%; transition: width 0.3s ease; }
+    .q-val { font-weight: 600; font-size: 0.95rem; text-align: right; }
+    .q-arrow { text-align: center; font-weight: bold; }
+    .q-text { display: flex; flex-direction: column; }
+    .q-desc { font-size: 0.8rem; color: var(--text-dim); }
+
+    /* Collapsible Boxes */
+    .collapsible-box {
+      display: none;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid var(--card-border);
+      font-size: 0.9rem;
+      color: var(--text-dim);
     }
-    .q-text {
-      flex-shrink: 0;
-      white-space: nowrap;
-      overflow: visible;
-      text-overflow: clip;
-      min-width: max-content;
-      padding-right: 14px;
+
+    .collapsible-box.open { display: block; }
+
+    .toggle-link {
+      color: #58a6ff;
+      cursor: pointer;
+      font-size: 0.85rem;
+      text-decoration: none;
     }
-  }
 
-  .welle-container {
-    background: var(--panel);
-    border: 1px solid var(--panel-border);
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-top: 15px;
-  }
-  .welle-title {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-dim);
-    margin: 0 0 10px 0;
-    font-weight: 600;
-  }
-  .welle-graphic-box {
-    display: flex;
-    justify-content: center;
-    padding: 16px 0;
-    background: #0d1117;
-    border-radius: 6px;
-    overflow-x: auto;
-  }
-  .welle-svg {
-    width: 100%;
-    max-width: 600px;
-    height: auto;
-  }
+    .toggle-link:hover { text-decoration: underline; }
 
-  @keyframes pulse-red {
-    0% { r: 5px; opacity: 1; stroke-width: 0; }
-    50% { r: 9px; opacity: 0.6; stroke-width: 3px; }
-    100% { r: 5px; opacity: 1; stroke-width: 0; }
-  }
-  .pulse-node {
-    animation: pulse-red 2s infinite ease-in-out;
-    stroke: var(--red);
-  }
+    /* API Status Dots */
+    .api-dots { display: flex; gap: 8px; font-size: 0.75rem; color: var(--text-dim); margin-top: 5px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #484f58; display: inline-block; }
+    .dot.ok { background: var(--green); }
+    .dot.fail { background: var(--red); }
 
-  .legende-kachel {
-    background: var(--panel);
-    border: 1px solid var(--panel-border);
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-top: 15px;
-  }
-  .legende-title {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-dim);
-    margin: 0 0 10px 0;
-    font-weight: 600;
-  }
-  .legende-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 10px;
-  }
-  .legende-item {
-    background: #0d1117;
-    border-left: 3px solid var(--panel-border);
-    padding: 8px 12px;
-    border-radius: 0 4px 4px 0;
-    opacity: 0.45;
-    transition: opacity 0.3s;
-  }
-  .legende-item.active {
-    opacity: 1;
-    border-left-width: 4px;
-    background: #1c1618;
-  }
-  .legende-name {
-    font-family: var(--mono);
-    font-size: 11px;
-    font-weight: bold;
-    margin-bottom: 2px;
-  }
-  .legende-desc {
-    font-size: 11px;
-    color: var(--text-dim);
-    line-height: 1.4;
-  }
-  .legende-item.active .legende-desc {
-    color: var(--text);
-  }
+    /* Welle / Legende SVG */
+    .legende-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 15px;
+    }
 
-  .link-kachel {
-    background: var(--panel);
-    border: 1px solid var(--panel-border);
-    border-radius: 8px;
-    padding: 14px;
-    margin-top: 15px;
-    display: block;
-    text-decoration: none;
-    transition: border-color 0.2s, background-color 0.2s;
-  }
-  .link-kachel:hover {
-    border-color: var(--accent);
-    background: #171f29;
-  }
-  .link-kachel-header {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 10px;
-    border-bottom: 1px solid var(--panel-border);
-    padding-bottom: 6px;
-    margin-bottom: 10px;
-  }
-  .link-kachel-title {
-    font-size: 13px;
-    font-weight: bold;
-    color: var(--text);
-  }
-  .link-kachel-arrow {
-    color: var(--accent);
-    font-size: 11px;
-    font-weight: bold;
-    background: #1c2635;
-    padding: 2px 6px;
-    border-radius: 4px;
-    border: 1px solid #263850;
-    white-space: nowrap;
-  }
-  .link-kachel:hover .link-kachel-arrow {
-    background: var(--accent);
-    color: var(--bg);
-  }
+    .legende-item {
+      background: #0d1117;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid var(--card-border);
+      font-size: 0.8rem;
+    }
 
-  .eingebettete-analyse {
-    background: #0d1117;
-    border: 1px solid var(--panel-border);
-    border-radius: 6px;
-    padding: 10px 12px;
-    margin-bottom: 12px;
-    font-size: 12px;
-    line-height: 1.4;
-    color: var(--text);
-  }
-  .eingebettete-analyse-title {
-    font-family: var(--mono);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-dim);
-    margin-bottom: 4px;
-  }
-  .eingebettete-analyse-p {
-    margin: 0;
-  }
+    .legende-item.active {
+      border-color: #58a6ff;
+    }
 
-  .link-kachel-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 12px;
-  }
-  .kachel-section h4 {
-    margin: 0 0 4px 0;
-    font-size: 11px;
-    text-transform: uppercase;
-    font-family: var(--mono);
-    color: var(--text);
-    letter-spacing: 0.02em;
-  }
-  .kachel-section ul {
-    margin: 0;
-    padding-left: 14px;
-    font-size: 11px;
-    color: var(--text-dim);
-    line-height: 1.4;
-  }
-  .kachel-section li {
-    margin-bottom: 3px;
-  }
-  .kachel-section li:last-child {
-    margin-bottom: 0;
-  }
-  .kachel-section li strong {
-    color: var(--text);
-  }
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
 
-  footer{margin-top:16px;font-size:11px;color:var(--text-dim);text-align:center;line-height:1.6;}
-</style>
+    .situation-ampel {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+    .situation-ampel.gruen { background-color: var(--green); }
+    .situation-ampel.gelb { background-color: var(--yellow); }
+    .situation-ampel.rot { background-color: var(--red); }
+    .situation-ampel.purple { background-color: var(--purple); }
+  </style>
 </head>
 <body>
-<div class="wrap">
 
-  <header>
-    <h1>Advanced Marktsentiment Dashboard <span id="versionStamp" style="font-family:var(--mono);font-size:10px;color:var(--yellow);border:1px solid var(--yellow);border-radius:4px;padding:1px 6px;vertical-align:middle;"></span></h1>
-    <div class="header-right">
-      <div class="api-status" title="Zeigt, ob die externen API-Keys aktuell funktionieren">
-        <span class="api-dot" id="apiDotGemini"></span>Gemini
-        <span class="api-dot fail" id="apiDotEtf"></span>ETF
-        <span class="api-dot ok" id="apiDotCrypto"></span>BTC
-        <span class="api-dot fail" id="apiDotMetal"></span>Metal
+<div class="dashboard-container">
+
+  <!-- HEADER -->
+  <div class="header-bar">
+    <div>
+      <h2 style="margin:0;">Markt-Sentiment Dashboard</h2>
+      <div class="api-dots">
+        <span>CNN <span id="apiDotGemini" class="dot"></span></span>
+        <span>Crypto <span id="apiDotCrypto" class="dot"></span></span>
+        <span>Metalle <span id="apiDotMetal" class="dot"></span></span>
+        <span>ETF <span id="apiDotEtf" class="dot"></span></span>
       </div>
-      <div class="style-slider-wrap" title="Sprachniveau der KI-Analyse einstellen">
-        <input type="range" id="styleLevelSlider" min="0" max="2" step="1" value="1" oninput="onStyleLevelChange(this.value)">
-        <span id="styleLevelLabel">Erfahrener Anleger</span>
-      </div>
-      <button class="refresh-btn" id="refreshBtn" onclick="ladeDaten()">↻ Live-Daten abrufen</button>
-      <div class="status-tag live" id="statusIndicator">Lade Zeitstempel...</div>
     </div>
-  </header>
-
-  <div class="fazit">
-    <h2>Gesamtfazit &amp; Strategie-Check</h2>
-    <div id="fazitInhalt">
-      <div class="fazit-section">
-        <div class="fazit-label"><span class="situation-ampel" id="situationAmpelDot"></span>Aktuelles Sentiment:</div>
-        <p class="fazit-p" id="gesamtfazitText">⏳ Analyse wird generiert…</p>
-        <div class="fazit-change" id="fazitChangeEl"></div>
-      </div>
-      <div id="actionBox" class="action-box">
-        <div class="action-header" onclick="toggleActionBox()">
-          <h3 style="color:var(--accent);">Deine Actions:</h3>
-          <span id="actionToggleIcon" class="action-toggle-icon">▶ Anzeigen</span>
-        </div>
-        <div class="action-content">
-          <ul class="action-list" id="actionListEl"><li>⏳ Empfehlungen werden geladen…</li></ul>
-        </div>
+    <div style="text-align: right;">
+      <button id="refreshBtn" class="btn" onclick="ladeDaten()">🔄 Aktualisieren</button>
+      <div style="margin-top: 5px;">
+        <span id="statusIndicator" class="status-tag stale">Lade Daten...</span>
       </div>
     </div>
   </div>
 
-  <div class="group-box" style="margin-bottom: 15px;">
-    <div class="group-title">Mein ETF</div>
+  <!-- GESAMTLAGE & FAZIT -->
+  <div class="card">
+    <div class="card-title">
+      <span><span id="situationAmpelDot" class="situation-ampel gelb"></span> Gesamtlage & KI-Analyse</span>
+      <span id="versionStamp" style="font-size: 0.75rem; color: var(--text-dim);"></span>
+    </div>
+    
+    <div class="slider-container">
+      <label for="styleLevelSlider" style="font-size:0.85rem;">Analyse-Niveau:</label>
+      <input type="range" id="styleLevelSlider" min="0" max="2" value="1" onchange="onStyleLevelChange(this.value)">
+      <span id="styleLevelLabel" style="font-size:0.85rem; font-weight:600;">Erfahrener Anleger</span>
+    </div>
+
+    <div id="fazitChangeEl" style="margin-bottom: 10px; font-size: 0.9rem;"></div>
+    <div id="gesamtfazitText" style="font-size: 0.95rem; line-height: 1.4; margin-bottom: 15px;">
+      Analyse wird geladen...
+    </div>
+
+    <div>
+      <a class="toggle-link" onclick="toggleActionBox()">Handlungsempfehlungen <span id="actionToggleIcon">▶ Anzeigen</span></a>
+      <div id="actionBox" class="collapsible-box">
+        <ul id="actionListEl" style="margin:0; padding-left:20px;"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ETF KACHEL -->
+  <div class="card">
+    <div class="card-title">UBS Core MSCI World ETF</div>
     <div id="rowsSectionETF"></div>
   </div>
 
-  <div class="dashboard-grid">
-    <div id="sentimentGroup" class="group-box">
-      <div class="group-title">Sentiment &amp; Markt-Nervosität</div>
-      <div id="rowsSection1"></div>
-      <div class="kachel-fazit-box" id="fazitBox1">
-        <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox1')">
-          <h4>📋 Kachel-Fazit: Sentiment &amp; Liquidität</h4>
-          <span class="action-toggle-icon">▶ Anzeigen</span>
-        </div>
-        <div class="kachel-fazit-content" id="fazitContent1"><span style="color:var(--text-dim);">⏳ Analyse wird generiert…</span></div>
-      </div>
-    </div>
-
-    <div id="trendGroup" class="group-box">
-      <div class="group-title">Trend- &amp; Sicherheits-Schutz</div>
-      <div id="rowsSection2"></div>
-      <div class="kachel-fazit-box" id="fazitBox2">
-        <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox2')">
-          <h4>📋 Kachel-Fazit: Trend &amp; Marktbreite</h4>
-          <span class="action-toggle-icon">▶ Anzeigen</span>
-        </div>
-        <div class="kachel-fazit-content" id="fazitContent2"><span style="color:var(--text-dim);">⏳ Analyse wird generiert…</span></div>
-      </div>
-    </div>
-
-    <div id="structureGroup" class="group-box">
-      <div class="group-title">Markt-Struktur &amp; Liquidität</div>
-      <div id="rowsSection3"></div>
-      <div class="kachel-fazit-box" id="fazitBox3">
-        <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox3')">
-          <h4>📋 Kachel-Fazit: Struktur &amp; Fremdkapital-Hebel</h4>
-          <span class="action-toggle-icon">▶ Anzeigen</span>
-        </div>
-        <div class="kachel-fazit-content" id="fazitContent3"><span style="color:var(--text-dim);">⏳ Analyse wird generiert…</span></div>
-      </div>
-    </div>
-
-    <div id="commodityGroup" class="group-box">
-      <div class="group-title">Rohstoffe: Öl &amp; Gold</div>
-      <div id="rowsSection4"></div>
-      <div class="kachel-fazit-box" id="fazitBox4">
-        <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox4')">
-          <h4>📋 Kachel-Fazit: Gold-Öl-Ratio</h4>
-          <span class="action-toggle-icon">▶ Anzeigen</span>
-        </div>
-        <div class="kachel-fazit-content" id="fazitContent4"><span style="color:var(--text-dim);">⏳ Analyse wird generiert…</span></div>
-      </div>
-    </div>
+  <!-- KACHEL 1: SENTIMENT -->
+  <div class="card">
+    <div class="card-title">1. Sentiment & Risiko-Radar</div>
+    <div id="rowsSection1"></div>
+    <a class="toggle-link" onclick="toggleKachelFazit('kachelBox1')">Fazit <span class="action-toggle-icon">▶ Anzeigen</span></a>
+    <div id="kachelBox1" class="collapsible-box"><div id="fazitContent1"></div></div>
   </div>
 
-  <div class="welle-container">
-    <div class="welle-title">Modell-Visualisierung: Der vollständige 8-Wellen-Zyklus</div>
-    <div class="welle-graphic-box">
-      <svg class="welle-svg" viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg">
-        <line x1="0" y1="180" x2="600" y2="180" stroke="#1f242c" stroke-dasharray="3"></line>
-        <line x1="0" y1="40" x2="600" y2="40" stroke="#1f242c" stroke-dasharray="3"></line>
-        
-        <rect x="470" y="25" width="80" height="110" fill="#2d1315" opacity="0.4" rx="4"></rect>
-        <text x="510" y="20" fill="#ff7b72" font-family="sans-serif" font-size="8" font-weight="bold" text-anchor="middle">GEFAHRENZONE</text>
-
-        <path d="M 30,180 L 110,110 L 160,140 L 320,50 L 380,115" fill="none" stroke="#2c3540" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-        
-        <path d="M 380,115 L 450,35 L 495,125 L 535,65 L 580,210" fill="none" stroke="var(--red)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
-              
-        <circle cx="110" cy="110" r="3" fill="#2c3540"></circle>
-        <circle cx="160" cy="140" r="3" fill="#2c3540"></circle>
-        <circle cx="320" cy="50" r="3" fill="#2c3540"></circle>
-        <circle cx="380" cy="115" r="3" fill="#2c3540"></circle>
-
-        <circle cx="450" cy="35" r="4.5" fill="var(--purple)"></circle>
-        <circle cx="495" cy="125" r="4" fill="var(--yellow)"></circle>
-        <circle cx="580" cy="210" r="5" fill="var(--red)"></circle>
-        
-        <circle id="wellePunkt" cx="535" cy="65" r="5" fill="var(--red)" class="pulse-node" style="fill: var(--red); stroke: var(--red);"></circle> 
-
-        <text x="25" y="195" fill="#485565" font-family="monospace" font-size="10">W1 Start</text>
-        <text x="105" y="95" fill="#485565" font-family="monospace" font-size="10">W1</text>
-        <text x="155" y="155" fill="#485565" font-family="monospace" font-size="10">W2</text>
-        <text x="315" y="35" fill="#8b98a5" font-family="monospace" font-size="10">W3</text>
-        <text x="385" y="130" fill="#485565" font-family="monospace" font-size="10">W4</text>
-        
-        <text x="450" y="22" fill="var(--purple)" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">W5 Top</text>
-        <text x="495" y="142" fill="var(--yellow)" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">Welle A</text>
-        <text id="welleIstLabel" x="535" y="50" fill="var(--red)" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" style="fill: var(--red);">Welle B (IST)</text>
-        <text x="580" y="228" fill="var(--red)" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">Welle C 💥</text>
-      </svg>
-    </div>
+  <!-- KACHEL 2: TREND & SCHWUNG -->
+  <div class="card">
+    <div class="card-title">2. Trend & Markt-Schwung</div>
+    <div id="rowsSection2"></div>
+    <a class="toggle-link" onclick="toggleKachelFazit('kachelBox2')">Fazit <span class="action-toggle-icon">▶ Anzeigen</span></a>
+    <div id="kachelBox2" class="collapsible-box"><div id="fazitContent2"></div></div>
   </div>
 
-  <div class="legende-kachel">
-    <div class="legende-title">Erläuterung der Marktphasen</div>
-    <div class="legende-grid" id="legendeGrid">
-      <div class="legende-item" id="leg_W1" style="border-left-color: var(--green); background-color: rgb(13, 17, 23);">
-        <div class="legende-name" style="color: var(--green);">WELLE 1: DER AUFBRUCH</div>
-        <div class="legende-desc">Erste zaghafte Erholung nach einem harten Bärenmarkt. Meist nur von institutionellen Investoren getragen.</div>
-      </div>
-      <div class="legende-item" id="leg_W2" style="border-left-color: var(--green); background-color: rgb(13, 17, 23);">
-        <div class="legende-name" style="color: var(--green);">WELLE 2: DER RÜCKSTAU</div>
-        <div class="legende-desc">Scharfer Rücksetzer, da Anleger noch mit der alten Angst kämpfen. Wichtig: Welle 2 macht niemals neue Tiefs.</div>
-      </div>
-      <div class="legende-item" id="leg_W3" style="border-left-color: var(--green); background-color: rgb(13, 17, 23);">
-        <div class="legende-name" style="color: var(--green);">WELLE 3: DIE BREITE MASSE</div>
-        <div class="legende-desc">Die längste, stärkste und profitabelste Aufwärtsbewegung. Fundamentaldaten drehen, exzellente Marktbreite stützt den Aufstieg.</div>
-      </div>
-      <div class="legende-item" id="leg_W4" style="border-left-color: var(--green); background-color: rgb(13, 17, 23);">
-        <div class="legende-name" style="color: var(--green);">WELLE 4: DIE KONSOLIDIERUNG</div>
-        <div class="legende-desc">Gewinnmitnahmen führen zu einer unruhigen Seitwärts- oder Abwärtsphase. Bietet die letzte gesunde Kaufgelegenheit.</div>
-      </div>
-      <div class="legende-item" id="leg_W5" style="border-left-color: var(--purple); background-color: rgb(13, 17, 23);">
-        <div class="legende-name" style="color: var(--purple);">WELLE 5: DIE EUPHORIE</div>
-        <div class="legende-desc">Finale Übertreibung angetrieben durch FOMO und Kleinanleger. Indizes erreichen Allzeithochs, während Grossanleger bereits unbemerkt verkaufen.</div>
-      </div>
-      <div class="legende-item" id="leg_WelleA" style="border-left-color: var(--yellow); background-color: rgb(13, 17, 23);">
-        <div class="legende-name" style="color: var(--yellow);">WELLE A: DER WARNSCHUSS</div>
-        <div class="legende-desc">Der erste abrupte Kurseinbruch. Wird von der Masse unterschätzt und fälschlicherweise als günstige Nachkaufchance bewertet.</div>
-      </div>
-      <div class="legende-item active" id="leg_WelleB" style="border-left-color: var(--red); background-color: rgb(28, 22, 24);">
-        <div class="legende-name" style="color: var(--red);">WELLE B: MARKT-ILLUSION</div>
-        <div class="legende-desc">Die gefährlichste Bullenfalle im Zyklus. Die Kurse steigen noch mal an, täuschen Stabilität vor, aber die Marktbreite (A/D &lt; 35) ist kollabiert. Notausstieg vor Welle C!</div>
-      </div>
-      <div class="legende-item" id="leg_WelleC" style="border-left-color: var(--red); background-color: rgb(13, 17, 23);">
-        <div class="legende-name" style="color: var(--red);">WELLE C: DIE KAPITULATION</div>
-        <div class="legende-desc">Die zerstörerische Panikphase. Ein scharfer, rücksichtsloser Abverkauf weit unter das Niveau der Welle A. Erst danach startet der neue Zyklus.</div>
-      </div>
-    </div>
-  </div>
-
-  <a class="link-kachel" href="https://de.tradingview.com/script/9iof2PC9/" target="_blank">
-    <div class="link-kachel-header">
-      <div class="link-kachel-title">🌐 S&amp;P 500 Bottom Finder, von Eric Ludwig</div>
-      <div class="link-kachel-arrow">↗ Script öffnen</div>
-    </div>
+  <!-- BOTTOM FINDER / ELLIOTT-WELLEN GRAPH -->
+  <div class="card">
+    <div class="card-title">Marktzyklus & Marktbreite (Bottom Finder)</div>
+    <div id="bottomFinderAnalyseText" style="font-size: 0.9rem; margin-bottom: 15px;"></div>
     
-    <div class="eingebettete-analyse">
-      <div class="eingebettete-analyse-title">🔎 Modell-Kurzanalyse (Bottom Finder Status)</div>
-      <div class="eingebettete-analyse-p" id="bottomFinderAnalyseText">
-        Dynamische Status-Analyse wird geladen...
-      </div>
-    </div>
+    <svg viewBox="0 0 650 250" style="width:100%; height:auto; background:#0d1117; border-radius:6px; border: 1px solid var(--card-border);">
+      <path d="M 50 200 L 150 120 L 220 160 L 320 50 L 400 110 L 450 35 L 495 125 L 535 65 L 580 210" fill="none" stroke="#30363d" stroke-width="3"/>
+      <circle id="wellePunkt" cx="320" cy="50" r="6" fill="var(--green)" stroke="var(--green)" stroke-width="2" />
+      <text id="welleIstLabel" x="320" y="35" fill="var(--green)" font-size="12" font-weight="bold" text-anchor="middle">Trend (IST)</text>
+    </svg>
 
-    <div class="link-kachel-grid">
-      <div class="kachel-section">
-        <h4>1. Pre-Bottom-Signal (Blau)</h4>
-        <ul>
-          <li><strong>Bedingung:</strong> S5FI &lt; 20 (Weniger als 20% der S&amp;P 500 Aktien über ihrem 50-Tage-Schnitt)</li>
-          <li><strong>Interpretation:</strong> Extrem schwache Marktbreite – Gegenbewegung könnte bevorstehen.</li>
-        </ul>
-      </div>
-      <div class="kachel-section">
-        <h4>2. Bottom-Signal (Grün)</h4>
-        <ul>
-          <li><strong>Basis:</strong> Advance Decline Differenz der NYSE (Ticker: NSHF)</li>
-          <li><strong>Bedingung:</strong> 50-Tage-SMA heute &gt; vor 10 Tagen + blaues Signal innerhalb der letzten 10 Bars.</li>
-          <li><strong>Interpretation:</strong> Mittelfristige Marktbreite dreht nachhaltig nach oben.</li>
-        </ul>
-      </div>
-      <div class="kachel-section">
-        <h4>Darstellung &amp; Handhabung</h4>
-        <ul>
-          <li><strong>Overlays:</strong> Blau signalisiert Pre-Bottom, Grün signalisiert das bestätigte Bottom.</li>
-          <li><strong>Fehlausbrüche:</strong> Kein Signal ist perfekt; falsche Ausbrüche kommen vor.</li>
-        </ul>
-      </div>
-      <div class="kachel-section">
-        <h4>Tipps &amp; Hinweise</h4>
-        <ul>
-          <li><strong>Bestätigung:</strong> Nutze zusätzlich Momentum (RSI/MACD) oder Volumen.</li>
-          <li><strong>Risiko:</strong> Immer striktes Stop-Loss- &amp; Positionsmanagement anwenden.</li>
-          <li><strong>Praxis:</strong> Vor dem Live-Einsatz im präferierten Zeitrahmen backtesten.</li>
-        </ul>
-      </div>
+    <div class="legende-grid">
+      <div id="leg_W3" class="legende-item"><b>Welle 3:</b> Starker Aufwärtstrend</div>
+      <div id="leg_W5" class="legende-item"><b>Welle 5:</b> Finale Überhitzung</div>
+      <div id="leg_WelleA" class="legende-item"><b>Welle A:</b> Erste Korrektur</div>
+      <div id="leg_WelleB" class="legende-item"><b>Welle B:</b> Bärenmarkt-Falle</div>
+      <div id="leg_WelleC" class="legende-item"><b>Welle C:</b> Finaler Ausverkauf</div>
     </div>
-  </a>
+  </div>
 
-  <footer>
-    Impressum: Leonardo Curcuruto © 2026, Switzerland
-  </footer>
+  <!-- KACHEL 3: AKTIE & STRUKTUR -->
+  <div class="card">
+    <div class="card-title">3. Marktstruktur & Marktbreite</div>
+    <div id="rowsSection3"></div>
+    <a class="toggle-link" onclick="toggleKachelFazit('kachelBox3')">Fazit <span class="action-toggle-icon">▶ Anzeigen</span></a>
+    <div id="kachelBox3" class="collapsible-box"><div id="fazitContent3"></div></div>
+  </div>
+
+  <!-- KACHEL 4: ROHSTOFFE -->
+  <div class="card">
+    <div class="card-title">4. Rohstoffe & Makro-Indikatoren</div>
+    <div id="rowsSection4"></div>
+    <a class="toggle-link" onclick="toggleKachelFazit('kachelBox4')">Fazit <span class="action-toggle-icon">▶ Anzeigen</span></a>
+    <div id="kachelBox4" class="collapsible-box"><div id="fazitContent4"></div></div>
+  </div>
+
 </div>
 
+<!-- LOGIK & JAVASCRIPT -->
 <script>
 // =========================================================================
 // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN:
-const APP_VERSION = "TEST BUILD 2026-07-24 18:15";
+const APP_VERSION = "BUILD 2026-07-24";
 // =========================================================================
 
 const FALLBACK = {
@@ -782,7 +385,6 @@ function getHexColor(color) {
   return '#8b98a5';
 }
 
-// Erweitere buildQuickRowHTML um den optionalen Parameter 'arrowColor'
 function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, arrowChar, arrowColor) {
   const dim = isStale ? 'opacity:0.45;' : '';
   const arrow = arrowChar || '▲';
@@ -891,7 +493,6 @@ function render(data){
     activeItem.style.backgroundColor = '#1c1618';
   }
 
-  // Bottom Finder Text
   const bfTextEl = document.getElementById('bottomFinderAnalyseText');
   if(bfTextEl) {
     bfTextEl.innerHTML = `
@@ -901,28 +502,28 @@ function render(data){
     `;
   }
 
-  // --- SAUBERE TRENNUNG ETF-PFEIL & AMPEL ---
+  // --- ETF LOGIK (PFEIL = TAGESGEWINN, AMPEL = TREND) ---
   let etfChangeVal = data.etf_change || 0;
   
-  // 1. Pfeil & Pfeilfarbe richten sich ausschliesslich nach der Kursänderung
+  // Pfeil & Pfeilfarbe richten sich STRIKT nach der Tagesveränderung (+ = ▲ in GRÜN / - = ▼ in ROT)
   let etfArrow = etfChangeVal >= 0 ? "▲" : "▼";
   let etfArrowColor = etfChangeVal >= 0 ? "gruen" : "rot"; 
 
-  // 2. Trend-Score & Ampelfarbe richten sich nach dem Momentum-Modell
+  // Trend-Score & Ampel für ETF
   let momScoreETFTrend = momentum ? momentum.score : 50;
   let etfAmpelColor = momScoreETFTrend < 35 ? "rot" : (momScoreETFTrend > 75 ? "purple" : "gelb");
   const etfPercent = Math.min(100, Math.max(10, momScoreETFTrend));
   const formattedEtfPreis = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(data.etf_price || FALLBACK.etf_price);
 
   const etfRowHtml = buildQuickRowHTML(
-    etfAmpelColor,   // Zeilen- & Balkenfarbe (Trend-Score)
+    etfAmpelColor,   // Trend-Farbe
     "UBS Core MSCI World (UETW.DE)", 
     "Trend- & Momentum-Score (Modell 1: EMA50/200 & Markt-Schwung)", 
     etfPercent, 
     formattedEtfPreis + " (" + (etfChangeVal >= 0 ? "+" : "") + etfChangeVal.toFixed(2) + "%)", 
     !etfIstLive, 
     etfArrow,
-    etfArrowColor    // Pfeilfarbe (Grün bei Plus, Rot bei Minus)
+    etfArrowColor    // <-- Garantierte Tagesgewinn-Farbe (Grün bei Plus)
   );
   document.getElementById('rowsSectionETF').innerHTML = etfRowHtml;
 
@@ -1285,4 +886,5 @@ document.getElementById('versionStamp').textContent = APP_VERSION;
 ladeDaten();
 </script>
 
-</body></html>
+</body>
+</html>
