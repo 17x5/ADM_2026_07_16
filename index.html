@@ -463,7 +463,7 @@
 <div class="wrap">
 
   <header>
-    <h1>Advanced Marktsentiment Dashboard <span style="font-size:14px;font-weight:normal;color:var(--text);">• Keine Anlageberatung •</span> <span style="font-family:var(--mono);font-size:10px;color:var(--yellow);border:1px solid var(--yellow);border-radius:4px;padding:1px 6px;vertical-align:middle;">TEST BUILD 2026-07-24 16:20</span></h1>
+    <h1>Advanced Marktsentiment Dashboard <span id="versionStamp" style="font-family:var(--mono);font-size:10px;color:var(--yellow);border:1px solid var(--yellow);border-radius:4px;padding:1px 6px;vertical-align:middle;"></span></h1>
     <div class="header-right">
       <div class="api-status" title="Zeigt, ob die externen API-Keys aktuell funktionieren">
         <span class="api-dot" id="apiDotGemini"></span>Gemini
@@ -487,7 +487,7 @@
       <div class="fazit-label"><span class="situation-ampel" id="situationAmpelDot"></span>Deine Situation:</div>
       <p class="fazit-p" id="gesamtfazitText">⏳ Analyse wird generiert…</p>
       <div class="fazit-change" style="color: var(--red);">
-        <strong>Veränderung zum letzten Handelstag:</strong> ▼ -0.1 Punkte im Vergleich zum Vortag (40)
+        <strong>VIX (Marktvolatilität) zum Vortag:</strong> ▼ -0.1 Punkte im Vergleich zum Vortag (40)
       </div>
     </div>
     <div id="actionBox" class="action-box" style="border-left-color:var(--accent);">
@@ -556,9 +556,9 @@
     </div>
   
     <div class="quick-row">
-      <div class="q-ampel" style="">🟡</div>
+      <div class="q-ampel" style="">🔴</div>
       <div class="q-bar-container" style="">
-        <div class="q-bar-fill" style="width: 35.2%; background-color: var(--yellow);"></div>
+        <div class="q-bar-fill" style="width: 35.2%; background-color: var(--red);"></div>
       </div>
       <div class="q-val" style="">35 / 100</div>
       <div class="q-arrow" style="color: var(--yellow); ">▲</div>
@@ -840,6 +840,11 @@ klassische Bullenfalle vor dem Einsetzen der Welle C.
 </div>
 
 <script>
+// =========================================================================
+// ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN:
+const APP_VERSION = "TEST BUILD 2026-07-24 16:20";
+// =========================================================================
+
 const FALLBACK = {
   timestamp: "2026-07-09T08:00:00+00:00",
   score: 42.0, 
@@ -855,7 +860,7 @@ const FALLBACK = {
     {key:"market_momentum_sp500", name:"Markt-Schwung", sub:"S&P 500 relativ zur 200-Tage-Linie", score:45.0},
     {key:"stock_price_strength", name:"Aktien-Stärke", sub:"Anzahl der 52-Wochen-Hochs vs. Tiefs", score:44.0},
     {key:"stock_price_breadth", name:"Marktbreite (A/D Basis)", sub:"Volumen steigender vs. fallender Aktien", score:23.0}, 
-    {key:"put_call_options", name:"Absicherungs-Verhältnis", sub:"Put- zu Call-Optionsvolumen", score:53.0},
+    {key:"put_call_options", name:"Absicherungs-Verhältnis", sub:"Put- zu Call-Optionsvolumen", score:35.0},
     {key:"market_volatility_vix", name:"Markt-Nervosität (VIX)", sub:"Implizite Volatilität S&P 500", score:58.0, raw_vix: 16.90}, 
     {key:"finra_margin_debt", name:"Kredit-Hebelung am Markt", sub:"FINRA Margin Debt Dynamik", score:45.0},
     {key:"technical_confirmation", name:"Trend-Bestätigung", sub:"Technische Verkaufserschöpfung", score:55.0}
@@ -882,7 +887,7 @@ const THRESHOLDS = {
   goldPreis:      { min: 1800, max: 4500 },
   oelPreis:       { rot: 90, gruen: 60, barMin: 40, barMax: 120 },
   bitcoin:        { gruen: 2, rot: -2, barFaktor: 5 },
-  putCall:        { rot: 75, gruen: 35 }
+  putCall:        { rot: 35, gelb: 55, gruen: 70 } // Börsenlehre: Niedriger Put/Call-Wert = Sorglosigkeit/Sorglosigkeits-Gefahr (Rot/Gelb), Hoher Wert = Angst/Absicherung (Grün)
 };
 
 let isLive = false;
@@ -932,8 +937,9 @@ function getHexColor(color) {
   return '#8b98a5';
 }
 
-function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale) {
+function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, arrowChar) {
   const dim = isStale ? 'opacity:0.45;' : '';
+  const arrow = arrowChar || '▲';
   return `
     <div class="quick-row">
       <div class="q-ampel" style="${dim}">${getEmojiColor(color)}</div>
@@ -941,7 +947,7 @@ function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale) {
         <div class="q-bar-fill" style="width: ${valPercent}%; background-color: ${getHexColor(color)};"></div>
       </div>
       <div class="q-val" style="${dim}">${valString}</div>
-      <div class="q-arrow" style="color: ${getHexColor(color)}; ${dim}">▲</div>
+      <div class="q-arrow" style="color: ${getHexColor(color)}; ${dim}">${arrow}</div>
       <div class="q-text" style="${dim}"><b>${title}</b><span class="q-desc">${sub}</span></div>
       ${isStale ? `<div class="q-stale-note" style="color:var(--yellow); font-weight:600;">⚠ Fallback-Wert, nicht live</div>` : ''}
     </div>
@@ -1014,6 +1020,21 @@ function render(data){
     activeItem.style.backgroundColor = '#1c1618';
   }
 
+  // Modell 1: Trend- & Momentum-Score für die ETF-Ampel
+  let momScoreETFTrend = momentum ? momentum.score : 50;
+  let etfAmpelColor = "gelb";
+  if (momScoreETFTrend >= 50 && data.score >= 45) {
+    etfAmpelColor = "gruen";
+  } else if (momScoreETFTrend < 35 || data.score < 30) {
+    etfAmpelColor = "rot";
+  }
+  let etfChangeVal = data.etf_change || 0;
+  let etfArrow = etfChangeVal >= 0 ? "▲" : "▼";
+  const formattedEtfPreis = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(data.etf_price || FALLBACK.etf_price);
+  const etfPercent = Math.min(100, Math.max(10, momScoreETFTrend));
+  const etfRowHtml = buildQuickRowHTML(etfAmpelColor, "UBS Core MSCI World (UETW.DE)", "Trend- & Momentum-Score (Modell 1: EMA50/200 & Markt-Schwung)", etfPercent, formattedEtfPreis + " (" + (etfChangeVal >= 0 ? "+" : "") + etfChangeVal.toFixed(2) + "%)", !etfIstLive, etfArrow);
+  document.getElementById('rowsSectionETF').innerHTML = etfRowHtml;
+
   let htmlS1 = "";
   let vixBarPercent = Math.min(100, Math.max(0, ((rawVix - THRESHOLDS.vix.barMin) / THRESHOLDS.vix.barMax) * 100));
   htmlS1 += buildQuickRowHTML(vixColor, "Markt-Nervosität (VIX)", "Schwankungsbreite und implizite Angstkomponente des Aktienmarktes", vixBarPercent, rawVix.toFixed(2) + " USD");
@@ -1025,9 +1046,10 @@ function render(data){
   let formattedBtcPrice = new Intl.NumberFormat('de-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(data.btc_usd);
   htmlS1 += buildQuickRowHTML(btcColor, "Bitcoin (BTC/USD)", "Spekulativer Liquiditäts- & Risk-On-Fiebermesser", btcBarPercent, formattedBtcPrice, !cryptoIstLive);
 
-  let optScore = options ? options.score : 50;
-  let optColor = optScore > THRESHOLDS.putCall.rot ? "rot" : (optScore < THRESHOLDS.putCall.gruen ? "gruen" : "gelb");
-  htmlS1 += buildQuickRowHTML(optColor, "Absicherungs-Verhältnis", "Put- zu Call-Optionsvolumen an den Terminbörsen", optScore, optScore.toFixed(0) + " / 100");
+  // Absicherungs-Verhältnis angepasst nach Börsenlehre
+  let optScore = options ? options.score : 35;
+  let optColor = optScore < THRESHOLDS.putCall.rot ? "rot" : (optScore < THRESHOLDS.putCall.gelb ? "gelb" : "gruen");
+  htmlS1 += buildQuickRowHTML(optColor, "Absicherungs-Verhältnis", "Put- zu Call-Optionsvolumen (Niedrig = Extreme Sorglosigkeit / Reversal-Gefahr)", optScore, optScore.toFixed(0) + " / 100");
   
   document.getElementById('rowsSection1').innerHTML = htmlS1;
   document.getElementById('fazitContent1').innerHTML = GEMINI_API_KEY ? `<span style="color:var(--text-dim);">⏳ Analyse wird generiert…</span>` : ``;
@@ -1169,7 +1191,7 @@ Erzeuge NUR ein valides JSON-Objekt (keine Markdown-Codeblöcke, kein Fliesstext
   "ampel": "gruen|gelb|rot (Gesamteinschätzung der Marktlage: gruen=entspannt/unkritisch, gelb=erhöhte Vorsicht, rot=hohes Risiko/Warnsignal)",
   "actions": ["konkrete, kurze Handlungsempfehlung 1", "Handlungsempfehlung 2", "Handlungsempfehlung 3"]
 }
-Sachlich, konkret, keine Übertreibungen, keine Anlageberatung im rechtlichen Sinn, kurze Sätze.`;
+Sachlich, konkret, keine Übertreibungen, kurze Sätze.`;
 
   const antwortText = await callGemini(prompt);
   if (!antwortText) {
@@ -1376,12 +1398,6 @@ async function ladeDaten(){
     setApiDot('apiDotEtf', false);
   }
 
-  const formattedEtfPreis = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(etfPreis);
-  const etfColor = etfAenderung >= 0 ? "gruen" : "rot";
-  const etfPercent = Math.min(100, Math.abs(etfAenderung) * 20);
-  const etfRowHtml = buildQuickRowHTML(etfColor, "UBS Core MSCI World (UETW.DE)", "Dein ETF-Sparplan-Kurs, Xetra", etfPercent, formattedEtfPreis + " (" + (etfAenderung >= 0 ? "+" : "") + etfAenderung.toFixed(2) + "%)", !etfIstLive);
-  document.getElementById('rowsSectionETF').innerHTML = etfRowHtml;
-
   try{
     const res = await fetch('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', { headers: {'Accept':'application/json'} });
     if(!res.ok) throw new Error();
@@ -1402,6 +1418,8 @@ async function ladeDaten(){
       btc_change_24h: btcAenderung,
       gold_usd: goldPreis,
       oil_usd: oelPreis,
+      etf_price: etfPreis,
+      etf_change: etfAenderung,
       subs: [
         {key:"market_momentum_sp500", name:"Markt-Schwung", sub:"S&P 500 relativ zur 200-Tage-Linie", score:json.market_momentum_sp500.score},
         {key:"stock_price_strength", name:"Aktien-Stärke", sub:"Anzahl der 52-Wochen-Hochs vs. Tiefs", score:json.stock_price_strength.score},
@@ -1418,6 +1436,9 @@ async function ladeDaten(){
     btn.disabled = false;
   }
 }
+
+// Zeitstempel im Header beim Starten automatisch setzen:
+document.getElementById('versionStamp').textContent = APP_VERSION;
 
 ladeDaten();
 </script>
