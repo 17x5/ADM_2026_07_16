@@ -259,19 +259,22 @@
   }
   .q-stale-note { flex-basis: 100%; margin-top: 4px; margin-left: 34px; font-size: 11px; }
 
+  /* Standardmäßig IMMER eingeklappt per !important erzwingen */
   .quick-row-details {
-    max-height: 0;
+    max-height: 0 !important;
     overflow: hidden;
     transition: max-height 0.22s ease-out, padding 0.22s ease-out;
-    padding: 0 12px 0 34px;
+    padding: 0 12px;
     font-size: 11px;
     color: var(--text-dim);
     background: #0d1117;
     line-height: 1.4;
   }
+  
+  /* Nur wenn .open gesetzt ist, öffnen */
   .quick-row-wrapper.open .quick-row-details {
-    max-height: 120px;
-    padding-bottom: 8px;
+    max-height: 500px !important;
+    padding: 4px 12px 8px 34px;
   }
 
   @media (max-width: 600px) {
@@ -282,22 +285,38 @@
       width: 100%;
     }
     .quick-row {
-      flex-wrap: nowrap;
-      gap: 6px;
+      flex-wrap: wrap;
+      gap: 4px 8px;
+      padding: 8px 0;
+    }
+    .q-ampel {
+      width: 20px;
     }
     .q-bar-container {
-      width: 45px;
+      width: 50px;
     }
     .q-val {
-      width: 80px;
+      width: 95px;
       font-size: 11px;
+    }
+    .q-arrow {
+      width: 15px;
+      margin-right: 0;
     }
     .q-text {
       flex-grow: 1;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
       min-width: 0;
+    }
+    .row-toggle-hint {
+      margin-left: auto;
+    }
+    /* Auf dem Handy im geöffneten Zustand sauberen Padding-Einzug nutzen */
+    .quick-row-wrapper.open .quick-row-details {
+      padding: 4px 8px 8px 8px;
+      font-size: 12px;
     }
   }
 
@@ -714,7 +733,7 @@
 <script>
 // =========================================================================
 // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN:
-const APP_VERSION = "TEST BUILD 2026-07-24 17:46";
+const APP_VERSION = "TEST BUILD 2026-07-24 20:20";
 // =========================================================================
 
 const FALLBACK = {
@@ -729,13 +748,13 @@ const FALLBACK = {
   etf_price: 38.92,
   etf_change: -0.82,
   subs: [
-    {key:"market_momentum_sp500", name:"Markt-Schwung", sub:"S&P 500 relativ zur 200-Tage-Linie", score:45.0},
-    {key:"stock_price_strength", name:"Aktien-Stärke", sub:"Anzahl der 52-Wochen-Hochs vs. Tiefs", score:44.0},
-    {key:"stock_price_breadth", name:"Marktbreite (A/D Basis)", sub:"Volumen steigender vs. fallender Aktien", score:23.0}, 
-    {key:"put_call_options", name:"Absicherungs-Verhältnis", sub:"Put- zu Call-Optionsvolumen", score:35.0},
-    {key:"market_volatility_vix", name:"Markt-Nervosität (VIX)", sub:"Schwankungsbreite und implizite Angstkomponente des Aktienmarktes", score:58.0, raw_vix: 16.90}, 
-    {key:"finra_margin_debt", name:"Kredit-Hebelung am Markt", sub:"FINRA Margin Debt Dynamik", score:45.0},
-    {key:"technical_confirmation", name:"Trend-Bestätigung", sub:"Technische Verkaufserschöpfung", score:55.0}
+    {key:"market_momentum_sp500", name:"Markt-Schwung", sub:"Zeigt an, ob sich der S&P 500 stabil über oder unter seiner 200-Tage-Linie bewegt. Steigt der Kurs klar darüber, läuft der Motor rund.", score:45.0},
+    {key:"stock_price_strength", name:"Aktien-Stärke", sub:"Misst die Anzahl der Aktien auf 52-Wochen-Hochs im Vergleich zu Tiefs. Das zeigt, wie stark der innere Kern des Marktes ist.", score:44.0},
+    {key:"stock_price_breadth", name:"Marktbreite (A/D Basis)", sub:"Misst die echte Marktbreite, indem sie vergleicht, ob insgesamt mehr Aktien steigen oder fallen. Steigen nur wenige Riesen, droht Gefahr.", score:23.0}, 
+    {key:"put_call_options", name:"Absicherungs-Verhältnis", sub:"Zeigt das Verhältnis von Verlustabsicherungen zu Wetten auf steigende Kurse. Sichert sich niemand mehr ab, herrscht blinde Sorglosigkeit.", score:35.0},
+    {key:"market_volatility_vix", name:"Markt-Nervosität (VIX)", sub:"Das ist der Angst-Index der Börse. Er misst, wie panisch oder schwankungsanfällig die Anleger gerade sind.", score:58.0, raw_vix: 16.90}, 
+    {key:"finra_margin_debt", name:"Kredit-Hebelung am Markt", sub:"Misst, wie stark Anleger mit geliehenem Geld spekulieren. Zu viel Fremdkapital verstärkt die Wucht von Crashs massiv.", score:45.0},
+    {key:"technical_confirmation", name:"Trend-Bestätigung", sub:"Technische Verkaufserschöpfung zur Erkennung von Wendepunkten.", score:55.0}
   ]
 };
 
@@ -945,23 +964,23 @@ function render(data){
   let momScoreETFTrend = momentum ? momentum.score : 50;
   const formattedEtfPreis = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(data.etf_price || FALLBACK.etf_price);
   const etfPercent = Math.min(100, Math.max(10, momScoreETFTrend));
-  const etfRowHtml = buildQuickRowHTML(etfAmpelColor, "UBS Core MSCI World (UETW.DE)", "Tageskurs-Vergleich zum Vortag", etfPercent, formattedEtfPreis + " (" + (etfChangeVal >= 0 ? "+" : "") + etfChangeVal.toFixed(2) + "%)", !etfIstLive, etfArrow);
+  const etfRowHtml = buildQuickRowHTML(etfAmpelColor, "UBS Core MSCI World (UETW.DE)", "Dein persönlicher Anlage-ETF, der die Entwicklung der weltweiten Aktienmärkte abbildet.", etfPercent, formattedEtfPreis + " (" + (etfChangeVal >= 0 ? "+" : "") + etfChangeVal.toFixed(2) + "%)", !etfIstLive, etfArrow);
   document.getElementById('rowsSectionETF').innerHTML = etfRowHtml;
 
   let htmlS1 = "";
   let vixBarPercent = Math.min(100, Math.max(0, ((rawVix - THRESHOLDS.vix.barMin) / THRESHOLDS.vix.barMax) * 100));
-  htmlS1 += buildQuickRowHTML(vixColor, "Markt-Nervosität (VIX)", "Schwankungsbreite und implizite Angstkomponente des Aktienmarktes", vixBarPercent, rawVix.toFixed(2) + " USD");
-  htmlS1 += buildQuickRowHTML(cnnColor, "Angst & Gier Index (CNN)", "Aggregiertes Sentiment aus 7 Marktindikatoren", data.score, data.score.toFixed(0) + " / 100");
+  htmlS1 += buildQuickRowHTML(vixColor, "Markt-Nervosität (VIX)", "Das ist der Angst-Index der Börse. Er misst, wie panisch oder schwankungsanfällig die Anleger gerade sind.", vixBarPercent, rawVix.toFixed(2) + " USD");
+  htmlS1 += buildQuickRowHTML(cnnColor, "Angst & Gier Index (CNN)", "Ein Stimmungsbarometer, das sieben Marktfaktoren zusammenfasst. Es zeigt, ob gerade Gier oder Angst dominiert.", data.score, data.score.toFixed(0) + " / 100");
   
   let btcChange = data.btc_change_24h || 0;
   let btcColor = btcChange > THRESHOLDS.bitcoin.gruen ? "gruen" : (btcChange < THRESHOLDS.bitcoin.rot ? "rot" : "gelb");
   let btcBarPercent = Math.min(100, Math.max(0, 50 + btcChange * THRESHOLDS.bitcoin.barFaktor));
   let formattedBtcPrice = new Intl.NumberFormat('de-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(data.btc_usd);
-  htmlS1 += buildQuickRowHTML(btcColor, "Bitcoin (BTC/USD)", "Spekulativer Liquiditäts- & Risk-On-Fiebermesser", btcBarPercent, formattedBtcPrice, !cryptoIstLive);
+  htmlS1 += buildQuickRowHTML(btcColor, "Bitcoin (BTC/USD)", "Dient als Fiebermesser für Spekulationslaune und Risiko-Bereitschaft im Markt.", btcBarPercent, formattedBtcPrice, !cryptoIstLive);
 
   let optScore = options ? options.score : 35;
   let optColor = optScore < THRESHOLDS.putCall.rot ? "rot" : (optScore < THRESHOLDS.putCall.gelb ? "gelb" : "gruen");
-  htmlS1 += buildQuickRowHTML(optColor, "Absicherungs-Verhältnis", "Put- zu Call-Optionsvolumen (Niedrig = Extreme Sorglosigkeit / Reversal-Gefahr)", optScore, optScore.toFixed(0) + " / 100");
+  htmlS1 += buildQuickRowHTML(optColor, "Absicherungs-Verhältnis", "Zeigt das Verhältnis von Verlustabsicherungen zu Wetten auf steigende Kurse. Sichert sich niemand mehr ab, herrscht blinde Sorglosigkeit.", optScore, optScore.toFixed(0) + " / 100");
   
   document.getElementById('rowsSection1').innerHTML = htmlS1;
 
@@ -971,15 +990,15 @@ function render(data){
   
   let momScore = momentum ? momentum.score : 50;
   let momColor = momScore < THRESHOLDS.momentum.rot ? "rot" : (momScore > THRESHOLDS.momentum.purple ? "purple" : "gelb");
-  htmlS2 += buildQuickRowHTML(momColor, "Markt-Schwung", "S&P 500 relativ zur 200-Tage-Linie", momScore, momScore.toFixed(0) + " / 100");
+  htmlS2 += buildQuickRowHTML(momColor, "Markt-Schwung", "Zeigt an, ob sich der S&P 500 stabil über oder unter seiner 200-Tage-Linie bewegt. Steigt der Kurs klar darüber, läuft der Motor rund.", momScore, momScore.toFixed(0) + " / 100");
   
-  htmlS2 += buildQuickRowHTML(actBreadth < THRESHOLDS.breadth.rot ? "rot" : (actBreadth < THRESHOLDS.breadth.gelb ? "gelb" : "gruen"), "Advance-Decline-Linie (A/D-Linie)", "Das fundamentale Verhältnis von steigenden zu fallenden Aktien", actBreadth, actBreadth.toFixed(0) + " / 100");
+  htmlS2 += buildQuickRowHTML(actBreadth < THRESHOLDS.breadth.rot ? "rot" : (actBreadth < THRESHOLDS.breadth.gelb ? "gelb" : "gruen"), "Advance-Decline-Linie (A/D-Linie)", "Misst die echte Marktbreite, indem sie vergleicht, ob insgesamt mehr Aktien steigen oder fallen. Steigen nur wenige Riesen, droht Gefahr.", actBreadth, actBreadth.toFixed(0) + " / 100");
   document.getElementById('rowsSection2').innerHTML = htmlS2;
 
   let htmlS3 = "";
   let strScore = strength ? strength.score : 50;
   let strColor = strScore < THRESHOLDS.strength.rot ? "rot" : (strScore > THRESHOLDS.strength.gruen ? "gruen" : "gelb");
-  htmlS3 += buildQuickRowHTML(strColor, "Aktien-Stärke", "Anzahl der 52-Wochen-Hochs vs. Tiefs am Markt", strScore, strScore.toFixed(0) + " / 100");
+  htmlS3 += buildQuickRowHTML(strColor, "Aktien-Stärke", "Misst die Anzahl der Aktien auf 52-Wochen-Hochs im Vergleich zu Tiefs. Das zeigt, wie stark der innere Kern des Marktes ist.", strScore, strScore.toFixed(0) + " / 100");
   
   let debtScore = marginDebt ? marginDebt.score : 50;
   let debtColor = "gruen";
@@ -990,7 +1009,7 @@ function render(data){
   } else if (debtScore > THRESHOLDS.marginDebt.gelb) {
     debtColor = "gelb";
   }
-  htmlS3 += buildQuickRowHTML(debtColor, "Kredit-Hebelung am Markt", "Aktienkäufe mit geliehenem Geld (FINRA)", debtDisplayPercent, debtScore.toFixed(0) + " / 100");
+  htmlS3 += buildQuickRowHTML(debtColor, "Kredit-Hebelung am Markt", "Misst, wie stark Anleger mit geliehenem Geld spekulieren. Zu viel Fremdkapital verstärkt die Wucht von Crashs massiv.", debtDisplayPercent, debtScore.toFixed(0) + " / 100");
   document.getElementById('rowsSection3').innerHTML = htmlS3;
 
   let htmlS4 = "";
@@ -1002,16 +1021,16 @@ function render(data){
   if (goldOelRatio > THRESHOLDS.goldOelRatio.rot) ratioColor = "rot";
   else if (goldOelRatio < THRESHOLDS.goldOelRatio.gruen) ratioColor = "gruen";
   let ratioPercent = Math.min(100, Math.max(0, ((goldOelRatio - THRESHOLDS.goldOelRatio.barMin) / THRESHOLDS.goldOelRatio.barSpan) * 100));
-  htmlS4 += buildQuickRowHTML(ratioColor, "Gold-Öl-Ratio", "Krisen- &amp; Risikobarometer: Unzenpreis Gold geteilt durch Fasspreis Öl", ratioPercent, goldOelRatio.toFixed(1) + " : 1", !metalIstLive);
+  htmlS4 += buildQuickRowHTML(ratioColor, "Gold-Öl-Ratio", "Vergleicht den Goldpreis mit dem Ölpreis. Ein hoher Wert zeigt Krisenstimmung, ein tiefer starkes Wirtschaftswachstum.", ratioPercent, goldOelRatio.toFixed(1) + " : 1", !metalIstLive);
 
   let goldPercent = Math.min(100, Math.max(0, ((goldPreisWert - THRESHOLDS.goldPreis.min) / (THRESHOLDS.goldPreis.max - THRESHOLDS.goldPreis.min)) * 100));
   let formattedGoldPreis = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(goldPreisWert);
-  htmlS4 += buildQuickRowHTML("gelb", "Goldpreis (Unze)", "Feinunze Gold, Spotpreis in US-Dollar", goldPercent, formattedGoldPreis, !metalIstLive);
+  htmlS4 += buildQuickRowHTML("gelb", "Goldpreis (Unze)", "Der klassische sichere Hafen in Krisenzeiten. Steigt er stark, suchen Anleger Schutz vor unruhigen Zeiten.", goldPercent, formattedGoldPreis, !metalIstLive);
 
   let oelColor = oelPreisWert > THRESHOLDS.oelPreis.rot ? "rot" : (oelPreisWert < THRESHOLDS.oelPreis.gruen ? "gruen" : "gelb");
   let oelPercent = Math.min(100, Math.max(0, ((oelPreisWert - THRESHOLDS.oelPreis.barMin) / (THRESHOLDS.oelPreis.barMax - THRESHOLDS.oelPreis.barMin)) * 100));
   let formattedOelPreis = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(oelPreisWert);
-  htmlS4 += buildQuickRowHTML(oelColor, "Ölpreis (WTI)", "US-Rohöl-Fasspreis (West Texas Intermediate) in US-Dollar", oelPercent, formattedOelPreis, !metalIstLive);
+  htmlS4 += buildQuickRowHTML(oelColor, "Ölpreis (WTI)", "Spiegelt die globale Energienachfrage und den wirtschaftlichen Puls der Weltwirtschaft wider.", oelPercent, formattedOelPreis, !metalIstLive);
 
   document.getElementById('rowsSection4').innerHTML = htmlS4;
 
@@ -1286,12 +1305,12 @@ async function ladeDaten(){
       etf_price: etfPreis,
       etf_change: etfAenderung,
       subs: [
-        {key:"market_momentum_sp500", name:"Markt-Schwung", sub:"S&P 500 relativ zur 200-Tage-Linie", score:json.market_momentum_sp500.score},
-        {key:"stock_price_strength", name:"Aktien-Stärke", sub:"Anzahl der 52-Wochen-Hochs vs. Tiefs", score:json.stock_price_strength.score},
-        {key:"stock_price_breadth", name:"Marktbreite (A/D Basis)", sub:"Volumen steigender vs. fallender Aktien", score:json.stock_price_breadth.score},
-        {key:"put_call_options", name:"Absicherungs-Verhältnis", sub:"Put- zu Call-Optionsvolumen", score:json.put_call_options.score},
-        {key:"market_volatility_vix", name:"Markt-Nervosität (VIX)", sub:"Schwankungsbreite und implizite Angstkomponente des Aktienmarktes", score:json.market_volatility_vix.score, raw_vix: extrahierterVixUSD},
-        {key:"finra_margin_debt", name:"Kredit-Hebelung am Markt", sub:"FINRA Margin Debt Dynamik", score: json.fear_and_greed.score > 78 ? 85 : 35}
+        {key:"market_momentum_sp500", name:"Markt-Schwung", sub:"Zeigt an, ob sich der S&P 500 stabil über oder unter seiner 200-Tage-Linie bewegt. Steigt der Kurs klar darüber, läuft der Motor rund.", score:json.market_momentum_sp500.score},
+        {key:"stock_price_strength", name:"Aktien-Stärke", sub:"Misst die Anzahl der Aktien auf 52-Wochen-Hochs im Vergleich zu Tiefs. Das zeigt, wie stark der innere Kern des Marktes ist.", score:json.stock_price_strength.score},
+        {key:"stock_price_breadth", name:"Marktbreite (A/D Basis)", sub:"Misst die echte Marktbreite, indem sie vergleicht, ob insgesamt mehr Aktien steigen oder fallen. Steigen nur wenige Riesen, droht Gefahr.", score:json.stock_price_breadth.score},
+        {key:"put_call_options", name:"Absicherungs-Verhältnis", sub:"Zeigt das Verhältnis von Verlustabsicherungen zu Wetten auf steigende Kurse. Sichert sich niemand mehr ab, herrscht blinde Sorglosigkeit.", score:json.put_call_options.score},
+        {key:"market_volatility_vix", name:"Markt-Nervosität (VIX)", sub:"Das ist der Angst-Index der Börse. Er misst, wie panisch oder schwankungsanfällig die Anleger gerade sind.", score:json.market_volatility_vix.score, raw_vix: extrahierterVixUSD},
+        {key:"finra_margin_debt", name:"Kredit-Hebelung am Markt", sub:"Misst, wie stark Anleger mit geliehenem Geld spekulieren. Zu viel Fremdkapital verstärkt die Wucht von Crashs massiv.", score: json.fear_and_greed.score > 78 ? 85 : 35}
       ]
     };
     isLive = true; render(data);
