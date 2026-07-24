@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="de">
-<head>
-  <link rel="icon" type="image/png" href="favicon.png">
+<html lang="de"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="icon" type="image/png" href="file:///C:/Users/Leonardo/Downloads/favicon.png">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Advanced Marktsentiment Dashboard - OnePage Final</title>
@@ -256,6 +256,10 @@
     .quick-row {
       flex-wrap: nowrap;
     }
+    .group-box {
+      width: max-content;
+      min-width: 100%;
+    }
     .q-val {
       width: 90px;
       font-size: 11px;
@@ -462,77 +466,248 @@
     <h1>Advanced Marktsentiment Dashboard <span style="font-size:14px;font-weight:normal;color:var(--text);">• Keine Anlageberatung •</span></h1>
     <div class="header-right">
       <div class="api-status" title="Zeigt, ob die externen API-Keys aktuell funktionieren">
-        <span class="api-dot" id="apiDotGemini"></span>Gemini
-        <span class="api-dot" id="apiDotEtf"></span>ETF
-        <span class="api-dot" id="apiDotCrypto"></span>BTC
-        <span class="api-dot" id="apiDotMetal"></span>Metal
+        <span class="api-dot ok" id="apiDotGemini"></span>Gemini
+        <span class="api-dot fail" id="apiDotEtf"></span>ETF
+        <span class="api-dot ok" id="apiDotCrypto"></span>BTC
+        <span class="api-dot fail" id="apiDotMetal"></span>Metal
       </div>
       <div class="style-slider-wrap" title="Sprachniveau der KI-Analyse einstellen">
-        <input type="range" id="styleLevelSlider" min="0" max="2" step="1" value="1"
-               oninput="onStyleLevelChange(this.value)">
-        <span id="styleLevelLabel">Erfahrener Anleger</span>
+        <input type="range" id="styleLevelSlider" min="0" max="2" step="1" value="0" oninput="onStyleLevelChange(this.value)">
+        <span id="styleLevelLabel">Börsen-Einsteiger</span>
       </div>
       <button class="refresh-btn" id="refreshBtn" onclick="ladeDaten()">↻ Live-Daten abrufen</button>
-      <div class="status-tag stale" id="statusIndicator">Lade Daten…</div>
+      <div class="status-tag live" id="statusIndicator">24.07.2026, 16:14 Uhr</div>
     </div>
   </header>
 
   <div class="fazit">
     <h2>Gesamtfazit &amp; Strategie-Check</h2>
-    <div id="fazitInhalt"></div>
+    <div id="fazitInhalt">
+    <div class="fazit-section">
+      <div class="fazit-label"><span class="situation-ampel rot" id="situationAmpelDot"></span>Deine Situation:</div>
+      <p class="fazit-p" id="gesamtfazitText">Aktuell erleben wir eine 
+gefährliche Markt-Illusion. Die Kurse wirken nach aussen stabil, aber im
+ Hintergrund bröckelt das Fundament gewaltig. Die Ansteckungsgefahr für 
+plötzliche Kursverluste ist hoch.</p>
+      <div class="fazit-change" style="color: var(--green);">
+        <strong>Veränderung zum letzten Handelstag:</strong> ▲ +0.0 Punkte im Vergleich zum Vortag (40)
+      </div>
+    </div>
+    <div id="actionBox" class="action-box" style="border-left-color:var(--accent);">
+      <div class="action-header" onclick="toggleActionBox()">
+        <h3 style="color:var(--accent);">Deine Actions:</h3>
+        <span id="actionToggleIcon" class="action-toggle-icon">▶ Anzeigen</span>
+      </div>
+      <div class="action-content">
+        <ul class="action-list" id="actionListEl"><li>Keine voreiligen Aktienkäufe tätigen und Abwarten bevorzugen.</li><li>Bargeld-Reserven auf dem Konto aufbauen und sichern.</li><li>Eigene Anlagen prüfen und zu gewagte Risiken reduzieren.</li></ul>
+      </div>
+    </div>
+  </div>
   </div>
 
   <div class="group-box" style="margin-bottom: 15px;">
     <div class="group-title">Mein ETF</div>
-    <div id="rowsSectionETF"></div>
+    <div id="rowsSectionETF">
+    <div class="quick-row">
+      <div class="q-ampel" style="opacity:0.45;">🔴</div>
+      <div class="q-bar-container" style="opacity:0.45;">
+        <div class="q-bar-fill" style="width: 16.4%; background-color: var(--red);"></div>
+      </div>
+      <div class="q-val" style="opacity:0.45;">EUR&nbsp;38.92 (-0.82%)</div>
+      <div class="q-arrow" style="color: var(--red); opacity:0.45;">▲</div>
+      <div class="q-text" style="opacity:0.45;"><b>UBS Core MSCI World (UETW.DE)</b><span class="q-desc">Dein ETF-Sparplan-Kurs, Xetra</span></div>
+      <div class="q-stale-note" style="color:var(--yellow); font-weight:600;">⚠ Fallback-Wert, nicht live</div>
+    </div>
+  </div>
   </div>
 
   <div class="dashboard-grid">
     <div id="sentimentGroup" class="group-box">
       <div class="group-title">Sentiment &amp; Markt-Nervosität</div>
-      <div id="rowsSection1"></div>
+      <div id="rowsSection1">
+    <div class="quick-row">
+      <div class="q-ampel" style="">🟡</div>
+      <div class="q-bar-container" style="">
+        <div class="q-bar-fill" style="width: 22.400000000000002%; background-color: var(--yellow);"></div>
+      </div>
+      <div class="q-val" style="">18.96 USD</div>
+      <div class="q-arrow" style="color: var(--yellow); ">▲</div>
+      <div class="q-text" style=""><b>Markt-Nervosität (VIX)</b><span class="q-desc">Schwankungsbreite und implizite Angstkomponente des Aktienmarktes</span></div>
+      
+    </div>
+  
+    <div class="quick-row">
+      <div class="q-ampel" style="">🟡</div>
+      <div class="q-bar-container" style="">
+        <div class="q-bar-fill" style="width: 39.6285714285714%; background-color: var(--yellow);"></div>
+      </div>
+      <div class="q-val" style="">40 / 100</div>
+      <div class="q-arrow" style="color: var(--yellow); ">▲</div>
+      <div class="q-text" style=""><b>Angst &amp; Gier Index (CNN)</b><span class="q-desc">Aggregiertes Sentiment aus 7 Marktindikatoren</span></div>
+      
+    </div>
+  
+    <div class="quick-row">
+      <div class="q-ampel" style="">🟡</div>
+      <div class="q-bar-container" style="">
+        <div class="q-bar-fill" style="width: 41.290891863617944%; background-color: var(--yellow);"></div>
+      </div>
+      <div class="q-val" style="">63.871&nbsp;$</div>
+      <div class="q-arrow" style="color: var(--yellow); ">▲</div>
+      <div class="q-text" style=""><b>Bitcoin (BTC/USD)</b><span class="q-desc">Spekulativer Liquiditäts- &amp; Risk-On-Fiebermesser</span></div>
+      
+    </div>
+  
+    <div class="quick-row">
+      <div class="q-ampel" style="">🟡</div>
+      <div class="q-bar-container" style="">
+        <div class="q-bar-fill" style="width: 35.2%; background-color: var(--yellow);"></div>
+      </div>
+      <div class="q-val" style="">35 / 100</div>
+      <div class="q-arrow" style="color: var(--yellow); ">▲</div>
+      <div class="q-text" style=""><b>Absicherungs-Verhältnis</b><span class="q-desc">Put- zu Call-Optionsvolumen an den Terminbörsen</span></div>
+      
+    </div>
+  </div>
       <div class="kachel-fazit-box" id="fazitBox1">
         <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox1')">
           <h4>📋 Kachel-Fazit: Sentiment &amp; Liquidität</h4>
           <span class="action-toggle-icon">▶ Anzeigen</span>
         </div>
-        <div class="kachel-fazit-content" id="fazitContent1">Lade Analyse…</div>
+        <div class="kachel-fazit-content" id="fazitContent1">Die Anleger
+ sind spürbar verunsichert und nervös. Auch Kryptowährungen wie Bitcoin 
+verlieren an Wert, weil kaum jemand Risiken eingehen will.</div>
       </div>
     </div>
 
     <div id="trendGroup" class="group-box">
       <div class="group-title">Trend- &amp; Sicherheits-Schutz</div>
-      <div id="rowsSection2"></div>
+      <div id="rowsSection2">
+    <div class="quick-row">
+      <div class="q-ampel" style="">🔴</div>
+      <div class="q-bar-container" style="">
+        <div class="q-bar-fill" style="width: 15%; background-color: var(--red);"></div>
+      </div>
+      <div class="q-val" style="">MARKT-ILLUSION</div>
+      <div class="q-arrow" style="color: var(--red); ">▲</div>
+      <div class="q-text" style=""><b>Sicherheits-Ampel &amp; Markttrend</b><span class="q-desc">Modell 9iof2PC9 • Verdeckte Schwäche in Welle B (Index täuscht Stabilität vor, Fundament bricht ein)</span></div>
+      
+    </div>
+  
+    <div class="quick-row">
+      <div class="q-ampel" style="">🔴</div>
+      <div class="q-bar-container" style="">
+        <div class="q-bar-fill" style="width: 29%; background-color: var(--red);"></div>
+      </div>
+      <div class="q-val" style="">29 / 100</div>
+      <div class="q-arrow" style="color: var(--red); ">▲</div>
+      <div class="q-text" style=""><b>Markt-Schwung</b><span class="q-desc">S&amp;P 500 relativ zur 200-Tage-Linie</span></div>
+      
+    </div>
+  
+    <div class="quick-row">
+      <div class="q-ampel" style="">🔴</div>
+      <div class="q-bar-container" style="">
+        <div class="q-bar-fill" style="width: 14%; background-color: var(--red);"></div>
+      </div>
+      <div class="q-val" style="">14 / 100</div>
+      <div class="q-arrow" style="color: var(--red); ">▲</div>
+      <div class="q-text" style=""><b>Advance-Decline-Linie (A/D-Linie)</b><span class="q-desc">Das fundamentale Verhältnis von steigenden zu fallenden Aktien</span></div>
+      
+    </div>
+  </div>
       <div class="kachel-fazit-box" id="fazitBox2">
         <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox2')">
           <h4>📋 Kachel-Fazit: Trend &amp; Marktbreite</h4>
           <span class="action-toggle-icon">▶ Anzeigen</span>
         </div>
-        <div class="kachel-fazit-content" id="fazitContent2">Lade Analyse…</div>
+        <div class="kachel-fazit-content" id="fazitContent2">Der Schein 
+trügt, denn nur sehr wenige Schwergewichte stützen noch die Indizes. Das
+ ist wie bei einer Brücke, die nur noch auf zwei wackeligen Pfeilern 
+steht.</div>
       </div>
     </div>
 
     <div id="structureGroup" class="group-box">
       <div class="group-title">Markt-Struktur &amp; Liquidität</div>
-      <div id="rowsSection3"></div>
+      <div id="rowsSection3">
+    <div class="quick-row">
+      <div class="q-ampel" style="">🔴</div>
+      <div class="q-bar-container" style="">
+        <div class="q-bar-fill" style="width: 34%; background-color: var(--red);"></div>
+      </div>
+      <div class="q-val" style="">34 / 100</div>
+      <div class="q-arrow" style="color: var(--red); ">▲</div>
+      <div class="q-text" style=""><b>Aktien-Stärke</b><span class="q-desc">Anzahl der 52-Wochen-Hochs vs. Tiefs am Markt</span></div>
+      
+    </div>
+  
+    <div class="quick-row">
+      <div class="q-ampel" style="">🟢</div>
+      <div class="q-bar-container" style="">
+        <div class="q-bar-fill" style="width: 65%; background-color: var(--green);"></div>
+      </div>
+      <div class="q-val" style="">35 / 100</div>
+      <div class="q-arrow" style="color: var(--green); ">▲</div>
+      <div class="q-text" style=""><b>Kredit-Hebelung am Markt</b><span class="q-desc">Aktienkäufe mit geliehenem Geld (FINRA)</span></div>
+      
+    </div>
+  </div>
       <div class="kachel-fazit-box" id="fazitBox3">
         <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox3')">
           <h4>📋 Kachel-Fazit: Struktur &amp; Fremdkapital-Hebel</h4>
           <span class="action-toggle-icon">▶ Anzeigen</span>
         </div>
-        <div class="kachel-fazit-content" id="fazitContent3">Lade Analyse…</div>
+        <div class="kachel-fazit-content" id="fazitContent3">Anleger 
+leihen sich kaum noch Geld für Aktienkäufe und sichern sich vorsorglich 
+gegen Abstürze ab. Das zeigt grosse Zurückhaltung im Markt.</div>
       </div>
     </div>
 
     <div id="commodityGroup" class="group-box">
       <div class="group-title">Rohstoffe: Öl &amp; Gold</div>
-      <div id="rowsSection4"></div>
+      <div id="rowsSection4">
+    <div class="quick-row">
+      <div class="q-ampel" style="opacity:0.45;">🔴</div>
+      <div class="q-bar-container" style="opacity:0.45;">
+        <div class="q-bar-fill" style="width: 100%; background-color: var(--red);"></div>
+      </div>
+      <div class="q-val" style="opacity:0.45;">50.7 : 1</div>
+      <div class="q-arrow" style="color: var(--red); opacity:0.45;">▲</div>
+      <div class="q-text" style="opacity:0.45;"><b>Gold-Öl-Ratio</b><span class="q-desc">Krisen- &amp; Risikobarometer: Unzenpreis Gold geteilt durch Fasspreis Öl</span></div>
+      <div class="q-stale-note" style="color:var(--yellow); font-weight:600;">⚠ Fallback-Wert, nicht live</div>
+    </div>
+  
+    <div class="quick-row">
+      <div class="q-ampel" style="opacity:0.45;">🟡</div>
+      <div class="q-bar-container" style="opacity:0.45;">
+        <div class="q-bar-fill" style="width: 82.66666666666667%; background-color: var(--yellow);"></div>
+      </div>
+      <div class="q-val" style="opacity:0.45;">$&nbsp;4'032</div>
+      <div class="q-arrow" style="color: var(--yellow); opacity:0.45;">▲</div>
+      <div class="q-text" style="opacity:0.45;"><b>Goldpreis (Unze)</b><span class="q-desc">Feinunze Gold, Spotpreis in US-Dollar</span></div>
+      <div class="q-stale-note" style="color:var(--yellow); font-weight:600;">⚠ Fallback-Wert, nicht live</div>
+    </div>
+  
+    <div class="quick-row">
+      <div class="q-ampel" style="opacity:0.45;">🟡</div>
+      <div class="q-bar-container" style="opacity:0.45;">
+        <div class="q-bar-fill" style="width: 49.46249999999999%; background-color: var(--yellow);"></div>
+      </div>
+      <div class="q-val" style="opacity:0.45;">$&nbsp;79.57</div>
+      <div class="q-arrow" style="color: var(--yellow); opacity:0.45;">▲</div>
+      <div class="q-text" style="opacity:0.45;"><b>Ölpreis (WTI)</b><span class="q-desc">US-Rohöl-Fasspreis (West Texas Intermediate) in US-Dollar</span></div>
+      <div class="q-stale-note" style="color:var(--yellow); font-weight:600;">⚠ Fallback-Wert, nicht live</div>
+    </div>
+  </div>
       <div class="kachel-fazit-box" id="fazitBox4">
         <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox4')">
           <h4>📋 Kachel-Fazit: Gold-Öl-Ratio</h4>
           <span class="action-toggle-icon">▶ Anzeigen</span>
         </div>
-        <div class="kachel-fazit-content" id="fazitContent4">Lade Analyse…</div>
+        <div class="kachel-fazit-content" id="fazitContent4">Der hohe 
+Goldpreis zeigt, dass viele Anleger ihr Erspartes im sicheren Hafen 
+parken wollen. Der Ölpreis bleibt hoch und belastet die Wirtschaft.</div>
       </div>
     </div>
   </div>
@@ -541,28 +716,26 @@
     <div class="welle-title">Modell-Visualisierung: Der vollständige 8-Wellen-Zyklus</div>
     <div class="welle-graphic-box">
       <svg class="welle-svg" viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg">
-        <line x1="0" y1="180" x2="600" y2="180" stroke="#1f242c" stroke-dasharray="3"/>
-        <line x1="0" y1="40" x2="600" y2="40" stroke="#1f242c" stroke-dasharray="3"/>
+        <line x1="0" y1="180" x2="600" y2="180" stroke="#1f242c" stroke-dasharray="3"></line>
+        <line x1="0" y1="40" x2="600" y2="40" stroke="#1f242c" stroke-dasharray="3"></line>
         
-        <rect x="470" y="25" width="80" height="110" fill="#2d1315" opacity="0.4" rx="4"/>
+        <rect x="470" y="25" width="80" height="110" fill="#2d1315" opacity="0.4" rx="4"></rect>
         <text x="510" y="20" fill="#ff7b72" font-family="sans-serif" font-size="8" font-weight="bold" text-anchor="middle">GEFAHRENZONE</text>
 
-        <path d="M 30,180 L 110,110 L 160,140 L 320,50 L 380,115" 
-              fill="none" stroke="#2c3540" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M 30,180 L 110,110 L 160,140 L 320,50 L 380,115" fill="none" stroke="#2c3540" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
         
-        <path d="M 380,115 L 450,35 L 495,125 L 535,65 L 580,210" 
-              fill="none" stroke="var(--red)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M 380,115 L 450,35 L 495,125 L 535,65 L 580,210" fill="none" stroke="var(--red)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
               
-        <circle cx="110" cy="110" r="3" fill="#2c3540"/>
-        <circle cx="160" cy="140" r="3" fill="#2c3540"/>
-        <circle cx="320" cy="50" r="3" fill="#2c3540"/>
-        <circle cx="380" cy="115" r="3" fill="#2c3540"/>
+        <circle cx="110" cy="110" r="3" fill="#2c3540"></circle>
+        <circle cx="160" cy="140" r="3" fill="#2c3540"></circle>
+        <circle cx="320" cy="50" r="3" fill="#2c3540"></circle>
+        <circle cx="380" cy="115" r="3" fill="#2c3540"></circle>
 
-        <circle cx="450" cy="35" r="4.5" fill="var(--purple)"/>
-        <circle cx="495" cy="125" r="4" fill="var(--yellow)"/>
-        <circle cx="580" cy="210" r="5" fill="var(--red)"/>
+        <circle cx="450" cy="35" r="4.5" fill="var(--purple)"></circle>
+        <circle cx="495" cy="125" r="4" fill="var(--yellow)"></circle>
+        <circle cx="580" cy="210" r="5" fill="var(--red)"></circle>
         
-        <circle id="wellePunkt" cx="535" cy="65" r="5" fill="var(--red)" class="pulse-node"/> 
+        <circle id="wellePunkt" cx="535" cy="65" r="5" fill="var(--red)" class="pulse-node" style="fill: var(--red); stroke: var(--red);"></circle> 
 
         <text x="25" y="195" fill="#485565" font-family="monospace" font-size="10">W1 Start</text>
         <text x="105" y="95" fill="#485565" font-family="monospace" font-size="10">W1</text>
@@ -572,7 +745,7 @@
         
         <text x="450" y="22" fill="var(--purple)" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">W5 Top</text>
         <text x="495" y="142" fill="var(--yellow)" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">Welle A</text>
-        <text id="welleIstLabel" x="535" y="50" fill="var(--red)" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle">Welle B (IST)</text>
+        <text id="welleIstLabel" x="535" y="50" fill="var(--red)" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" style="fill: var(--red);">Welle B (IST)</text>
         <text x="580" y="228" fill="var(--red)" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">Welle C 💥</text>
       </svg>
     </div>
@@ -581,44 +754,50 @@
   <div class="legende-kachel">
     <div class="legende-title">Erläuterung der Marktphasen</div>
     <div class="legende-grid" id="legendeGrid">
-      <div class="legende-item" id="leg_W1" style="border-left-color: var(--green);">
+      <div class="legende-item" id="leg_W1" style="border-left-color: var(--green); background-color: rgb(13, 17, 23);">
         <div class="legende-name" style="color: var(--green);">WELLE 1: DER AUFBRUCH</div>
         <div class="legende-desc">Erste zaghafte Erholung nach einem harten Bärenmarkt. Meist nur von institutionellen Investoren getragen.</div>
       </div>
-      <div class="legende-item" id="leg_W2" style="border-left-color: var(--green);">
+      <div class="legende-item" id="leg_W2" style="border-left-color: var(--green); background-color: rgb(13, 17, 23);">
         <div class="legende-name" style="color: var(--green);">WELLE 2: DER RÜCKSTAU</div>
         <div class="legende-desc">Scharfer Rücksetzer, da Anleger noch mit der alten Angst kämpfen. Wichtig: Welle 2 macht niemals neue Tiefs.</div>
       </div>
-      <div class="legende-item" id="leg_W3" style="border-left-color: var(--green);">
+      <div class="legende-item" id="leg_W3" style="border-left-color: var(--green); background-color: rgb(13, 17, 23);">
         <div class="legende-name" style="color: var(--green);">WELLE 3: DIE BREITE MASSE</div>
         <div class="legende-desc">Die längste, stärkste und profitabelste Aufwärtsbewegung. Fundamentaldaten drehen, exzellente Marktbreite stützt den Aufstieg.</div>
       </div>
-      <div class="legende-item" id="leg_W4" style="border-left-color: var(--green);">
+      <div class="legende-item" id="leg_W4" style="border-left-color: var(--green); background-color: rgb(13, 17, 23);">
         <div class="legende-name" style="color: var(--green);">WELLE 4: DIE KONSOLIDIERUNG</div>
         <div class="legende-desc">Gewinnmitnahmen führen zu einer unruhigen Seitwärts- oder Abwärtsphase. Bietet die letzte gesunde Kaufgelegenheit.</div>
       </div>
-      <div class="legende-item" id="leg_W5" style="border-left-color: var(--purple);">
+      <div class="legende-item" id="leg_W5" style="border-left-color: var(--purple); background-color: rgb(13, 17, 23);">
         <div class="legende-name" style="color: var(--purple);">WELLE 5: DIE EUPHORIE</div>
-        <div class="legende-desc">Finale Übertreibung angetrieben durch FOMO und Kleinanleger. Indizes erreichen Allzeithochs, während Grossanleger bereits unbemerkt verkaufen.</div>
+        <div class="legende-desc">Finale Übertreibung angetrieben durch 
+FOMO und Kleinanleger. Indizes erreichen Allzeithochs, während 
+Grossanleger bereits unbemerkt verkaufen.</div>
       </div>
-      <div class="legende-item" id="leg_WelleA" style="border-left-color: var(--yellow);">
+      <div class="legende-item" id="leg_WelleA" style="border-left-color: var(--yellow); background-color: rgb(13, 17, 23);">
         <div class="legende-name" style="color: var(--yellow);">WELLE A: DER WARNSCHUSS</div>
         <div class="legende-desc">Der erste abrupte Kurseinbruch. Wird von der Masse unterschätzt und fälschlicherweise als günstige Nachkaufchance bewertet.</div>
       </div>
-      <div class="legende-item" id="leg_WelleB" style="border-left-color: var(--red);">
+      <div class="legende-item active" id="leg_WelleB" style="border-left-color: var(--red); background-color: rgb(28, 22, 24);">
         <div class="legende-name" style="color: var(--red);">WELLE B: MARKT-ILLUSION</div>
-        <div class="legende-desc">Die gefährlichste Bullenfalle im Zyklus. Die Kurse steigen noch mal an, täuschen Stabilität vor, aber die Marktbreite (A/D &lt; 35) ist kollabiert. Notausstieg vor Welle C!</div>
+        <div class="legende-desc">Die gefährlichste Bullenfalle im 
+Zyklus. Die Kurse steigen noch mal an, täuschen Stabilität vor, aber die
+ Marktbreite (A/D &lt; 35) ist kollabiert. Notausstieg vor Welle C!</div>
       </div>
-      <div class="legende-item" id="leg_WelleC" style="border-left-color: var(--red);">
+      <div class="legende-item" id="leg_WelleC" style="border-left-color: var(--red); background-color: rgb(13, 17, 23);">
         <div class="legende-name" style="color: var(--red);">WELLE C: DIE KAPITULATION</div>
-        <div class="legende-desc">Die zerstörerische Panikphase. Ein scharfer, rücksichtsloser Abverkauf weit unter das Niveau der Welle A. Erst danach startet der neue Zyklus.</div>
+        <div class="legende-desc">Die zerstörerische Panikphase. Ein 
+scharfer, rücksichtsloser Abverkauf weit unter das Niveau der Welle A. 
+Erst danach startet der neue Zyklus.</div>
       </div>
     </div>
   </div>
 
   <a class="link-kachel" href="https://de.tradingview.com/script/9iof2PC9/" target="_blank">
     <div class="link-kachel-header">
-      <div class="link-kachel-title">🌐 S&P 500 Bottom Finder, von Eric Ludwig</div>
+      <div class="link-kachel-title">🌐 S&amp;P 500 Bottom Finder, von Eric Ludwig</div>
       <div class="link-kachel-arrow">↗ Script öffnen</div>
     </div>
     
@@ -626,7 +805,10 @@
       <div class="eingebettete-analyse-title">🔎 Modell-Kurzanalyse (Bottom Finder Status)</div>
       <div class="eingebettete-analyse-p">
         🔴 <strong>Status: WELLE B (Markt-Illusion / Bullenfalle)</strong><br>
-        Die gefährlichste Phase: Während die grossen Indizes optisch stabil wirken (CNN Score: 42), bricht die fundamentale Marktbreite im Untergrund massiv ein (A/D-Linie: 19/100). Dies signalisiert eine klassische Bullenfalle vor dem Einsetzen der Welle C.
+        Die gefährlichste Phase: Während die grossen Indizes optisch 
+stabil wirken (CNN Score: 42), bricht die fundamentale Marktbreite im 
+Untergrund massiv ein (A/D-Linie: 19/100). Dies signalisiert eine 
+klassische Bullenfalle vor dem Einsetzen der Welle C.
       </div>
     </div>
 
@@ -634,7 +816,7 @@
       <div class="kachel-section">
         <h4>1. Pre-Bottom-Signal (Blau)</h4>
         <ul>
-          <li><strong>Bedingung:</strong> S5FI &lt; 20 (Weniger als 20% der S&P 500 Aktien über ihrem 50-Tage-Schnitt)</li>
+          <li><strong>Bedingung:</strong> S5FI &lt; 20 (Weniger als 20% der S&amp;P 500 Aktien über ihrem 50-Tage-Schnitt)</li>
           <li><strong>Interpretation:</strong> Extrem schwache Marktbreite – Gegenbewegung könnte bevorstehen.</li>
         </ul>
       </div>
@@ -665,7 +847,7 @@
   </a>
 
   <footer>
-    Impressum: Leonardo Curcuruto &copy; 2026, Switzerland
+    Impressum: Leonardo Curcuruto © 2026, Switzerland
   </footer>
 </div>
 
@@ -1251,5 +1433,5 @@ async function ladeDaten(){
 
 ladeDaten();
 </script>
-</body>
-</html>
+
+</body></html>
