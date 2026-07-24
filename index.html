@@ -158,21 +158,6 @@
     .dashboard-grid {
       grid-template-columns: 1fr;
     }
-    .quick-row {
-      flex-wrap: wrap;
-    }
-    .q-val {
-      width: 90px;
-      font-size: 11px;
-    }
-    .q-text {
-      white-space: normal;
-      overflow: visible;
-      text-overflow: clip;
-      flex-basis: 100%;
-      margin-left: 34px;
-      margin-top: 2px;
-    }
   }
 
   .kachel-fazit-box {
@@ -257,6 +242,33 @@
   .q-text b { font-size: 13px; color: var(--text); }
   .q-desc { color: var(--text-dim); font-size: 11px; margin-left: 6px; }
   .q-stale-note { flex-basis: 100%; margin-top: 4px; margin-left: 34px; font-size: 11px; }
+
+  @media (max-width: 600px) {
+    html, body {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    html::-webkit-scrollbar, body::-webkit-scrollbar {
+      display: none;
+    }
+    .quick-row {
+      flex-wrap: nowrap;
+    }
+    .q-val {
+      width: 90px;
+      font-size: 11px;
+    }
+    .q-text {
+      flex-shrink: 0;
+      white-space: nowrap;
+      overflow: visible;
+      text-overflow: clip;
+      min-width: max-content;
+      padding-right: 14px;
+    }
+  }
 
   .welle-container {
     background: var(--panel);
