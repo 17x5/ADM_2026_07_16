@@ -217,6 +217,13 @@
     font-weight: 600;
   }
 
+  /* AUSKLAPPBARE ZEILEN STILE */
+  .quick-row-wrapper {
+    border-bottom: 1px solid #161b22;
+  }
+  .quick-row-wrapper:last-child {
+    border-bottom: none;
+  }
   .quick-row {
     display: flex;
     flex-wrap: nowrap;
@@ -225,9 +232,9 @@
     font-size: 13px;
     line-height: 1.4;
     padding: 6px 0;
-    border-bottom: 1px solid #161b22;
+    cursor: pointer;
+    border-bottom: none !important;
   }
-  .quick-row:last-child { border-bottom: none; }
   
   .q-ampel { width: 24px; flex-shrink: 0; font-size: 13px; }
   
@@ -240,8 +247,31 @@
 
   .q-text { flex-grow: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .q-text b { font-size: 13px; color: var(--text); }
-  .q-desc { color: var(--text-dim); font-size: 11px; margin-left: 6px; }
+  
+  .row-toggle-hint {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-left: auto;
+    padding-left: 8px;
+    flex-shrink: 0;
+  }
   .q-stale-note { flex-basis: 100%; margin-top: 4px; margin-left: 34px; font-size: 11px; }
+
+  .quick-row-details {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.22s ease-out, padding 0.22s ease-out;
+    padding: 0 12px 0 34px;
+    font-size: 11px;
+    color: var(--text-dim);
+    background: #0d1117;
+    line-height: 1.4;
+  }
+  .quick-row-wrapper.open .quick-row-details {
+    max-height: 120px;
+    padding-bottom: 8px;
+  }
 
   @media (max-width: 600px) {
     html, body {
@@ -687,7 +717,7 @@
 <script>
 // =========================================================================
 // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN:
-const APP_VERSION = "TEST BUILD 2026-07-24 19:40";
+const APP_VERSION = "TEST BUILD 2026-07-24 17:46";
 // =========================================================================
 
 const FALLBACK = {
@@ -706,7 +736,7 @@ const FALLBACK = {
     {key:"stock_price_strength", name:"Aktien-Stärke", sub:"Anzahl der 52-Wochen-Hochs vs. Tiefs", score:44.0},
     {key:"stock_price_breadth", name:"Marktbreite (A/D Basis)", sub:"Volumen steigender vs. fallender Aktien", score:23.0}, 
     {key:"put_call_options", name:"Absicherungs-Verhältnis", sub:"Put- zu Call-Optionsvolumen", score:35.0},
-    {key:"market_volatility_vix", name:"Markt-Nervosität (VIX)", sub:"Implizite Volatilität S&P 500", score:58.0, raw_vix: 16.90}, 
+    {key:"market_volatility_vix", name:"Markt-Nervosität (VIX)", sub:"Schwankungsbreite und implizite Angstkomponente des Aktienmarktes", score:58.0, raw_vix: 16.90}, 
     {key:"finra_margin_debt", name:"Kredit-Hebelung am Markt", sub:"FINRA Margin Debt Dynamik", score:45.0},
     {key:"technical_confirmation", name:"Trend-Bestätigung", sub:"Technische Verkaufserschöpfung", score:55.0}
   ]
@@ -766,6 +796,14 @@ function toggleKachelFazit(boxId) {
   }
 }
 
+function toggleQuickRow(element) {
+  element.classList.toggle('open');
+  const hint = element.querySelector('.row-toggle-hint');
+  if (hint) {
+    hint.textContent = element.classList.contains('open') ? 'Info ▲' : 'Info ▼';
+  }
+}
+
 function getEmojiColor(color) {
   if (color === 'gruen') return '🟢';
   if (color === 'gelb') return '🟡';
@@ -786,15 +824,21 @@ function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, ar
   const dim = isStale ? 'opacity:0.45;' : '';
   const arrow = arrowChar || '▲';
   return `
-    <div class="quick-row">
-      <div class="q-ampel" style="${dim}">${getEmojiColor(color)}</div>
-      <div class="q-bar-container" style="${dim}">
-        <div class="q-bar-fill" style="width: ${valPercent}%; background-color: ${getHexColor(color)};"></div>
+    <div class="quick-row-wrapper" onclick="toggleQuickRow(this)">
+      <div class="quick-row">
+        <div class="q-ampel" style="${dim}">${getEmojiColor(color)}</div>
+        <div class="q-bar-container" style="${dim}">
+          <div class="q-bar-fill" style="width: ${valPercent}%; background-color: ${getHexColor(color)};"></div>
+        </div>
+        <div class="q-val" style="${dim}">${valString}</div>
+        <div class="q-arrow" style="color: ${getHexColor(color)}; ${dim}">${arrow}</div>
+        <div class="q-text" style="${dim}"><b>${title}</b></div>
+        <div class="row-toggle-hint">Info ▼</div>
+        ${isStale ? `<div class="q-stale-note" style="color:var(--yellow); font-weight:600;">⚠ Fallback-Wert, nicht live</div>` : ''}
       </div>
-      <div class="q-val" style="${dim}">${valString}</div>
-      <div class="q-arrow" style="color: ${getHexColor(color)}; ${dim}">${arrow}</div>
-      <div class="q-text" style="${dim}"><b>${title}</b><span class="q-desc">${sub}</span></div>
-      ${isStale ? `<div class="q-stale-note" style="color:var(--yellow); font-weight:600;">⚠ Fallback-Wert, nicht live</div>` : ''}
+      <div class="quick-row-details">
+        ${sub}
+      </div>
     </div>
   `;
 }
@@ -897,9 +941,6 @@ function render(data){
     `;
   }
 
-  // =========================================================================
-  // KORRIGIERTE ETF-LOGIK: AMPEL REIN NACH KURSVERÄNDERUNG GGÜ. VORTAG
-  // =========================================================================
   let etfChangeVal = data.etf_change || 0;
   let etfAmpelColor = (etfChangeVal >= 0) ? "gruen" : "rot";
   let etfArrow = (etfChangeVal >= 0) ? "▲" : "▼";
@@ -909,7 +950,6 @@ function render(data){
   const etfPercent = Math.min(100, Math.max(10, momScoreETFTrend));
   const etfRowHtml = buildQuickRowHTML(etfAmpelColor, "UBS Core MSCI World (UETW.DE)", "Tageskurs-Vergleich zum Vortag", etfPercent, formattedEtfPreis + " (" + (etfChangeVal >= 0 ? "+" : "") + etfChangeVal.toFixed(2) + "%)", !etfIstLive, etfArrow);
   document.getElementById('rowsSectionETF').innerHTML = etfRowHtml;
-  // =========================================================================
 
   let htmlS1 = "";
   let vixBarPercent = Math.min(100, Math.max(0, ((rawVix - THRESHOLDS.vix.barMin) / THRESHOLDS.vix.barMax) * 100));
@@ -1253,7 +1293,7 @@ async function ladeDaten(){
         {key:"stock_price_strength", name:"Aktien-Stärke", sub:"Anzahl der 52-Wochen-Hochs vs. Tiefs", score:json.stock_price_strength.score},
         {key:"stock_price_breadth", name:"Marktbreite (A/D Basis)", sub:"Volumen steigender vs. fallender Aktien", score:json.stock_price_breadth.score},
         {key:"put_call_options", name:"Absicherungs-Verhältnis", sub:"Put- zu Call-Optionsvolumen", score:json.put_call_options.score},
-        {key:"market_volatility_vix", name:"Markt-Nervosität (VIX)", sub:"Implizite Volatilität S&P 500", score:json.market_volatility_vix.score, raw_vix: extrahierterVixUSD},
+        {key:"market_volatility_vix", name:"Markt-Nervosität (VIX)", sub:"Schwankungsbreite und implizite Angstkomponente des Aktienmarktes", score:json.market_volatility_vix.score, raw_vix: extrahierterVixUSD},
         {key:"finra_margin_debt", name:"Kredit-Hebelung am Markt", sub:"FINRA Margin Debt Dynamik", score: json.fear_and_greed.score > 78 ? 85 : 35}
       ]
     };
