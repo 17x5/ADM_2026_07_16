@@ -782,9 +782,11 @@ function getHexColor(color) {
   return '#8b98a5';
 }
 
-function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, arrowChar) {
+function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, arrowChar, arrowColor) {
   const dim = isStale ? 'opacity:0.45;' : '';
   const arrow = arrowChar || '▲';
+  const finalArrowColor = arrowColor ? getHexColor(arrowColor) : getHexColor(color);
+
   return `
     <div class="quick-row">
       <div class="q-ampel" style="${dim}">${getEmojiColor(color)}</div>
@@ -792,7 +794,7 @@ function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, ar
         <div class="q-bar-fill" style="width: ${valPercent}%; background-color: ${getHexColor(color)};"></div>
       </div>
       <div class="q-val" style="${dim}">${valString}</div>
-      <div class="q-arrow" style="color: ${getHexColor(color)}; ${dim}">${arrow}</div>
+      <div class="q-arrow" style="color: ${finalArrowColor}; ${dim}">${arrow}</div>
       <div class="q-text" style="${dim}"><b>${title}</b><span class="q-desc">${sub}</span></div>
       ${isStale ? `<div class="q-stale-note" style="color:var(--yellow); font-weight:600;">⚠ Fallback-Wert, nicht live</div>` : ''}
     </div>
@@ -907,9 +909,12 @@ function render(data){
   }
   let etfChangeVal = data.etf_change || 0;
   let etfArrow = etfChangeVal >= 0 ? "▲" : "▼";
+  // Standard-Börsenlogik: Oben = grün, Unten = rot
+  let arrowColor = etfChangeVal >= 0 ? "gruen" : "rot";
+
   const formattedEtfPreis = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(data.etf_price || FALLBACK.etf_price);
   const etfPercent = Math.min(100, Math.max(10, momScoreETFTrend));
-  const etfRowHtml = buildQuickRowHTML(etfAmpelColor, "UBS Core MSCI World (UETW.DE)", "Trend- & Momentum-Score (Modell 1: EMA50/200 & Markt-Schwung)", etfPercent, formattedEtfPreis + " (" + (etfChangeVal >= 0 ? "+" : "") + etfChangeVal.toFixed(2) + "%)", !etfIstLive, etfArrow);
+  const etfRowHtml = buildQuickRowHTML(etfAmpelColor, "UBS Core MSCI World (UETW.DE)", "Trend- & Momentum-Score (Modell 1: EMA50/200 & Markt-Schwung)", etfPercent, formattedEtfPreis + " (" + (etfChangeVal >= 0 ? "+" : "") + etfChangeVal.toFixed(2) + "%)", !etfIstLive, etfArrow, arrowColor);
   document.getElementById('rowsSectionETF').innerHTML = etfRowHtml;
 
   let htmlS1 = "";
