@@ -93,8 +93,18 @@
   }
   .fazit h2{
     font-size:13px;text-transform:uppercase;letter-spacing:0.06em;
-    background:#1f4e79;color:var(--accent);margin:0;
-    padding:6px 16px;font-weight:bold;border-bottom:1px solid var(--accent);
+    color:var(--accent);margin:0;
+    font-weight:bold;
+  }
+  .fazit-header-row {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    background:#1f4e79;
+    padding: 6px 16px;
+    border-bottom: 1px solid var(--accent);
+    flex-wrap: wrap;
+    gap: 20px;
   }
   #fazitInhalt {
     padding:12px 16px;
@@ -517,17 +527,19 @@
         <span class="api-dot ok" id="apiDotCrypto"></span>BTC
         <span class="api-dot fail" id="apiDotMetal"></span>Metal
       </div>
-      <div class="style-slider-wrap" title="Sprachniveau der KI-Analyse einstellen">
-        <input type="range" id="styleLevelSlider" min="0" max="2" step="1" value="1" oninput="onStyleLevelChange(this.value)">
-        <span id="styleLevelLabel">Erfahrener Anleger</span>
-      </div>
       <button class="refresh-btn" id="refreshBtn" onclick="ladeDaten()">↻ Live-Daten abrufen</button>
       <div class="status-tag live" id="statusIndicator">Lade Zeitstempel...</div>
     </div>
   </header>
 
   <div class="fazit">
-    <h2>Gesamtfazit &amp; Strategie-Check</h2>
+    <div class="fazit-header-row">
+      <h2>Gesamtfazit &amp; Strategie-Check</h2>
+      <div class="style-slider-wrap" title="Sprachniveau der KI-Analyse einstellen">
+        <input type="range" id="styleLevelSlider" min="0" max="2" step="1" value="1" oninput="onStyleLevelChange(this.value)">
+        <span id="styleLevelLabel">Erfahrener Anleger</span>
+      </div>
+    </div>
     <div id="fazitInhalt">
       <div class="fazit-section">
         <div class="fazit-label"><span class="situation-ampel" id="situationAmpelDot"></span>Aktuelles Sentiment:</div>
