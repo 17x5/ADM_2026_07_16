@@ -323,7 +323,6 @@
     .row-toggle-hint {
       margin-left: auto;
     }
-    /* Auf dem Handy im geöffneten Zustand sauberen Padding-Einzug nutzen */
     .quick-row-wrapper.open .quick-row-details {
       padding: 4px 8px 8px 8px;
       font-size: 12px;
@@ -748,28 +747,6 @@
 const APP_VERSION = "TEST BUILD 2026-07-24 20:20";
 // =========================================================================
 
-const FALLBACK = {
-  timestamp: "2026-07-09T08:00:00+00:00",
-  score: 42.0, 
-  rating: "neutral",
-  previous_close: 45.0,
-  btc_usd: 64250,
-  btc_change_24h: 1.25,
-  gold_usd: 4032.00,
-  oil_usd: 79.57,
-  etf_price: 38.92,
-  etf_change: -0.82,
-  subs: [
-    {key:"market_momentum_sp500", name:"Markt-Schwung", sub:"Zeigt an, ob sich der S&P 500 stabil über oder unter seiner 200-Tage-Linie bewegt. Steigt der Kurs klar darüber, läuft der Motor rund.", score:45.0},
-    {key:"stock_price_strength", name:"Aktien-Stärke", sub:"Misst die Anzahl der Aktien auf 52-Wochen-Hochs im Vergleich zu Tiefs. Das zeigt, wie stark der innere Kern des Marktes ist.", score:44.0},
-    {key:"stock_price_breadth", name:"Marktbreite (A/D Basis)", sub:"Misst die echte Marktbreite, indem sie vergleicht, ob insgesamt mehr Aktien steigen oder fallen. Steigen nur wenige Riesen, droht Gefahr.", score:23.0}, 
-    {key:"put_call_options", name:"Absicherungs-Verhältnis", sub:"Zeigt das Verhältnis von Verlustabsicherungen zu Wetten auf steigende Kurse. Sichert sich niemand mehr ab, herrscht blinde Sorglosigkeit.", score:35.0},
-    {key:"market_volatility_vix", name:"Markt-Nervosität (VIX)", sub:"Das ist der Angst-Index der Börse. Er misst, wie panisch oder schwankungsanfällig die Anleger gerade sind.", score:58.0, raw_vix: 16.90}, 
-    {key:"finra_margin_debt", name:"Kredit-Hebelung am Markt", sub:"Misst, wie stark Anleger mit geliehenem Geld spekulieren. Zu viel Fremdkapital verstärkt die Wucht von Crashs massiv.", score:45.0},
-    {key:"technical_confirmation", name:"Trend-Bestätigung", sub:"Technische Verkaufserschöpfung zur Erkennung von Wendepunkten.", score:55.0}
-  ]
-};
-
 const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
 const GEMINI_MODEL = "gemini-3.6-flash";
 
@@ -862,7 +839,7 @@ function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, ar
         <div class="q-arrow" style="color: ${getHexColor(color)}; ${dim}">${arrow}</div>
         <div class="q-text" style="${dim}"><b>${title}</b></div>
         <div class="row-toggle-hint">Info ▼</div>
-        ${isStale ? `<div class="q-stale-note" style="color:var(--yellow); font-weight:600;">⚠ Fallback-Wert, nicht live</div>` : ''}
+        ${isStale ? `<div class="q-stale-note" style="color:var(--yellow); font-weight:600;">⚠ Keine Live-Daten</div>` : ''}
       </div>
       <div class="quick-row-details">
         ${sub}
@@ -895,14 +872,14 @@ function updateFazitChange(currentScore, previousClose) {
 }
 
 function render(data){
-  const vix = data.subs.find(s=>s.key==="market_volatility_vix");
-  const breadth = data.subs.find(s=>s.key==="stock_price_breadth");
-  const momentum = data.subs.find(s=>s.key==="market_momentum_sp500");
-  const strength = data.subs.find(s=>s.key==="stock_price_strength");
-  const options = data.subs.find(s=>s.key==="put_call_options");
-  const marginDebt = data.subs.find(s=>s.key==="finra_margin_debt");
+  const vix = data?.subs?.find(s => s.key === "market_volatility_vix");
+  const breadth = data?.subs?.find(s => s.key === "stock_price_breadth");
+  const momentum = data?.subs?.find(s => s.key === "market_momentum_sp500");
+  const strength = data?.subs?.find(s => s.key === "stock_price_strength");
+  const options = data?.subs?.find(s => s.key === "put_call_options");
+  const marginDebt = data?.subs?.find(s => s.key === "finra_margin_debt");
 
-  let rawVix = vix ? (vix.raw_vix || 16.90) : 16.90;
+  let rawVix = vix ? (vix.raw_vix ?? 16.90) : 16.90;
   let vixColor = "gelb";
   if (rawVix < THRESHOLDS.vix.gruen) vixColor = "gruen";
   else if (rawVix > THRESHOLDS.vix.rot) vixColor = "rot";
@@ -974,7 +951,10 @@ function render(data){
   let etfArrow = (etfChangeVal >= 0) ? "▲" : "▼";
   
   let momScoreETFTrend = momentum ? momentum.score : 50;
-  const formattedEtfPreis = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(data.etf_price || FALLBACK.etf_price);
+  const formattedEtfPreis = (data.etf_price !== undefined && data.etf_price !== null && !isNaN(data.etf_price)) 
+    ? new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(data.etf_price) 
+    : '–';
+  
   const etfPercent = Math.min(100, Math.max(10, momScoreETFTrend));
   const etfRowHtml = buildQuickRowHTML(etfAmpelColor, "UBS Core MSCI World (UETW.DE)", "Dein persönlicher Anlage-ETF, der die Entwicklung der weltweiten Aktienmärkte abbildet.", etfPercent, formattedEtfPreis + " (" + (etfChangeVal >= 0 ? "+" : "") + etfChangeVal.toFixed(2) + "%)", !etfIstLive, etfArrow);
   document.getElementById('rowsSectionETF').innerHTML = etfRowHtml;
@@ -987,7 +967,9 @@ function render(data){
   let btcChange = data.btc_change_24h || 0;
   let btcColor = btcChange > THRESHOLDS.bitcoin.gruen ? "gruen" : (btcChange < THRESHOLDS.bitcoin.rot ? "rot" : "gelb");
   let btcBarPercent = Math.min(100, Math.max(0, 50 + btcChange * THRESHOLDS.bitcoin.barFaktor));
-  let formattedBtcPrice = new Intl.NumberFormat('de-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(data.btc_usd);
+  let formattedBtcPrice = (data.btc_usd !== undefined && data.btc_usd !== null && !isNaN(data.btc_usd))
+    ? new Intl.NumberFormat('de-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(data.btc_usd)
+    : '–';
   htmlS1 += buildQuickRowHTML(btcColor, "Bitcoin (BTC/USD)", "Dient als Fiebermesser für Spekulationslaune und Risiko-Bereitschaft im Markt.", btcBarPercent, formattedBtcPrice, !cryptoIstLive);
 
   let optScore = options ? options.score : 35;
@@ -1002,7 +984,7 @@ function render(data){
   
   let momScore = momentum ? momentum.score : 50;
   let momColor = momScore < THRESHOLDS.momentum.rot ? "rot" : (momScore > THRESHOLDS.momentum.purple ? "purple" : "gelb");
-  htmlS2 += buildQuickRowHTML(momColor, "Markt-Schwung", "Zeigt an, ob sich der S&P 500 stabil über oder unter seiner 200-Tage-Linie bewegt. Steigt der Kurs klar darüber, läuft der Motor rund.", momScore, momScore.toFixed(0) + " / 100");
+  htmlS2 += buildQuickRowHTML(momColor, "Markt-Schwung", "Zeigt an, ob sich der S&P 500 stabil über oder unter seiner 200-Tage-Linie bewegt. Steigt er klar darüber, läuft der Motor rund.", momScore, momScore.toFixed(0) + " / 100");
   
   htmlS2 += buildQuickRowHTML(actBreadth < THRESHOLDS.breadth.rot ? "rot" : (actBreadth < THRESHOLDS.breadth.gelb ? "gelb" : "gruen"), "Advance-Decline-Linie (A/D-Linie)", "Misst die echte Marktbreite, indem sie vergleicht, ob insgesamt mehr Aktien steigen oder fallen. Steigen nur wenige Riesen, droht Gefahr.", actBreadth, actBreadth.toFixed(0) + " / 100");
   document.getElementById('rowsSection2').innerHTML = htmlS2;
@@ -1027,21 +1009,25 @@ function render(data){
   let htmlS4 = "";
   let goldPreisWert = data.gold_usd;
   let oelPreisWert = data.oil_usd;
-  let goldOelRatio = oelPreisWert > 0 ? (goldPreisWert / oelPreisWert) : 0;
+  let goldOelRatio = (oelPreisWert && oelPreisWert > 0) ? (goldPreisWert / oelPreisWert) : 0;
 
   let ratioColor = "gelb";
   if (goldOelRatio > THRESHOLDS.goldOelRatio.rot) ratioColor = "rot";
   else if (goldOelRatio < THRESHOLDS.goldOelRatio.gruen) ratioColor = "gruen";
   let ratioPercent = Math.min(100, Math.max(0, ((goldOelRatio - THRESHOLDS.goldOelRatio.barMin) / THRESHOLDS.goldOelRatio.barSpan) * 100));
-  htmlS4 += buildQuickRowHTML(ratioColor, "Gold-Öl-Ratio", "Vergleicht den Goldpreis mit dem Ölpreis. Ein hoher Wert zeigt Krisenstimmung, ein tiefer starkes Wirtschaftswachstum.", ratioPercent, goldOelRatio.toFixed(1) + " : 1", !metalIstLive);
+  htmlS4 += buildQuickRowHTML(ratioColor, "Gold-Öl-Ratio", "Vergleicht den Goldpreis mit dem Ölpreis. Ein hoher Wert zeigt Krisenstimmung, ein tiefer starkes Wirtschaftswachstum.", ratioPercent, goldOelRatio > 0 ? goldOelRatio.toFixed(1) + " : 1" : "–", !metalIstLive);
 
-  let goldPercent = Math.min(100, Math.max(0, ((goldPreisWert - THRESHOLDS.goldPreis.min) / (THRESHOLDS.goldPreis.max - THRESHOLDS.goldPreis.min)) * 100));
-  let formattedGoldPreis = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(goldPreisWert);
+  let goldPercent = (goldPreisWert !== undefined && goldPreisWert !== null) ? Math.min(100, Math.max(0, ((goldPreisWert - THRESHOLDS.goldPreis.min) / (THRESHOLDS.goldPreis.max - THRESHOLDS.goldPreis.min)) * 100)) : 0;
+  let formattedGoldPreis = (goldPreisWert !== undefined && goldPreisWert !== null && !isNaN(goldPreisWert))
+    ? new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(goldPreisWert)
+    : '–';
   htmlS4 += buildQuickRowHTML("gelb", "Goldpreis (Unze)", "Der klassische sichere Hafen in Krisenzeiten. Steigt er stark, suchen Anleger Schutz vor unruhigen Zeiten.", goldPercent, formattedGoldPreis, !metalIstLive);
 
-  let oelColor = oelPreisWert > THRESHOLDS.oelPreis.rot ? "rot" : (oelPreisWert < THRESHOLDS.oelPreis.gruen ? "gruen" : "gelb");
-  let oelPercent = Math.min(100, Math.max(0, ((oelPreisWert - THRESHOLDS.oelPreis.barMin) / (THRESHOLDS.oelPreis.barMax - THRESHOLDS.oelPreis.barMin)) * 100));
-  let formattedOelPreis = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(oelPreisWert);
+  let oelColor = (oelPreisWert && oelPreisWert > THRESHOLDS.oelPreis.rot) ? "rot" : ((oelPreisWert && oelPreisWert < THRESHOLDS.oelPreis.gruen) ? "gruen" : "gelb");
+  let oelPercent = (oelPreisWert !== undefined && oelPreisWert !== null) ? Math.min(100, Math.max(0, ((oelPreisWert - THRESHOLDS.oelPreis.barMin) / (THRESHOLDS.oelPreis.barMax - THRESHOLDS.oelPreis.barMin)) * 100)) : 0;
+  let formattedOelPreis = (oelPreisWert !== undefined && oelPreisWert !== null && !isNaN(oelPreisWert))
+    ? new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(oelPreisWert)
+    : '–';
   htmlS4 += buildQuickRowHTML(oelColor, "Ölpreis (WTI)", "Spiegelt die globale Energienachfrage und den wirtschaftlichen Puls der Weltwirtschaft wider.", oelPercent, formattedOelPreis, !metalIstLive);
 
   document.getElementById('rowsSection4').innerHTML = htmlS4;
@@ -1225,8 +1211,8 @@ async function ladeDaten(){
   const btn = document.getElementById('refreshBtn');
   btn.disabled = true;
 
-  let btcPreis = FALLBACK.btc_usd;
-  let btcAenderung = FALLBACK.btc_change_24h;
+  let btcPreis = null;
+  let btcAenderung = 0;
   cryptoIstLive = false;
 
   try {
@@ -1248,8 +1234,8 @@ async function ladeDaten(){
     setApiDot('apiDotCrypto', false);
   }
 
-  let goldPreis = FALLBACK.gold_usd;
-  let oelPreis = FALLBACK.oil_usd;
+  let goldPreis = null;
+  let oelPreis = null;
   metalIstLive = false;
   try {
     const metalRes = await fetch('https://api.metalpriceapi.com/v1/latest?api_key=9ea216f35e8e7a6bab73a5f3c04853f5&base=USD&currencies=XAU,WTI');
@@ -1270,8 +1256,8 @@ async function ladeDaten(){
     setApiDot('apiDotMetal', false);
   }
 
-  let etfPreis = FALLBACK.etf_price;
-  let etfAenderung = FALLBACK.etf_change;
+  let etfPreis = null;
+  let etfAenderung = 0;
   etfIstLive = false;
   try {
     const etfRes = await fetch('etf.json?t=' + Date.now());
@@ -1327,7 +1313,24 @@ async function ladeDaten(){
     };
     isLive = true; render(data);
   }catch(err){
-    isLive = false; render(FALLBACK);
+    isLive = false;
+    
+    const statusIndicator = document.getElementById('statusIndicator');
+    if (statusIndicator) {
+      statusIndicator.className = 'status-tag stale';
+      statusIndicator.textContent = 'Fehler beim Laden';
+    }
+
+    const gesamtEl = document.getElementById('gesamtfazitText');
+    if (gesamtEl) {
+      gesamtEl.textContent = '⚠️ Live-Daten konnten nicht abgerufen werden. Es sind keine aktuellen Werte verfügbar.';
+    }
+
+    document.getElementById('rowsSectionETF').innerHTML = '<div style="padding: 10px; color: var(--red);">Keine Live-Daten verfügbar</div>';
+    document.getElementById('rowsSection1').innerHTML = '';
+    document.getElementById('rowsSection2').innerHTML = '';
+    document.getElementById('rowsSection3').innerHTML = '';
+    document.getElementById('rowsSection4').innerHTML = '';
   }finally{
     btn.disabled = false;
   }
