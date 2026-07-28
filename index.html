@@ -744,7 +744,7 @@
 <script>
 // =========================================================================
 // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN:
-const APP_VERSION = "TEST BUILD 2026-07-28 22:20";
+const APP_VERSION = "TEST BUILD 2026-07-28 22:34";
 // =========================================================================
 
 const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -1101,34 +1101,27 @@ async function generiereGeminiTexte(ctx) {
     gold_usd: goldPreisWert, oel_usd_wti: oelPreisWert
   };
 
-const prompt = `Du bist ein erfahrener Portfoliomanager. Beginne mit einer kurzen, realistischen Markteinordnung (z. B. "Der Markt zeigt sich aktuell bewegt..."), gehe dann aber sachlich in die Analyse für einen Schweizer Privatanleger. 
-
-Schreibe nüchtern, professionell und auf Augenhöhe – wie ein erfahrener Anlageberater im Gespräch mit einem Kunden. Vermeide jegliche Theatralik, übertriebene Metaphern oder künstliches Drama. Moderate, verständliche Beispiele sind in Ordnung, aber bitte sachlich halten.
-
+const prompt = `Du bist Marktanalyst und kommentierst ein Finanz-Sentiment-Dashboard auf Deutsch (Schweizer Kontext, Privatanleger).
 Sprachniveau der Antwort: ${stilAnweisung}
-
-Aktuelle Kennzahlen & Modell-Status:
+Hier die aktuellen Kennzahlen als JSON:
 ${JSON.stringify(kontext, null, 2)}
 
-Analysiere nach folgenden **Tiefgang-Regeln**:
-1. **Divergenzen aufdecken:** Zeige auf, wo sich Sentiment (z.B. Gier) und interne Marktrealität (z.B. Marktverwerfungen oder VIX) widersprechen.
-2. **Kausalität herstellen:** Verknüpfe Liquidität, Kredit-Hebelung und Marktbreite sachlich mit dem Risiko des aktuellen Status (${bfStatus}).
+WICHTIGE REGELN FÜR DIE ANALYSE:
+1. Trenne Fakten (z.B. solide Unternehmenszahlen/Berichtssaison) von reinen Stimmungs- oder Strukturdaten (Marktbreite, Sentiment).
+2. Formuliere nicht pauschal, dass "die Unternehmen geschwächt" seien, solange die Fundamentaldaten und Gewinnüberraschungen stark sind. 
+3. Wenn Indizes stark sind, aber die Marktbreite hinkt, benenne es präzise als Konzentration auf Mega-Caps oder erhöhte Vorsicht bei hoher Bewertung – ohne gleich in Panikmache zu verfallen.
 
 Erzeuge NUR ein valides JSON-Objekt (keine Markdown-Codeblöcke, kein Fliesstext davor/danach) mit exakt diesen Feldern:
 {
-  "fazit1": "2 Sätze mit Tiefgang: Analysiere die Dynamik zwischen Angst/Gier, VIX und der Bitcoin-Spekulation.",
-  "fazit2": "2 Sätze mit Tiefgang: Setze den Markttrend in direkten Bezug zur echten Marktbreite (A/D-Linie).",
-  "fazit3": "2 Sätze mit Tiefgang: Bewerte das Risiko der Kredit-Hebelung (Margin Debt) und des Put/Call-Ratios.",
-  "fazit4": "2 Sätze mit Tiefgang: Interpretiere das Gold-Öl-Ratio im Hinblick auf Konjunktur- vs. Krisenerwartung.",
-  "gesamtfazit": "3-4 prägnante Sätze. Starte mit einer realistischen Marktbeobachtung, verbinde die Kennzahlen zu einer Gesamtsicht und benenne sachlich den Haupttreiber für den Status ${bfStatus}.",
-  "ampel": "gruen|gelb|rot",
-  "actions": [
-    "Konkrete Handlungsempfehlung 1 (z. B. Absicherung, Cash-Quote, Positionsgrösse)",
-    "Konkrete Handlungsempfehlung 2",
-    "Konkrete Handlungsempfehlung 3"
-  ]
+  "fazit1": "1-2 Sätze Einschätzung zu Sentiment/Nervosität/Bitcoin (Kachel 1)",
+  "fazit2": "1-2 Sätze Einschätzung zu Trend/Momentum/Marktbreite (Kachel 2)",
+  "fazit3": "1-2 Sätze Einschätzung zu Struktur/Kredit-Hebelung (Kachel 3)",
+  "fazit4": "1-2 Sätze Einschätzung zu Gold/Öl/Rohstoffen (Kachel 4)",
+  "gesamtfazit": "2-3 Sätze Gesamteinschätzung der Marktlage, ausgewogene Balance zwischen soliden Fundamentaldaten und strukturellen Risiken.",
+  "ampel": "gruen|gelb|rot (Gesamteinschätzung der Marktlage: gruen=entspannt/unkritisch, gelb=erhöhte Vorsicht, rot=hohes Risiko/Warnsignal)",
+  "actions": ["konkrete, kurze Handlungsempfehlung 1", "Handlungsempfehlung 2", "Handlungsempfehlung 3"]
 }
-Formuliere präzise, klar, realistisch und ohne übertriebene Effet-Hascherei.`;
+Sachlich, konkret, ausgewogen, keine Übertreibungen, kurze Sätze.`;
 
   const antwortText = await callGemini(prompt);
   if (!antwortText) {
