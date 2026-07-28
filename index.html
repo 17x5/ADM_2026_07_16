@@ -76,6 +76,7 @@
   }
   .status-tag.live{background:#0d2818;border-color:var(--green);color:#7ee2a8;}
   .status-tag.stale{background:#2a2410;border-color:var(--yellow);color:#e8c766;}
+  .status-tag.error{background:#2d1315;border-color:var(--red);color:#ff7b72;}
 
   .api-status { display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:10px; color:var(--text-dim); }
   .api-dot { width:8px; height:8px; border-radius:50%; background:var(--text-dim); flex-shrink:0; transition:background-color 0.2s; }
@@ -853,7 +854,7 @@ function updateFazitChange(currentScore, previousClose) {
   let diffText = "";
   let diffColor = "var(--text-dim)";
   
-if (diff > 0) {
+  if (diff > 0) {
     diffText = `▲ +${diff.toFixed(1)} Punkte im Fear & Greed Index zum Vortag (Vortag: ${previousClose.toFixed(0)})`;
     diffColor = "var(--green)";
   } else if (diff < 0) {
@@ -1101,7 +1102,7 @@ async function generiereGeminiTexte(ctx) {
     gold_usd: goldPreisWert, oel_usd_wti: oelPreisWert
   };
 
-const prompt = `Du bist ein erfahrener und besonnener Marktstratege, der einen Privatanleger betreut, der sein Vermögen langfristig schützen und aufbauen möchte.
+  const prompt = `Du bist ein erfahrener und besonnener Marktstratege, der einen Privatanleger betreut, der sein Vermögen langfristig schützen und aufbauen möchte.
 Sprachniveau der Antwort: ${stilAnweisung}
 Hier die aktuellen Kennzahlen als JSON:
 ${JSON.stringify(kontext, null, 2)}
@@ -1301,7 +1302,7 @@ async function ladeDaten(){
     }
 
     const data = {
-      timestamp: json.fear_and_greed.timestamp,
+      timestamp: new Date().toISOString(), // <--- Übernimmt exakt den Zeitpunkt des Button-Drucks
       score: json.fear_and_greed.score,
       rating: json.fear_and_greed.rating,
       previous_close: json.fear_and_greed.previous_close,
@@ -1326,7 +1327,7 @@ async function ladeDaten(){
     
     const statusIndicator = document.getElementById('statusIndicator');
     if (statusIndicator) {
-      statusIndicator.className = 'status-tag stale';
+      statusIndicator.className = 'status-tag error'; // <--- Schaltet im Fehlerfall auf Rot um
       statusIndicator.textContent = 'Fehler beim Laden';
     }
 
