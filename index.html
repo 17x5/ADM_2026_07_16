@@ -744,7 +744,7 @@
 <script>
 // =========================================================================
 // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN:
-const APP_VERSION = "TEST BUILD 2026-07-28 22:34";
+const APP_VERSION = "TEST BUILD 2026-07-28 22:59";
 // =========================================================================
 
 const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -1108,8 +1108,8 @@ ${JSON.stringify(kontext, null, 2)}
 
 WICHTIGE REGELN FÜR DIE ANALYSE:
 1. Trenne Fakten (z.B. solide Unternehmenszahlen/Berichtssaison) von reinen Stimmungs- oder Strukturdaten (Marktbreite, Sentiment).
-2. Formuliere nicht pauschal, dass "die Unternehmen geschwächt" seien, solange die Fundamentaldaten und Gewinnüberraschungen stark sind. 
-3. Wenn Indizes stark sind, aber die Marktbreite hinkt, benenne es präzise als Konzentration auf Mega-Caps oder erhöhte Vorsicht bei hoher Bewertung – ohne gleich in Panikmache zu verfallen.
+2. Formuliere nicht pauschal, dass "die Unternehmen geschwächt" seien, solange die Fundamentaldaten stark sind. 
+3. Wenn Indizes stark sind, aber die Marktbreite hinkt, benenne es präzise als Konzentration auf Mega-Caps oder erhöhte Vorsicht bei hoher Bewertung.
 
 Erzeuge NUR ein valides JSON-Objekt (keine Markdown-Codeblöcke, kein Fliesstext davor/danach) mit exakt diesen Feldern:
 {
@@ -1119,7 +1119,11 @@ Erzeuge NUR ein valides JSON-Objekt (keine Markdown-Codeblöcke, kein Fliesstext
   "fazit4": "1-2 Sätze Einschätzung zu Gold/Öl/Rohstoffen (Kachel 4)",
   "gesamtfazit": "2-3 Sätze Gesamteinschätzung der Marktlage, ausgewogene Balance zwischen soliden Fundamentaldaten und strukturellen Risiken.",
   "ampel": "gruen|gelb|rot (Gesamteinschätzung der Marktlage: gruen=entspannt/unkritisch, gelb=erhöhte Vorsicht, rot=hohes Risiko/Warnsignal)",
-  "actions": ["konkrete, kurze Handlungsempfehlung 1", "Handlungsempfehlung 2", "Handlungsempfehlung 3"]
+  "actions": [
+    "Das Wichtigste am Markt: [Kurze, verständliche Einschätzung zu Stimmung und Vorgehen ohne Fachchinesisch]",
+    "Die Firmen dahinter: [Kurzer Satz zur stabilen Lage und den guten Gewinnen der Unternehmen]",
+    "Für deinen 100% World-ETF: [Klare, einfache Handlungsempfehlung für das All-In-Investment im UBS ETF]"
+  ]
 }
 Sachlich, konkret, ausgewogen, keine Übertreibungen, kurze Sätze.`;
 
