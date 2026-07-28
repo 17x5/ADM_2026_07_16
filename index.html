@@ -744,7 +744,7 @@
 <script>
 // =========================================================================
 // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN:
-const APP_VERSION = "TEST BUILD 2026-07-28 23:05";
+const APP_VERSION = "TEST BUILD 2026-07-28 23:10";
 // =========================================================================
 
 const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -1120,12 +1120,12 @@ Erzeuge NUR ein valides JSON-Objekt (keine Markdown-Codeblöcke, kein Fliesstext
   "gesamtfazit": "2-3 Sätze souveräne Gesamteinschätzung der Marktlage, die fundamentale Stärke und strukturelle Risiken nüchtern abwägt.",
   "ampel": "gruen|gelb|rot (Gesamteinschätzung der Marktlage: gruen=entspannt/unkritisch, gelb=erhöhte Vorsicht, rot=hohes Risiko/Warnsignal)",
   "actions": [
-    "Marktlage: [Nüchterne Einordnung der aktuellen Marktverfassung und des Sentiments ohne Fachchinesisch]",
-    "Fundamentaldaten: [Sachlicher Hinweis auf die robuste Ertragslage der Unternehmen als Sicherheitsanker]",
-    "Empfehlung für 100% World-ETF: [Klare, beruhigende Handlungsanweisung für das bestehende All-In-Investment zum Vermögenserhalt]"
+    "Formuliere hier eigenständig eine handlungsorientierte Action zur strategischen Ruhe bei Marktschwankungen.",
+    "Formuliere hier eigenständig eine Action zur Risikokontrolle und dem Vermeiden spekulativer Einzelwetten.",
+    "Formuliere hier eigenständig eine beruhigende, konkrete Handlungsempfehlung speziell für das bestehende 100% All-In-Investment im World-ETF."
   ]
 }
-Sachlich, analytisch, souverän, keine Übertreibungen, präzise und kurze Sätze.`;
+Schreibe die Actions eigenständig, sachlich, analytisch und souverän. Nutze ausschliesslich die direkte Du-Form, keine Übertreibungen, präzise und kurze Sätze.`;
 
   const antwortText = await callGemini(prompt);
   if (!antwortText) {
