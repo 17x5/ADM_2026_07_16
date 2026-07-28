@@ -744,7 +744,7 @@
 <script>
 // =========================================================================
 // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN:
-const APP_VERSION = "TEST BUILD 2026-07-28 22:59";
+const APP_VERSION = "TEST BUILD 2026-07-28 23:05";
 // =========================================================================
 
 const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -1101,31 +1101,31 @@ async function generiereGeminiTexte(ctx) {
     gold_usd: goldPreisWert, oel_usd_wti: oelPreisWert
   };
 
-const prompt = `Du bist Marktanalyst und kommentierst ein Finanz-Sentiment-Dashboard auf Deutsch (Schweizer Kontext, Privatanleger).
+const prompt = `Du bist ein erfahrener und besonnener Marktstratege, der einen Privatanleger betreut, der sein Vermögen langfristig schützen und aufbauen möchte.
 Sprachniveau der Antwort: ${stilAnweisung}
 Hier die aktuellen Kennzahlen als JSON:
 ${JSON.stringify(kontext, null, 2)}
 
 WICHTIGE REGELN FÜR DIE ANALYSE:
-1. Trenne Fakten (z.B. solide Unternehmenszahlen/Berichtssaison) von reinen Stimmungs- oder Strukturdaten (Marktbreite, Sentiment).
-2. Formuliere nicht pauschal, dass "die Unternehmen geschwächt" seien, solange die Fundamentaldaten stark sind. 
-3. Wenn Indizes stark sind, aber die Marktbreite hinkt, benenne es präzise als Konzentration auf Mega-Caps oder erhöhte Vorsicht bei hoher Bewertung.
+1. Trenne harte Fakten (solide Quartalszahlen, intakte Unternehmensgewinne) sauber von reinen Stimmungs- oder Strukturindikatoren (Marktbreite, Sentiment).
+2. Vermeide pauschale Panikmache oder die Behauptung, "die Unternehmen seien geschwächt", solange die Fundamentaldaten stark sind.
+3. Weise bei hoher Marktkonzentration auf Mega-Caps sachlich auf die erhöhte Vorsicht hin, ohne den übergeordneten Aufwärtstrend unbegründet madig zu machen.
 
 Erzeuge NUR ein valides JSON-Objekt (keine Markdown-Codeblöcke, kein Fliesstext davor/danach) mit exakt diesen Feldern:
 {
-  "fazit1": "1-2 Sätze Einschätzung zu Sentiment/Nervosität/Bitcoin (Kachel 1)",
-  "fazit2": "1-2 Sätze Einschätzung zu Trend/Momentum/Marktbreite (Kachel 2)",
-  "fazit3": "1-2 Sätze Einschätzung zu Struktur/Kredit-Hebelung (Kachel 3)",
-  "fazit4": "1-2 Sätze Einschätzung zu Gold/Öl/Rohstoffen (Kachel 4)",
-  "gesamtfazit": "2-3 Sätze Gesamteinschätzung der Marktlage, ausgewogene Balance zwischen soliden Fundamentaldaten und strukturellen Risiken.",
+  "fazit1": "1-2 Sätze sachliche Einschätzung zu Sentiment/Nervosität/Bitcoin (Kachel 1)",
+  "fazit2": "1-2 Sätze sachliche Einschätzung zu Trend/Momentum/Marktbreite (Kachel 2)",
+  "fazit3": "1-2 Sätze sachliche Einschätzung zu Struktur/Kredit-Hebelung (Kachel 3)",
+  "fazit4": "1-2 Sätze sachliche Einschätzung zu Gold/Öl/Rohstoffen (Kachel 4)",
+  "gesamtfazit": "2-3 Sätze souveräne Gesamteinschätzung der Marktlage, die fundamentale Stärke und strukturelle Risiken nüchtern abwägt.",
   "ampel": "gruen|gelb|rot (Gesamteinschätzung der Marktlage: gruen=entspannt/unkritisch, gelb=erhöhte Vorsicht, rot=hohes Risiko/Warnsignal)",
   "actions": [
-    "Das Wichtigste am Markt: [Kurze, verständliche Einschätzung zu Stimmung und Vorgehen ohne Fachchinesisch]",
-    "Die Firmen dahinter: [Kurzer Satz zur stabilen Lage und den guten Gewinnen der Unternehmen]",
-    "Für deinen 100% World-ETF: [Klare, einfache Handlungsempfehlung für das All-In-Investment im UBS ETF]"
+    "Marktlage: [Nüchterne Einordnung der aktuellen Marktverfassung und des Sentiments ohne Fachchinesisch]",
+    "Fundamentaldaten: [Sachlicher Hinweis auf die robuste Ertragslage der Unternehmen als Sicherheitsanker]",
+    "Empfehlung für 100% World-ETF: [Klare, beruhigende Handlungsanweisung für das bestehende All-In-Investment zum Vermögenserhalt]"
   ]
 }
-Sachlich, konkret, ausgewogen, keine Übertreibungen, kurze Sätze.`;
+Sachlich, analytisch, souverän, keine Übertreibungen, präzise und kurze Sätze.`;
 
   const antwortText = await callGemini(prompt);
   if (!antwortText) {
