@@ -744,7 +744,7 @@
 <script>
 // =========================================================================
 // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN:
-const APP_VERSION = "TEST BUILD 2026-07-28 22:04";
+const APP_VERSION = "TEST BUILD 2026-07-28 22:20";
 // =========================================================================
 
 const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -853,14 +853,14 @@ function updateFazitChange(currentScore, previousClose) {
   let diffText = "";
   let diffColor = "var(--text-dim)";
   
-  if (diff > 0) {
-    diffText = `▲ +${diff.toFixed(1)} Punkte im Vergleich zum Vortag (${previousClose.toFixed(0)})`;
+if (diff > 0) {
+    diffText = `▲ +${diff.toFixed(1)} Punkte im Fear & Greed Index zum Vortag (Vortag: ${previousClose.toFixed(0)})`;
     diffColor = "var(--green)";
   } else if (diff < 0) {
-    diffText = `▼ ${diff.toFixed(1)} Punkte im Vergleich zum Vortag (${previousClose.toFixed(0)})`;
+    diffText = `▼ ${Math.abs(diff).toFixed(1)} Punkte im Fear & Greed Index zum Vortag (Vortag: ${previousClose.toFixed(0)})`;
     diffColor = "var(--red)";
   } else {
-    diffText = `■ Unverändert zum Vortag (${previousClose.toFixed(0)})`;
+    diffText = `■ Fear & Greed Index unverändert zum Vortag (${previousClose.toFixed(0)})`;
     diffColor = "var(--yellow)";
   }
 
