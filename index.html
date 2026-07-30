@@ -745,7 +745,7 @@
 <script>
 // =========================================================================
 // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN:
-const APP_VERSION = "TEST BUILD 2026-07-28 14:14";
+const APP_VERSION = "TEST BUILD 2026-07-28 23:28";
 // =========================================================================
 
 const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -1075,23 +1075,45 @@ function onStyleLevelChange(value) {
   });
 })();
 
-function pruefeGesamtfazit(text, welleDesc) {
-  const risikoPhasen = ['Welle A', 'Welle B', 'Welle C'];
-  const istRisikoPhase = welleDesc && risikoPhasen.some(w => welleDesc.includes(w));
-  if (!istRisikoPhase || !text) return text;
+function pruefeTextSegment(text, verbotenesMusterSet) {
+  if (!text) return { text, beanstandet: false };
+  const treffer = verbotenesMusterSet.some(regex => regex.test(text));
+  return { text, beanstandet: treffer };
+}
 
-  const verharmlosungsMuster = [
-    /gesund/i, /kein(e)?\s*grund\s*zur\s*sorge/i, /unbedenklich/i,
-    /keine\s*sorge/i, /entspannt/i, /alles\s*im\s*lot/i, /alles\s*normal/i,
-    /nichts\s*zu\s*befürchten/i, /kurze\s*verschnaufpause/i
-  ];
-  const istVerharmlosend = verharmlosungsMuster.some(regex => regex.test(text));
+const VERHARMLOSUNGS_MUSTER = [
+  /gesund/i, /kein(e)?\s*grund\s*zur\s*sorge/i, /unbedenklich/i,
+  /keine\s*sorge/i, /entspannt/i, /alles\s*im\s*lot/i, /alles\s*normal/i,
+  /nichts\s*zu\s*befürchten/i, /kurze\s*verschnaufpause/i, /keinerlei\s*anlass/i
+];
 
-  if (istVerharmlosend) {
-    console.warn("Gesamtfazit verworfen (Verharmlosung in Risikophase erkannt):", text);
-    return `⚠️ Sicherheitshinweis: Die aktuelle Marktphase (${welleDesc}) gilt als Risikophase mit oft unterschätzter Gefahr. Die automatisch generierte Einschätzung wurde verworfen, da sie das Risiko verharmloste. Bitte Wellen-Chart und Kennzahlen manuell prüfen, bevor du handelst.`;
+const UEBERTREIBUNGS_MUSTER = [
+  /crash\s*(ist\s*)?unausweichlich/i, /weltuntergang/i, /sofort\s*alles\s*verkaufen/i,
+  /totalverlust/i, /kollaps\s*steht\s*bevor/i, /panik(artig)?\s*verkaufen/i,
+  /katastrophe/i, /es\s*ist\s*vorbei/i
+];
+
+function baueGesamtfazit(fundamentaleLage, strukturellesRisiko, welleDesc) {
+  const fCheck = pruefeTextSegment(fundamentaleLage, UEBERTREIBUNGS_MUSTER);
+  const sCheckVerharmlosend = pruefeTextSegment(strukturellesRisiko, VERHARMLOSUNGS_MUSTER);
+  const sCheckUebertrieben = pruefeTextSegment(strukturellesRisiko, UEBERTREIBUNGS_MUSTER);
+
+  let fundamentalTeil = fCheck.beanstandet
+    ? "Die fundamentale Lage der Unternehmen wird gesondert bewertet."
+    : (fundamentaleLage || "");
+
+  let risikoTeil;
+  if (sCheckVerharmlosend.beanstandet) {
+    console.warn("Strukturelles Risiko verharmlost erkannt, ersetzt:", strukturellesRisiko);
+    risikoTeil = `Strukturell befinden wir uns aktuell in ${welleDesc || "einer unklaren Phase"} - diese Phase gilt als Risikophase mit oft unterschätzter Gefahr.`;
+  } else if (sCheckUebertrieben.beanstandet) {
+    console.warn("Strukturelles Risiko übertrieben erkannt, ersetzt:", strukturellesRisiko);
+    risikoTeil = `Strukturell befinden wir uns aktuell in ${welleDesc || "einer unklaren Phase"} - erhöhte Vorsicht ist angebracht, eine Panikreaktion ist aber nicht angezeigt.`;
+  } else {
+    risikoTeil = strukturellesRisiko || "";
   }
-  return text;
+
+  return `${fundamentalTeil} Gleichzeitig: ${risikoTeil}`.trim();
 }
 
 async function generiereGeminiTexte(ctx) {
@@ -1137,7 +1159,8 @@ Erzeuge NUR ein valides JSON-Objekt (keine Markdown-Codeblöcke, kein Fliesstext
   "fazit2": "1-2 Sätze sachliche Einschätzung zu Trend/Momentum/Marktbreite (Kachel 2)",
   "fazit3": "1-2 Sätze sachliche Einschätzung zu Struktur/Kredit-Hebelung (Kachel 3)",
   "fazit4": "1-2 Sätze sachliche Einschätzung zu Gold/Öl/Rohstoffen (Kachel 4)",
-  "gesamtfazit": "2-3 Sätze souveräne Gesamteinschätzung der Marktlage, die fundamentale Stärke und strukturelle Risiken nüchtern abwägt.",
+  "fundamentale_lage": "1 knapper, sachlicher Satz NUR zu Unternehmensgewinnen/Fundamentaldaten - keine Bewertung des Gesamtrisikos, keine Beruhigung, nur der fundamentale Fakt.",
+  "strukturelles_risiko": "1 knapper, sachlicher Satz NUR zur aktuellen Wellen-Phase/Marktbreite/Struktur-Risiko gemäss 'marktphase'. Muss die Phase beim Namen nennen (z.B. Welle A/B/C) falls zutreffend. Weder beschönigen noch dramatisieren - nur der strukturelle Fakt.",
   "ampel": "gruen|gelb|rot (Gesamteinschätzung der Marktlage: gruen=entspannt/unkritisch, gelb=erhöhte Vorsicht, rot=hohes Risiko/Warnsignal)",
   "actions": [
     "Formuliere hier eigenständig eine handlungsorientierte Action zur strategischen Ruhe bei Marktschwankungen.",
@@ -1163,7 +1186,7 @@ Schreibe die Actions eigenständig, sachlich, analytisch und souverän. Nutze au
     document.getElementById('fazitContent4').innerHTML = ergebnis.fazit4 || '';
 
     const gesamtEl = document.getElementById('gesamtfazitText');
-    if (gesamtEl) gesamtEl.textContent = pruefeGesamtfazit(ergebnis.gesamtfazit || '', welleDesc);
+    if (gesamtEl) gesamtEl.textContent = baueGesamtfazit(ergebnis.fundamentale_lage, ergebnis.strukturelles_risiko, welleDesc);
 
     const ampelDot = document.getElementById('situationAmpelDot');
     if (ampelDot) {
