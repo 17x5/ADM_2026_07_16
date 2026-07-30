@@ -76,7 +76,6 @@
   }
   .status-tag.live{background:#0d2818;border-color:var(--green);color:#7ee2a8;}
   .status-tag.stale{background:#2a2410;border-color:var(--yellow);color:#e8c766;}
-  .status-tag.error{background:#2d1315;border-color:var(--red);color:#ff7b72;}
 
   .api-status { display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:10px; color:var(--text-dim); }
   .api-dot { width:8px; height:8px; border-radius:50%; background:var(--text-dim); flex-shrink:0; transition:background-color 0.2s; }
@@ -745,7 +744,7 @@
 <script>
 // =========================================================================
 // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN:
-const APP_VERSION = "TEST BUILD 2026-07-28 23:28";
+const APP_VERSION = "TEST BUILD 2026-07-24 20:20";
 // =========================================================================
 
 const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -855,13 +854,13 @@ function updateFazitChange(currentScore, previousClose) {
   let diffColor = "var(--text-dim)";
   
   if (diff > 0) {
-    diffText = `▲ +${diff.toFixed(1)} Punkte im Fear & Greed Index zum Vortag (Vortag: ${previousClose.toFixed(0)})`;
+    diffText = `▲ +${diff.toFixed(1)} Punkte im Vergleich zum Vortag (${previousClose.toFixed(0)})`;
     diffColor = "var(--green)";
   } else if (diff < 0) {
-    diffText = `▼ ${Math.abs(diff).toFixed(1)} Punkte im Fear & Greed Index zum Vortag (Vortag: ${previousClose.toFixed(0)})`;
+    diffText = `▼ ${diff.toFixed(1)} Punkte im Vergleich zum Vortag (${previousClose.toFixed(0)})`;
     diffColor = "var(--red)";
   } else {
-    diffText = `■ Fear & Greed Index unverändert zum Vortag (${previousClose.toFixed(0)})`;
+    diffText = `■ Unverändert zum Vortag (${previousClose.toFixed(0)})`;
     diffColor = "var(--yellow)";
   }
 
@@ -1102,31 +1101,22 @@ async function generiereGeminiTexte(ctx) {
     gold_usd: goldPreisWert, oel_usd_wti: oelPreisWert
   };
 
-  const prompt = `Du bist ein erfahrener und besonnener Marktstratege, der einen Privatanleger betreut, der sein Vermögen langfristig schützen und aufbauen möchte.
+  const prompt = `Du bist Marktanalyst und kommentierst ein Finanz-Sentiment-Dashboard auf Deutsch (Schweizer Kontext, Privatanleger).
 Sprachniveau der Antwort: ${stilAnweisung}
 Hier die aktuellen Kennzahlen als JSON:
 ${JSON.stringify(kontext, null, 2)}
 
-WICHTIGE REGELN FÜR DIE ANALYSE:
-1. Trenne harte Fakten (solide Quartalszahlen, intakte Unternehmensgewinne) sauber von reinen Stimmungs- oder Strukturindikatoren (Marktbreite, Sentiment).
-2. Vermeide pauschale Panikmache oder die Behauptung, "die Unternehmen seien geschwächt", solange die Fundamentaldaten stark sind.
-3. Weise bei hoher Marktkonzentration auf Mega-Caps sachlich auf die erhöhte Vorsicht hin, ohne den übergeordneten Aufwärtstrend unbegründet madig zu machen.
-
 Erzeuge NUR ein valides JSON-Objekt (keine Markdown-Codeblöcke, kein Fliesstext davor/danach) mit exakt diesen Feldern:
 {
-  "fazit1": "1-2 Sätze sachliche Einschätzung zu Sentiment/Nervosität/Bitcoin (Kachel 1)",
-  "fazit2": "1-2 Sätze sachliche Einschätzung zu Trend/Momentum/Marktbreite (Kachel 2)",
-  "fazit3": "1-2 Sätze sachliche Einschätzung zu Struktur/Kredit-Hebelung (Kachel 3)",
-  "fazit4": "1-2 Sätze sachliche Einschätzung zu Gold/Öl/Rohstoffen (Kachel 4)",
-  "gesamtfazit": "2-3 Sätze souveräne Gesamteinschätzung der Marktlage, die fundamentale Stärke und strukturelle Risiken nüchtern abwägt.",
+  "fazit1": "1-2 Sätze Einschätzung zu Sentiment/Nervosität/Bitcoin (Kachel 1)",
+  "fazit2": "1-2 Sätze Einschätzung zu Trend/Momentum/Marktbreite (Kachel 2)",
+  "fazit3": "1-2 Sätze Einschätzung zu Struktur/Kredit-Hebelung (Kachel 3)",
+  "fazit4": "1-2 Sätze Einschätzung zu Gold/Öl/Rohstoffen (Kachel 4)",
+  "gesamtfazit": "2-3 Sätze Gesamteinschätzung der Marktlage, Bezug zu ${bfStatus}",
   "ampel": "gruen|gelb|rot (Gesamteinschätzung der Marktlage: gruen=entspannt/unkritisch, gelb=erhöhte Vorsicht, rot=hohes Risiko/Warnsignal)",
-  "actions": [
-    "Formuliere hier eigenständig eine handlungsorientierte Action zur strategischen Ruhe bei Marktschwankungen.",
-    "Formuliere hier eigenständig eine Action zur Risikokontrolle und dem Vermeiden spekulativer Einzelwetten.",
-    "Formuliere hier eigenständig eine beruhigende, konkrete Handlungsempfehlung speziell für das bestehende 100% All-In-Investment im World-ETF."
-  ]
+  "actions": ["konkrete, kurze Handlungsempfehlung 1", "Handlungsempfehlung 2", "Handlungsempfehlung 3"]
 }
-Schreibe die Actions eigenständig, sachlich, analytisch und souverän. Nutze ausschliesslich die direkte Du-Form, keine Übertreibungen, präzise und kurze Sätze.`;
+Sachlich, konkret, keine Übertreibungen, kurze Sätze.`;
 
   const antwortText = await callGemini(prompt);
   if (!antwortText) {
@@ -1302,7 +1292,7 @@ async function ladeDaten(){
     }
 
     const data = {
-      timestamp: new Date().toISOString(), // <--- Übernimmt exakt den Zeitpunkt des Button-Drucks
+      timestamp: json.fear_and_greed.timestamp,
       score: json.fear_and_greed.score,
       rating: json.fear_and_greed.rating,
       previous_close: json.fear_and_greed.previous_close,
@@ -1327,7 +1317,7 @@ async function ladeDaten(){
     
     const statusIndicator = document.getElementById('statusIndicator');
     if (statusIndicator) {
-      statusIndicator.className = 'status-tag error'; // <--- Schaltet im Fehlerfall auf Rot um
+      statusIndicator.className = 'status-tag stale';
       statusIndicator.textContent = 'Fehler beim Laden';
     }
 
