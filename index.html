@@ -1,3 +1,4 @@
+<!-- BUILD-ZEITSTEMPEL: TEST BUILD 2026-07-30 14:33 -->
 <!DOCTYPE html>
 <html lang="de"><head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
@@ -5,6 +6,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Advanced Marktsentiment Dashboard - OnePage Final</title>
+
+<script>
+// =========================================================================
+// ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
+const APP_VERSION = "TEST BUILD 2026-07-30 14:33";
+// =========================================================================
+
+const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
+const GEMINI_MODEL = "gemini-3.6-flash";
+</script>
+
 <style>
   :root{
     --bg:#0d1117;
@@ -743,14 +755,6 @@
 </div>
 
 <script>
-// =========================================================================
-// ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN:
-const APP_VERSION = "TEST BUILD 2026-07-30 14:33";
-// =========================================================================
-
-const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
-const GEMINI_MODEL = "gemini-3.6-flash";
-
 const THRESHOLDS = {
   vix:            { gruen: 15.5, rot: 24.0, barMin: 10, barMax: 40 },
   cnnScore:       { rotUnten: 25, rotOben: 75, gruenUnten: 45, gruenOben: 55 },
@@ -1344,7 +1348,7 @@ async function ladeDaten(){
     }
 
     const data = {
-      timestamp: new Date().toISOString(), // <--- Übernimmt exakt den Zeitpunkt des Button-Drucks
+      timestamp: new Date().toISOString(), 
       score: json.fear_and_greed.score,
       rating: json.fear_and_greed.rating,
       previous_close: json.fear_and_greed.previous_close,
@@ -1369,7 +1373,7 @@ async function ladeDaten(){
     
     const statusIndicator = document.getElementById('statusIndicator');
     if (statusIndicator) {
-      statusIndicator.className = 'status-tag error'; // <--- Schaltet im Fehlerfall auf Rot um
+      statusIndicator.className = 'status-tag error'; 
       statusIndicator.textContent = 'Fehler beim Laden';
     }
 
