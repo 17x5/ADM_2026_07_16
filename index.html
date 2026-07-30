@@ -76,6 +76,7 @@
   }
   .status-tag.live{background:#0d2818;border-color:var(--green);color:#7ee2a8;}
   .status-tag.stale{background:#2a2410;border-color:var(--yellow);color:#e8c766;}
+  .status-tag.error{background:#2d1315;border-color:var(--red);color:#ff7b72;}
 
   .api-status { display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:10px; color:var(--text-dim); }
   .api-dot { width:8px; height:8px; border-radius:50%; background:var(--text-dim); flex-shrink:0; transition:background-color 0.2s; }
@@ -744,7 +745,7 @@
 <script>
 // =========================================================================
 // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN:
-const APP_VERSION = "TEST BUILD 2026-07-30 14:00";
+const APP_VERSION = "TEST BUILD 2026-07-28 23:28";
 // =========================================================================
 
 const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -854,13 +855,13 @@ function updateFazitChange(currentScore, previousClose) {
   let diffColor = "var(--text-dim)";
   
   if (diff > 0) {
-    diffText = `▲ +${diff.toFixed(1)} Punkte im Vergleich zum Vortag (${previousClose.toFixed(0)})`;
+    diffText = `▲ +${diff.toFixed(1)} Punkte im Fear & Greed Index zum Vortag (Vortag: ${previousClose.toFixed(0)})`;
     diffColor = "var(--green)";
   } else if (diff < 0) {
-    diffText = `▼ ${diff.toFixed(1)} Punkte im Vergleich zum Vortag (${previousClose.toFixed(0)})`;
+    diffText = `▼ ${Math.abs(diff).toFixed(1)} Punkte im Fear & Greed Index zum Vortag (Vortag: ${previousClose.toFixed(0)})`;
     diffColor = "var(--red)";
   } else {
-    diffText = `■ Unverändert zum Vortag (${previousClose.toFixed(0)})`;
+    diffText = `■ Fear & Greed Index unverändert zum Vortag (${previousClose.toFixed(0)})`;
     diffColor = "var(--yellow)";
   }
 
@@ -920,7 +921,7 @@ function render(data){
   else if (data.score < bf.korrekturScore || actBreadth < bf.korrekturBreadth) {
     bfStatus = "KORREKTUR"; 
     sfColor = "gelb"; 
-    welleDesc = "Welle A/B (Gesunder Rücksetzer)";
+    welleDesc = "Welle A: Warnschuss - wird von der Masse oft fälschlich als Kaufgelegenheit unterschätzt";
     activeLegId = "leg_WelleA";
     updateSvgNode(495, 125, "var(--yellow)", "Welle A (IST)");
   } else {
@@ -1047,7 +1048,7 @@ function render(data){
 }
 
 const STYLE_LEVELS = [
-  { key: 'einsteiger',    label: 'Börsen-Einsteiger', anweisung: 'Erkläre sehr einfach und ohne Fachbegriffe, wie für jemanden ohne Börsenvorwissen. Nutze bei Bedarf einen kurzen Alltagsvergleich. Kurze, klare Sätze.' },
+  { key: 'einsteiger',    label: 'Börsen-Einsteiger', anweisung: 'Erkläre sehr einfach und ohne Fachbegriffe, wie für jemanden ohne Börsenvorwissen. Nutze bei Bedarf einen kurzen Alltagsvergleich, aber dieser darf ein bestehendes Risiko niemals verharmlosen oder beschönigen - einfache Sprache heisst nicht beruhigende Sprache. Kurze, klare Sätze.' },
   { key: 'erfahren',      label: 'Erfahrener Anleger', anweisung: 'Erkläre für einen Anleger mit Grundkenntnissen an der Börse. Übliche Fachbegriffe (z.B. Volatilität, Momentum) sind ok, kurz erklärt wenn nötig.' },
   { key: 'profi',         label: 'Börsenprofi',       anweisung: 'Erkläre knapp und fachlich präzise für einen erfahrenen Börsenprofi. Fachbegriffe ohne Erklärung verwenden, keine Grundlagen erläutern.' }
 ];
@@ -1073,6 +1074,25 @@ function onStyleLevelChange(value) {
     document.getElementById('styleLevelLabel').textContent = STYLE_LEVELS[level].label;
   });
 })();
+
+function pruefeGesamtfazit(text, welleDesc) {
+  const risikoPhasen = ['Welle A', 'Welle B', 'Welle C'];
+  const istRisikoPhase = welleDesc && risikoPhasen.some(w => welleDesc.includes(w));
+  if (!istRisikoPhase || !text) return text;
+
+  const verharmlosungsMuster = [
+    /gesund/i, /kein(e)?\s*grund\s*zur\s*sorge/i, /unbedenklich/i,
+    /keine\s*sorge/i, /entspannt/i, /alles\s*im\s*lot/i, /alles\s*normal/i,
+    /nichts\s*zu\s*befürchten/i, /kurze\s*verschnaufpause/i
+  ];
+  const istVerharmlosend = verharmlosungsMuster.some(regex => regex.test(text));
+
+  if (istVerharmlosend) {
+    console.warn("Gesamtfazit verworfen (Verharmlosung in Risikophase erkannt):", text);
+    return `⚠️ Sicherheitshinweis: Die aktuelle Marktphase (${welleDesc}) gilt als Risikophase mit oft unterschätzter Gefahr. Die automatisch generierte Einschätzung wurde verworfen, da sie das Risiko verharmloste. Bitte Wellen-Chart und Kennzahlen manuell prüfen, bevor du handelst.`;
+  }
+  return text;
+}
 
 async function generiereGeminiTexte(ctx) {
   if (!GEMINI_API_KEY) return;
@@ -1101,22 +1121,31 @@ async function generiereGeminiTexte(ctx) {
     gold_usd: goldPreisWert, oel_usd_wti: oelPreisWert
   };
 
-  const prompt = `Du bist Marktanalyst und kommentierst ein Finanz-Sentiment-Dashboard auf Deutsch (Schweizer Kontext, Privatanleger).
+  const prompt = `Du bist ein erfahrener und besonnener Marktstratege, der einen Privatanleger betreut, der sein Vermögen langfristig schützen und aufbauen möchte.
 Sprachniveau der Antwort: ${stilAnweisung}
 Hier die aktuellen Kennzahlen als JSON:
 ${JSON.stringify(kontext, null, 2)}
 
+WICHTIGE REGELN FÜR DIE ANALYSE:
+1. Trenne harte Fakten (solide Quartalszahlen, intakte Unternehmensgewinne) sauber von reinen Stimmungs- oder Strukturindikatoren (Marktbreite, Sentiment).
+2. Das Feld "marktphase" gibt die aktuelle Position im 8-Wellen-Zyklus an. Das Gesamtfazit MUSS diese Phase explizit berücksichtigen und darf ihr nicht widersprechen. Insbesondere: Wird "marktphase" als Welle A oder Welle B (Marktphasen mit unterschätztem bzw. verdecktem Risiko) angegeben, darf das Gesamtfazit den Rücksetzer NICHT als "gesund" oder unbedenklich einordnen, auch wenn die Unternehmensgewinne solide sind. Fundamentale Stärke und Strukturrisiko sind getrennte Dimensionen - eines widerlegt das andere nicht. Diese Regel gilt auf JEDEM Sprachniveau (auch Einsteiger) unverändert - vereinfachte Sprache darf den Risikogehalt der Aussage nicht abschwächen.
+3. Weise bei hoher Marktkonzentration auf Mega-Caps sachlich auf die erhöhte Vorsicht hin, ohne den übergeordneten Aufwärtstrend unbegründet madig zu machen.
+
 Erzeuge NUR ein valides JSON-Objekt (keine Markdown-Codeblöcke, kein Fliesstext davor/danach) mit exakt diesen Feldern:
 {
-  "fazit1": "1-2 Sätze Einschätzung zu Sentiment/Nervosität/Bitcoin (Kachel 1)",
-  "fazit2": "1-2 Sätze Einschätzung zu Trend/Momentum/Marktbreite (Kachel 2)",
-  "fazit3": "1-2 Sätze Einschätzung zu Struktur/Kredit-Hebelung (Kachel 3)",
-  "fazit4": "1-2 Sätze Einschätzung zu Gold/Öl/Rohstoffen (Kachel 4)",
-  "gesamtfazit": "2-3 Sätze Gesamteinschätzung der Marktlage, Bezug zu ${bfStatus}",
+  "fazit1": "1-2 Sätze sachliche Einschätzung zu Sentiment/Nervosität/Bitcoin (Kachel 1)",
+  "fazit2": "1-2 Sätze sachliche Einschätzung zu Trend/Momentum/Marktbreite (Kachel 2)",
+  "fazit3": "1-2 Sätze sachliche Einschätzung zu Struktur/Kredit-Hebelung (Kachel 3)",
+  "fazit4": "1-2 Sätze sachliche Einschätzung zu Gold/Öl/Rohstoffen (Kachel 4)",
+  "gesamtfazit": "2-3 Sätze souveräne Gesamteinschätzung der Marktlage, die fundamentale Stärke und strukturelle Risiken nüchtern abwägt.",
   "ampel": "gruen|gelb|rot (Gesamteinschätzung der Marktlage: gruen=entspannt/unkritisch, gelb=erhöhte Vorsicht, rot=hohes Risiko/Warnsignal)",
-  "actions": ["konkrete, kurze Handlungsempfehlung 1", "Handlungsempfehlung 2", "Handlungsempfehlung 3"]
+  "actions": [
+    "Formuliere hier eigenständig eine handlungsorientierte Action zur strategischen Ruhe bei Marktschwankungen.",
+    "Formuliere hier eigenständig eine Action zur Risikokontrolle und dem Vermeiden spekulativer Einzelwetten.",
+    "Formuliere hier eigenständig eine beruhigende, konkrete Handlungsempfehlung speziell für das bestehende 100% All-In-Investment im World-ETF."
+  ]
 }
-Sachlich, konkret, keine Übertreibungen, kurze Sätze.`;
+Schreibe die Actions eigenständig, sachlich, analytisch und souverän. Nutze ausschliesslich die direkte Du-Form, keine Übertreibungen, präzise und kurze Sätze.`;
 
   const antwortText = await callGemini(prompt);
   if (!antwortText) {
@@ -1134,7 +1163,7 @@ Sachlich, konkret, keine Übertreibungen, kurze Sätze.`;
     document.getElementById('fazitContent4').innerHTML = ergebnis.fazit4 || '';
 
     const gesamtEl = document.getElementById('gesamtfazitText');
-    if (gesamtEl) gesamtEl.textContent = ergebnis.gesamtfazit || '';
+    if (gesamtEl) gesamtEl.textContent = pruefeGesamtfazit(ergebnis.gesamtfazit || '', welleDesc);
 
     const ampelDot = document.getElementById('situationAmpelDot');
     if (ampelDot) {
@@ -1292,7 +1321,7 @@ async function ladeDaten(){
     }
 
     const data = {
-      timestamp: json.fear_and_greed.timestamp,
+      timestamp: new Date().toISOString(), // <--- Übernimmt exakt den Zeitpunkt des Button-Drucks
       score: json.fear_and_greed.score,
       rating: json.fear_and_greed.rating,
       previous_close: json.fear_and_greed.previous_close,
@@ -1317,7 +1346,7 @@ async function ladeDaten(){
     
     const statusIndicator = document.getElementById('statusIndicator');
     if (statusIndicator) {
-      statusIndicator.className = 'status-tag stale';
+      statusIndicator.className = 'status-tag error'; // <--- Schaltet im Fehlerfall auf Rot um
       statusIndicator.textContent = 'Fehler beim Laden';
     }
 
