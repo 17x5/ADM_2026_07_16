@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-07-30 15:54";
+    const APP_VERSION = "TEST BUILD 2026-08-03 09:15";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -854,26 +854,30 @@ function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, ar
   `;
 }
 
-function updateFazitChange(currentScore, previousClose) {
-  let diff = currentScore - previousClose;
-  let diffText = "";
-  let diffColor = "var(--text-dim)";
-  
-  if (diff > 0) {
-    diffText = `▲ +${diff.toFixed(1)} Punkte im Fear & Greed Index zum Vortag (Vortag: ${previousClose.toFixed(0)})`;
-    diffColor = "var(--green)";
-  } else if (diff < 0) {
-    diffText = `▼ ${Math.abs(diff).toFixed(1)} Punkte im Fear & Greed Index zum Vortag (Vortag: ${previousClose.toFixed(0)})`;
-    diffColor = "var(--red)";
+function updateFazitChange(currentScore, previousClose, rawVix, prevVix) {
+  // 1. Fear & Greed Differenz berechnen
+  let diffFng = currentScore - previousClose;
+  let fngText = "";
+  if (diffFng > 0) {
+    fngText = `▲ +${diffFng.toFixed(1)} Pkt. (Vortag: ${previousClose.toFixed(0)})`;
+  } else if (diffFng < 0) {
+    fngText = `▼ ${Math.abs(diffFng).toFixed(1)} Pkt. (Vortag: ${previousClose.toFixed(0)})`;
   } else {
-    diffText = `■ Fear & Greed Index unverändert zum Vortag (${previousClose.toFixed(0)})`;
-    diffColor = "var(--yellow)";
+    fngText = `■ Unverändert (${previousClose.toFixed(0)})`;
+  }
+
+  // 2. VIX Text aufbauen (falls verfügbar)
+  let vixTextPart = "";
+  if (rawVix !== undefined && rawVix !== null && !isNaN(rawVix)) {
+    vixTextPart = `VIX: <strong>${rawVix.toFixed(2)} USD</strong>`;
+  } else {
+    vixTextPart = `VIX: –`;
   }
 
   const changeEl = document.getElementById('fazitChangeEl');
   if (changeEl) {
-    changeEl.style.color = diffColor;
-    changeEl.innerHTML = `<strong>Veränderung zum letzten Handelstag:</strong> ${diffText}`;
+    changeEl.style.color = "var(--text)";
+    changeEl.innerHTML = `<strong>Veränderung zum letzten Handelstag:</strong> ${vixTextPart} | Fear & Greed: ${fngText}`;
   }
 }
 
