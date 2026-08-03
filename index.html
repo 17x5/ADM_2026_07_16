@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-03 14:42";
+    const APP_VERSION = "TEST BUILD 2026-08-03 13:32";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -537,7 +537,7 @@
         <span class="api-dot" id="apiDotGemini"></span>Gemini
         <span class="api-dot fail" id="apiDotEtf"></span>ETF
         <span class="api-dot ok" id="apiDotCrypto"></span>BTC
-        <span class="api-dot fail" id="apiDotNinja"></span>Ninja
+        <span class="api-dot fail" id="apiDotRohstoffe"></span>Rohst.
       </div>
       <button class="refresh-btn" id="refreshBtn" onclick="ladeDaten()">↻ Live-Daten abrufen</button>
       <div class="status-tag live" id="statusIndicator">Lade Zeitstempel...</div>
@@ -1300,16 +1300,17 @@ async function holeCrypto() {
   return { btcPreis, btcAenderung, live };
 }
 
-const NINJA_API_KEY = 'Ns5Z1DsKWM0QVkXnsW0HnD92tGxmeguRWFOCM470';
+const GOLDPRICE_API_KEY = 'ga_live_BSLjNyz5dg99ScPiUAMauW_wBFchpXurRpxu0Zpt';
+const OILPRICEAPI_KEY = 'cc5e787054a4b8fdf9271f62c38b112f8165a1de0a34cfd9ce9489147134d40f';
 
 async function holeGold() {
   try {
-    const res = await fetchWithTimeout('https://api.api-ninjas.com/v1/goldprice', {
-      headers: { 'X-Api-Key': NINJA_API_KEY }
+    const res = await fetchWithTimeout('https://api.goldprice.dev/v1/prices?symbol=XAU-USD-SPOT', {
+      headers: { 'X-Api-Key': GOLDPRICE_API_KEY }
     }, 6000);
     if (!res.ok) return { preis: null, ok: false };
     const json = await res.json();
-    const preis = parseFloat(json.price);
+    const preis = parseFloat(json.price ?? json.data?.price);
     return { preis: isNaN(preis) ? null : preis, ok: !isNaN(preis) };
   } catch (e) {
     return { preis: null, ok: false };
@@ -1318,12 +1319,12 @@ async function holeGold() {
 
 async function holeOel() {
   try {
-    const res = await fetchWithTimeout('https://api.api-ninjas.com/v1/oilprice?type=wti', {
-      headers: { 'X-Api-Key': NINJA_API_KEY }
+    const res = await fetchWithTimeout('https://api.oilpriceapi.com/v1/prices/latest?by_code=WTI_USD', {
+      headers: { 'Authorization': `Token ${OILPRICEAPI_KEY}` }
     }, 6000);
     if (!res.ok) return { preis: null, ok: false };
     const json = await res.json();
-    const preis = parseFloat(json.price);
+    const preis = parseFloat(json.data?.price);
     return { preis: isNaN(preis) ? null : preis, ok: !isNaN(preis) };
   } catch (e) {
     return { preis: null, ok: false };
@@ -1341,7 +1342,7 @@ async function holeMetalle() {
   const oelPreis = oelOk ? oelErg.value.preis : null;
 
   const anzahlOk = (goldOk ? 1 : 0) + (oelOk ? 1 : 0);
-  setApiDot('apiDotNinja', anzahlOk === 2 ? true : anzahlOk === 1 ? 'warn' : false);
+  setApiDot('apiDotRohstoffe', anzahlOk === 2 ? true : anzahlOk === 1 ? 'warn' : false);
 
   // "live" (kombiniert) bleibt true, sobald mindestens ein Wert verfügbar
   // ist; goldOk/oelOk liefern den Status je Wert für die Stale-Anzeige.
