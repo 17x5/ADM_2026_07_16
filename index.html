@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-03 10:06";
+    const APP_VERSION = "TEST BUILD 2026-08-03 10:11";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -1067,7 +1067,7 @@ function render(data){
 
   document.getElementById('rowsSection4').innerHTML = htmlS4;
 
- updateFazitChange(data.score, data.previous_close, rawVix, vorherigerVixUSD);
+ updateFazitChange(data.score, data.previous_close, extrahierterVixUSD, vorherigerVixUSD);
   
   const statusIndicator = document.getElementById('statusIndicator');
   statusIndicator.className = isLive ? 'status-tag live' : 'status-tag stale';
@@ -1373,15 +1373,12 @@ async function ladeDaten(){
 
 let extrahierterVixUSD = null;
     let vorherigerVixUSD = null;
+    
     if(json.market_volatility_vix && json.market_volatility_vix.data && json.market_volatility_vix.data.length > 0){
       const ndp = json.market_volatility_vix.data[json.market_volatility_vix.data.length - 1];
       if(ndp && ndp.y) extrahierterVixUSD = ndp.y; 
       
-      // Falls der VIX-Datensatz auch einen Vortag/Previous-Wert hergibt:
-      if(json.market_volatility_vix.previous_close) {
-        vorherigerVixUSD = json.market_volatility_vix.previous_close;
-      } else if(json.market_volatility_vix.data.length > 1) {
-        // Alternativ den vorletzten Datenpunkt im Array als Vortag nehmen
+      if(json.market_volatility_vix.data.length > 1) {
         vorherigerVixUSD = json.market_volatility_vix.data[json.market_volatility_vix.data.length - 2].y;
       }
     }
