@@ -1052,7 +1052,7 @@ function render(data){
 
   document.getElementById('rowsSection4').innerHTML = htmlS4;
 
-  updateFazitChange(data.score, data.previous_close);
+  updateFazitChange(data.score, data.previous_close, rawVix);
   
   const statusIndicator = document.getElementById('statusIndicator');
   statusIndicator.className = isLive ? 'status-tag live' : 'status-tag stale';
