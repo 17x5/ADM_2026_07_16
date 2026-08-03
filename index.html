@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-03 10:11";
+    const APP_VERSION = "TEST BUILD 2026-07-30 15:54";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -556,6 +556,7 @@
     <div id="fazitInhalt">
       <div class="fazit-section">
         <div class="fazit-label"><span class="situation-ampel" id="situationAmpelDot"></span>Aktuelles Sentiment:</div>
+        <div style="font-family:var(--mono); font-size:13px; font-weight:600; margin-bottom:4px;" id="sentimentLineEl">⏳ Wert wird geladen...</div>
         <p class="fazit-p" id="gesamtfazitText">⏳ Analyse wird generiert…</p>
         <div class="fazit-change" id="fazitChangeEl"></div>
       </div>
@@ -854,55 +855,26 @@ function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, ar
   `;
 }
 
-function updateFazitChange(currentScore, previousClose, rawVix, prevVix) {
-  // 1. Fear & Greed Differenz berechnen
-  let diffFng = currentScore - previousClose;
-  let fngText = "";
-  if (diffFng > 0) {
-    fngText = `▲ +${diffFng.toFixed(1)} Pkt. (Vortag: ${previousClose.toFixed(0)})`;
-  } else if (diffFng < 0) {
-    fngText = `▼ ${Math.abs(diffFng).toFixed(1)} Pkt. (Vortag: ${previousClose.toFixed(0)})`;
-  } else {
-    fngText = `■ Unverändert (${previousClose.toFixed(0)})`;
-  }
-
-  // 2. VIX Wert, Ampelfarbe und VIX-Veränderung (mit Pfeil & Vortag) aufbauen
-  let vixTextPart = "";
-  let vVal = parseFloat(rawVix);
-  let vPrev = parseFloat(prevVix);
+function updateFazitChange(currentScore, previousClose) {
+  let diff = currentScore - previousClose;
+  let diffText = "";
+  let diffColor = "var(--text-dim)";
   
-  if (!isNaN(vVal) && vVal > 0) {
-    let vixColor = "var(--yellow)";
-    if (vVal < THRESHOLDS.vix.gruen) {
-      vixColor = "var(--green)";
-    } else if (vVal > THRESHOLDS.vix.rot) {
-      vixColor = "var(--red)";
-    }
-
-    let vixDiffText = "";
-    if (!isNaN(vPrev) && vPrev > 0) {
-      let diffVix = vVal - vPrev;
-      // Beim VIX bedeutet ein Anstieg oft mehr Nervosität, farblich dezent oder mit Standard-Pfeilen
-      if (diffVix > 0) {
-        vixDiffText = `▲ +${diffVix.toFixed(2)}`;
-      } else if (diffVix < 0) {
-        vixDiffText = `▼ ${diffVix.toFixed(2)}`;
-      } else {
-        vixDiffText = `■ 0.00`;
-      }
-      vixTextPart = `VIX: <strong style="color: ${vixColor};">${vVal.toFixed(2)} USD</strong> (${vixDiffText}, Vortag: ${vPrev.toFixed(2)})`;
-    } else {
-      // Fallback, falls kein Vortag ermittelt werden konnte
-      vixTextPart = `VIX: <strong style="color: ${vixColor};">${vVal.toFixed(2)} USD</strong>`;
-    }
+  if (diff > 0) {
+    diffText = `▲ +${diff.toFixed(1)} Punkte im Fear & Greed Index zum Vortag (Vortag: ${previousClose.toFixed(0)})`;
+    diffColor = "var(--green)";
+  } else if (diff < 0) {
+    diffText = `▼ ${Math.abs(diff).toFixed(1)} Punkte im Fear & Greed Index zum Vortag (Vortag: ${previousClose.toFixed(0)})`;
+    diffColor = "var(--red)";
   } else {
-    vixTextPart = `VIX: <span style="color: var(--text-dim);">–</span>`;
+    diffText = `■ Fear & Greed Index unverändert zum Vortag (${previousClose.toFixed(0)})`;
+    diffColor = "var(--yellow)";
   }
 
   const changeEl = document.getElementById('fazitChangeEl');
   if (changeEl) {
-    changeEl.style.color = "var(--text)";
-    changeEl.innerHTML = `<strong>Veränderung zum letzten Handelstag:</strong> ${vixTextPart} &nbsp;|&nbsp; Fear & Greed: <span style="${diffFng > 0 ? 'color:var(--green);' : (diffFng < 0 ? 'color:var(--red);' : 'color:var(--yellow);')}">${fngText}</span>`;
+    changeEl.style.color = diffColor;
+    changeEl.innerHTML = `<strong>Veränderung zum letzten Handelstag:</strong> ${diffText}`;
   }
 }
 
@@ -922,6 +894,15 @@ function render(data){
   let cnnColor = "gelb";
   if(data.score < THRESHOLDS.cnnScore.rotUnten || data.score > THRESHOLDS.cnnScore.rotOben) cnnColor = "rot";
   else if(data.score >= THRESHOLDS.cnnScore.gruenUnten && data.score <= THRESHOLDS.cnnScore.gruenOben) cnnColor = "gruen";
+
+  // Sentiment Zeile mit VIX-Wert, Pfeil und vorherigem Wert (Vortag) ergänzen
+  const sentimentLineEl = document.getElementById('sentimentLineEl');
+  if (sentimentLineEl) {
+    let diffScore = data.score - data.previous_close;
+    let arrowChar = diffScore > 0 ? "▲" : (diffScore < 0 ? "▼" : "■");
+    let colorStyle = diffScore > 0 ? "color:var(--green);" : (diffScore < 0 ? "color:var(--red);" : "color:var(--yellow);");
+    sentimentLineEl.innerHTML = `Fear & Greed: <span style="font-family:var(--mono);">${data.score.toFixed(0)} / 100</span> <span style="${colorStyle}">${arrowChar}</span> <span style="font-size:11px; color:var(--text-dim);">(Vortag: ${data.previous_close.toFixed(0)})</span> | VIX: <span style="font-family:var(--mono);">${rawVix.toFixed(2)}</span>`;
+  }
 
   let bfStatus = "GESUND";
   let sfColor = "gruen"; 
@@ -1067,7 +1048,7 @@ function render(data){
 
   document.getElementById('rowsSection4').innerHTML = htmlS4;
 
- updateFazitChange(data.score, data.previous_close, extrahierterVixUSD, vorherigerVixUSD);
+  updateFazitChange(data.score, data.previous_close);
   
   const statusIndicator = document.getElementById('statusIndicator');
   statusIndicator.className = isLive ? 'status-tag live' : 'status-tag stale';
@@ -1371,16 +1352,10 @@ async function ladeDaten(){
     if(!res.ok) throw new Error();
     const json = await res.json();
 
-let extrahierterVixUSD = null;
-    let vorherigerVixUSD = null;
-    
+    let extrahierterVixUSD = null;
     if(json.market_volatility_vix && json.market_volatility_vix.data && json.market_volatility_vix.data.length > 0){
       const ndp = json.market_volatility_vix.data[json.market_volatility_vix.data.length - 1];
       if(ndp && ndp.y) extrahierterVixUSD = ndp.y; 
-      
-      if(json.market_volatility_vix.data.length > 1) {
-        vorherigerVixUSD = json.market_volatility_vix.data[json.market_volatility_vix.data.length - 2].y;
-      }
     }
 
     const data = {
