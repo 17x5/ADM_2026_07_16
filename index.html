@@ -854,7 +854,7 @@ function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, ar
   `;
 }
 
-function updateFazitChange(currentScore, previousClose, rawVix, prevVix) {
+function updateFazitChange(currentScore, previousClose, rawVix) {
   // 1. Fear & Greed Differenz berechnen
   let diffFng = currentScore - previousClose;
   let fngText = "";
@@ -866,18 +866,28 @@ function updateFazitChange(currentScore, previousClose, rawVix, prevVix) {
     fngText = `■ Unverändert (${previousClose.toFixed(0)})`;
   }
 
-  // 2. VIX Text aufbauen (falls verfügbar)
+  // 2. VIX Wert, Ampelfarbe und Text aufbauen
   let vixTextPart = "";
+  let vixColor = "var(--text)"; // Standardfarbe
+  
   if (rawVix !== undefined && rawVix !== null && !isNaN(rawVix)) {
-    vixTextPart = `VIX: <strong>${rawVix.toFixed(2)} USD</strong>`;
+    // Ampellogik analog zu den Schwellenwerten im Cockpit
+    if (rawVix < THRESHOLDS.vix.gruen) {
+      vixColor = "var(--green)";
+    } else if (rawVix > THRESHOLDS.vix.rot) {
+      vixColor = "var(--red)";
+    } else {
+      vixColor = "var(--yellow)";
+    }
+    vixTextPart = `VIX: <strong style="color: ${vixColor};">${rawVix.toFixed(2)} USD</strong>`;
   } else {
-    vixTextPart = `VIX: –`;
+    vixTextPart = `VIX: <span style="color: var(--text-dim);">–</span>`;
   }
 
   const changeEl = document.getElementById('fazitChangeEl');
   if (changeEl) {
     changeEl.style.color = "var(--text)";
-    changeEl.innerHTML = `<strong>Veränderung zum letzten Handelstag:</strong> ${vixTextPart} | Fear & Greed: ${fngText}`;
+    changeEl.innerHTML = `<strong>Veränderung zum letzten Handelstag:</strong> ${vixTextPart} &nbsp;|&nbsp; Fear & Greed: <span style="${diffFng > 0 ? 'color:var(--green);' : (diffFng < 0 ? 'color:var(--red);' : 'color:var(--yellow);')}">${fngText}</span>`;
   }
 }
 
