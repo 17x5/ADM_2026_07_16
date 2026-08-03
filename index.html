@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-03 15:55";
+    const APP_VERSION = "TEST BUILD 2026-08-03 13:32";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -1310,7 +1310,7 @@ async function holeGold() {
     }, 6000);
     if (!res.ok) return { preis: null, ok: false };
     const json = await res.json();
-    const preis = parseFloat(json.price ?? json.data?.price);
+    const preis = parseFloat(json.symbols?.[0]?.price);
     return { preis: isNaN(preis) ? null : preis, ok: !isNaN(preis) };
   } catch (e) {
     return { preis: null, ok: false };
