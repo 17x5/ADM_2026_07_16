@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-03 10:21";
+    const APP_VERSION = "TEST BUILD 2026-07-30 15:54";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -556,8 +556,10 @@
     <div id="fazitInhalt">
       <div class="fazit-section">
         <div class="fazit-label"><span class="situation-ampel" id="situationAmpelDot"></span>Aktuelles Sentiment:</div>
+        <!-- 1) Punkt 1 (Fear & Greed Wert + VIX) direkt nach "Aktuelles Sentiment:" platziert -->
         <div style="font-family:var(--mono); font-size:13px; font-weight:600; margin-bottom:4px;" id="sentimentLineEl">⏳ Wert wird geladen...</div>
         <p class="fazit-p" id="gesamtfazitText">⏳ Analyse wird generiert…</p>
+        <!-- 2) & 3) Kombinierte Veränderung ohne doppelte Angaben unten platziert -->
         <div class="fazit-change" id="fazitChangeEl"></div>
       </div>
       <div id="actionBox" class="action-box">
@@ -695,7 +697,7 @@
       </div>
       <div class="legende-item active" id="leg_WelleB" style="border-left-color: var(--red); background-color: rgb(28, 22, 24);">
         <div class="legende-name" style="color: var(--red);">WELLE B: MARKT-ILLUSION</div>
-        <div class="legende-desc">Die gefährlichste Bullenfalle im Zyklus. Die Kurse steigen noch mal an, täuschen Stabilität vor, aber die Marktbreite (A/D &lt; 35) ist kollabiert. Notausstieg vor Welle C!</div>
+        <div class="legende-desc">Die gefährlichste Bullenfalle im Zyklus. Die Kurse steigen noch mal an, täuschen Stabilität vor, aber die Marktbreite (&lt; 35) ist kollabiert. Notausstieg vor Welle C!</div>
       </div>
       <div class="legende-item" id="leg_WelleC" style="border-left-color: var(--red); background-color: rgb(13, 17, 23);">
         <div class="legende-name" style="color: var(--red);">WELLE C: DIE KAPITULATION</div>
@@ -874,6 +876,7 @@ function updateFazitChange(currentScore, previousClose) {
   const changeEl = document.getElementById('fazitChangeEl');
   if (changeEl) {
     changeEl.style.color = diffColor;
+    // 3) Doppelte Aussagen entfernt: Nur noch die Punkte-Differenz und der Vortag-Verweis stehen hier sauber unten.
     changeEl.innerHTML = `<strong>Veränderung zum letzten Handelstag:</strong> ${diffText}`;
   }
 }
@@ -895,13 +898,13 @@ function render(data){
   if(data.score < THRESHOLDS.cnnScore.rotUnten || data.score > THRESHOLDS.cnnScore.rotOben) cnnColor = "rot";
   else if(data.score >= THRESHOLDS.cnnScore.gruenUnten && data.score <= THRESHOLDS.cnnScore.gruenOben) cnnColor = "gruen";
 
-  // Sentiment Zeile mit VIX-Wert, Pfeil und vorherigem Wert (Vortag) ergänzen
+  // 1) Punkt 1 (Fear & Greed Index + VIX) wird hier direkt oben beim aktuellen Sentiment ausgegeben
   const sentimentLineEl = document.getElementById('sentimentLineEl');
   if (sentimentLineEl) {
     let diffScore = data.score - data.previous_close;
     let arrowChar = diffScore > 0 ? "▲" : (diffScore < 0 ? "▼" : "■");
     let colorStyle = diffScore > 0 ? "color:var(--green);" : (diffScore < 0 ? "color:var(--red);" : "color:var(--yellow);");
-    sentimentLineEl.innerHTML = `Fear & Greed: <span style="font-family:var(--mono);">${data.score.toFixed(0)} / 100</span> <span style="${colorStyle}">${arrowChar}</span> <span style="font-size:11px; color:var(--text-dim);">(Vortag: ${data.previous_close.toFixed(0)})</span> | VIX: <span style="font-family:var(--mono);">${rawVix.toFixed(2)}</span>`;
+    sentimentLineEl.innerHTML = `Fear & Greed: <span style="font-family:var(--mono);">${data.score.toFixed(0)} / 100</span> <span style="${colorStyle}">${arrowChar}</span> | VIX: <span style="font-family:var(--mono);">${rawVix.toFixed(2)}</span>`;
   }
 
   let bfStatus = "GESUND";
