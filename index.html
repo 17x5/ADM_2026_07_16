@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-03 12:10";
+    const APP_VERSION = "TEST BUILD 2026-08-03 13:32";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -555,7 +555,6 @@
       <div class="fazit-section">
         <div class="fazit-label"><span class="situation-ampel" id="situationAmpelDot"></span>Aktuelles Sentiment:</div>
         <p class="fazit-p" id="gesamtfazitText">⏳ Analyse wird generiert…</p>
-        <!-- Exakt gewünschte Struktur und Reihenfolge platziert -->
         <div class="fazit-change" id="fazitChangeEl">Veränderung zum letzten Handelstag: VIX: 16.07 ▲ | Fear & Greed: 45 / 100 ▲</div>
       </div>
       <div id="actionBox" class="action-box">
@@ -874,7 +873,6 @@ function updateFazitChange(currentScore, previousClose, rawVixVal) {
     changeEl.style.color = diffColor;
     let fgArrow = diff > 0 ? "▲" : (diff < 0 ? "▼" : "■");
     let vixValFormatted = (rawVixVal !== undefined && rawVixVal !== null) ? rawVixVal.toFixed(2) : "16.07";
-    // Exakt im gewünschten Format generiert:
     changeEl.innerHTML = `Veränderung zum letzten Handelstag: VIX: ${vixValFormatted} ▲ | Fear & Greed: ${currentScore.toFixed(0)} / 100 ${fgArrow}`;
   }
 }
@@ -992,7 +990,7 @@ function render(data){
   
   let momScore = momentum ? momentum.score : 50;
   let momColor = momScore < THRESHOLDS.momentum.rot ? "rot" : (momScore > THRESHOLDS.momentum.purple ? "purple" : "gelb");
-  htmlS2 += buildQuickRowHTML(momColor, "Markt-Schwung", "Zeigt an, ob sich der S&P 500 stabil über oder unter seiner 200-Tage-Linie bewegt. Steigt er klar darüber, läuft der Motor rund.", momScore, momScore.toFixed(0) + " / 100");
+  htmlS2 += buildQuickRowHTML(momColor, "Markt-Schwung", "Zeigt an, ob sich der S&P 500 stabil über oder unter seiner 200-Tage-Linie bewegt. Steigt he klar darüber, läuft der Motor rund.", momScore, momScore.toFixed(0) + " / 100");
   
   htmlS2 += buildQuickRowHTML(actBreadth < THRESHOLDS.breadth.rot ? "rot" : (actBreadth < THRESHOLDS.breadth.gelb ? "gelb" : "gruen"), "Advance-Decline-Linie (A/D-Linie)", "Misst die echte Marktbreite, indem sie vergleicht, ob insgesamt mehr Aktien steigen oder fallen. Steigen nur wenige Riesen, droht Gefahr.", actBreadth, actBreadth.toFixed(0) + " / 100");
   document.getElementById('rowsSection2').innerHTML = htmlS2;
@@ -1317,24 +1315,20 @@ async function ladeDaten(){
   etfIstLive = false;
   try {
     const etfRes = await fetch('etf.json?t=' + Date.now());
-    if (etfRes.ok) {
+    if (etfRes && etfRes.ok) {
       const etfJson = await etfRes.json();
       const close = parseFloat(etfJson.price);
       const percentChange = parseFloat(etfJson.change_percent);
       if (!isNaN(close) && !isNaN(percentChange)) {
         etfPreis = close;
         etfAenderung = percentChange;
-        setApiDot('apiDotEtf', true);
         etfIstLive = true;
-      } else {
-        setApiDot('apiDotEtf', false);
       }
-    } else {
-      setApiDot('apiDotEtf', false);
     }
   } catch (e) {
-    setApiDot('apiDotEtf', false);
+    // Fallback: etf.json nicht vorhanden, wird ignoriert
   }
+  setApiDot('apiDotEtf', etfIstLive);
 
   try{
     const res = await fetch('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', { headers: {'Accept':'application/json'} });
