@@ -12,7 +12,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-03 11:18";
+    const APP_VERSION = "TEST BUILD 2026-08-03 11:27";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -1295,7 +1295,7 @@ async function ladeDaten(){
   let oelPreis = null;
   metalIstLive = false;
   try {
-    const metalRes = await fetch('https://api.metalpriceapi.com/v1/latest?api_key=9ea216f35e8e7a6bab73a5f3c04853f5&base=USD&currencies=XAU,WTI');
+    const metalRes = await fetch('https://api.metalpriceapi.com/v1/latest?api_key=9ea216f35e8e7a6bab73a5f3c04853f5&base=USD&currencies=XAU,WTI&t=' + Date.now());
     if(metalRes.ok) {
       const metalJson = await metalRes.json();
       if(metalJson && metalJson.success && metalJson.rates) {
