@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-03 10:03";
+    const APP_VERSION = "TEST BUILD 2026-08-03 10:06";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -866,7 +866,7 @@ function updateFazitChange(currentScore, previousClose, rawVix, prevVix) {
     fngText = `■ Unverändert (${previousClose.toFixed(0)})`;
   }
 
-  // 2. VIX Wert und VIX-Veränderung berechnen
+  // 2. VIX Wert, Ampelfarbe und VIX-Veränderung (mit Pfeil & Vortag) aufbauen
   let vixTextPart = "";
   let vVal = parseFloat(rawVix);
   let vPrev = parseFloat(prevVix);
@@ -879,20 +879,22 @@ function updateFazitChange(currentScore, previousClose, rawVix, prevVix) {
       vixColor = "var(--red)";
     }
 
-    let vixDiffHtml = "";
+    let vixDiffText = "";
     if (!isNaN(vPrev) && vPrev > 0) {
       let diffVix = vVal - vPrev;
+      // Beim VIX bedeutet ein Anstieg oft mehr Nervosität, farblich dezent oder mit Standard-Pfeilen
       if (diffVix > 0) {
-        // Beim VIX ist ein Anstieg oft "schlecht" (mehr Nervosität), daher optional rot/grün oder neutral einfärben
-        vixDiffHtml = ` <span style="color:var(--red); font-size:11px;">(▲ +${diffVix.toFixed(2)})</span>`;
+        vixDiffText = `▲ +${diffVix.toFixed(2)}`;
       } else if (diffVix < 0) {
-        vixDiffHtml = ` <span style="color:var(--green); font-size:11px;">(▼ ${diffVix.toFixed(2)})</span>`;
+        vixDiffText = `▼ ${diffVix.toFixed(2)}`;
       } else {
-        vixDiffHtml = ` <span style="color:var(--text-dim); font-size:11px;">(■ 0.00)</span>`;
+        vixDiffText = `■ 0.00`;
       }
+      vixTextPart = `VIX: <strong style="color: ${vixColor};">${vVal.toFixed(2)} USD</strong> (${vixDiffText}, Vortag: ${vPrev.toFixed(2)})`;
+    } else {
+      // Fallback, falls kein Vortag ermittelt werden konnte
+      vixTextPart = `VIX: <strong style="color: ${vixColor};">${vVal.toFixed(2)} USD</strong>`;
     }
-
-    vixTextPart = `VIX: <strong style="color: ${vixColor};">${vVal.toFixed(2)} USD</strong>${vixDiffHtml}`;
   } else {
     vixTextPart = `VIX: <span style="color: var(--text-dim);">–</span>`;
   }
@@ -1065,7 +1067,7 @@ function render(data){
 
   document.getElementById('rowsSection4').innerHTML = htmlS4;
 
-  updateFazitChange(data.score, data.previous_close, rawVix);
+ updateFazitChange(data.score, data.previous_close, rawVix, vorherigerVixUSD);
   
   const statusIndicator = document.getElementById('statusIndicator');
   statusIndicator.className = isLive ? 'status-tag live' : 'status-tag stale';
