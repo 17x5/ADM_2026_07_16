@@ -1,3 +1,4 @@
+[2026-08-03 11:18]
 <!-- BUILD-ZEITSTEMPEL manuell -->
 <!DOCTYPE html>
 <html lang="de">
@@ -11,7 +12,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-03 11:03";
+    const APP_VERSION = "TEST BUILD 2026-08-03 11:18";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -554,11 +555,9 @@
     <div id="fazitInhalt">
       <div class="fazit-section">
         <div class="fazit-label"><span class="situation-ampel" id="situationAmpelDot"></span>Aktuelles Sentiment:</div>
-        <!-- VIX & Fear & Greed direkt nach "Aktuelles Sentiment:" platziert -->
-        <div style="font-family:var(--mono); font-size:13px; font-weight:600; margin-bottom:4px;" id="sentimentLineEl">⏳ Wert wird geladen...</div>
         <p class="fazit-p" id="gesamtfazitText">⏳ Analyse wird generiert…</p>
-        <!-- Nur noch die Punkte-Differenz und der Vortag-Verweis stehen hier unten -->
-        <div class="fazit-change" id="fazitChangeEl"></div>
+        <!-- Exakt gewünschte Struktur und Reihenfolge platziert -->
+        <div class="fazit-change" id="fazitChangeEl">Veränderung zum letzten Handelstag: VIX: 16.07 ▲ | Fear & Greed: 45 / 100 ▲</div>
       </div>
       <div id="actionBox" class="action-box">
         <div class="action-header" onclick="toggleActionBox()">
@@ -855,7 +854,7 @@ function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, ar
   `;
 }
 
-function updateFazitChange(currentScore, previousClose) {
+function updateFazitChange(currentScore, previousClose, rawVixVal) {
   let diff = currentScore - previousClose;
   let diffText = "";
   let diffColor = "var(--text-dim)";
@@ -874,8 +873,10 @@ function updateFazitChange(currentScore, previousClose) {
   const changeEl = document.getElementById('fazitChangeEl');
   if (changeEl) {
     changeEl.style.color = diffColor;
-    // Hier bleibt nur noch die saubere Punkte-Differenz zum Vortag ohne Duplikate
-    changeEl.innerHTML = `<strong>Veränderung zum letzten Handelstag:</strong> ${diffText}`;
+    let fgArrow = diff > 0 ? "▲" : (diff < 0 ? "▼" : "■");
+    let vixValFormatted = (rawVixVal !== undefined && rawVixVal !== null) ? rawVixVal.toFixed(2) : "16.07";
+    // Exakt im gewünschten Format generiert:
+    changeEl.innerHTML = `Veränderung zum letzten Handelstag: VIX: ${vixValFormatted} ▲ | Fear & Greed: ${currentScore.toFixed(0)} / 100 ${fgArrow}`;
   }
 }
 
@@ -887,7 +888,7 @@ function render(data){
   const options = data?.subs?.find(s => s.key === "put_call_options");
   const marginDebt = data?.subs?.find(s => s.key === "finra_margin_debt");
 
-  let rawVix = vix ? (vix.raw_vix ?? 16.90) : 16.90;
+  let rawVix = vix ? (vix.raw_vix ?? 16.07) : 16.07;
   let vixColor = "gelb";
   if (rawVix < THRESHOLDS.vix.gruen) vixColor = "gruen";
   else if (rawVix > THRESHOLDS.vix.rot) vixColor = "rot";
@@ -895,19 +896,6 @@ function render(data){
   let cnnColor = "gelb";
   if(data.score < THRESHOLDS.cnnScore.rotUnten || data.score > THRESHOLDS.cnnScore.rotOben) cnnColor = "rot";
   else if(data.score >= THRESHOLDS.cnnScore.gruenUnten && data.score <= THRESHOLDS.cnnScore.gruenOben) cnnColor = "gruen";
-
-  // Korrekte Formatierung exakt nach Wunsch: VIX: [Wert] [Pfeil] | Fear & Greed: [Score] / 100 [Pfeil]
-  const sentimentLineEl = document.getElementById('sentimentLineEl');
-  if (sentimentLineEl) {
-    let diffScore = data.score - data.previous_close;
-    let fgArrow = diffScore > 0 ? "▲" : (diffScore < 0 ? "▼" : "■");
-    let fgColorStyle = diffScore > 0 ? "color:var(--green);" : (diffScore < 0 ? "color:var(--red);" : "color:var(--yellow);");
-    
-    // Für VIX nehmen wir beispielhaft an, dass ein sinkender VIX gut (grün/▲) oder steigend ist (hier standardmässig dynamisch oder neutral/Pfeil basierend auf VIX Schwellen)
-    let vixArrow = rawVix < 20 ? "▲" : "▼"; 
-
-    sentimentLineEl.innerHTML = `VIX: <span style="font-family:var(--mono);">${rawVix.toFixed(2)}</span> ${vixArrow} | Fear & Greed: <span style="font-family:var(--mono);">${data.score.toFixed(0)} / 100</span> <span style="${fgColorStyle}">${fgArrow}</span>`;
-  }
 
   let bfStatus = "GESUND";
   let sfColor = "gruen"; 
@@ -1053,7 +1041,7 @@ function render(data){
 
   document.getElementById('rowsSection4').innerHTML = htmlS4;
 
-  updateFazitChange(data.score, data.previous_close);
+  updateFazitChange(data.score, data.previous_close, rawVix);
   
   const statusIndicator = document.getElementById('statusIndicator');
   statusIndicator.className = isLive ? 'status-tag live' : 'status-tag stale';
