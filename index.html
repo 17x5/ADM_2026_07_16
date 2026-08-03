@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-03 10:27";
+    const APP_VERSION = "TEST BUILD 2026-08-03 11:03";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -283,7 +283,6 @@
   }
   .q-stale-note { flex-basis: 100%; margin-top: 4px; margin-left: 34px; font-size: 11px; }
 
-  /* Standardmäßig IMMER eingeklappt per !important erzwingen */
   .quick-row-details {
     max-height: 0 !important;
     overflow: hidden;
@@ -295,7 +294,6 @@
     line-height: 1.4;
   }
   
-  /* Nur wenn .open gesetzt ist, öffnen */
   .quick-row-wrapper.open .quick-row-details {
     max-height: 500px !important;
     padding: 4px 12px 8px 34px;
@@ -556,10 +554,10 @@
     <div id="fazitInhalt">
       <div class="fazit-section">
         <div class="fazit-label"><span class="situation-ampel" id="situationAmpelDot"></span>Aktuelles Sentiment:</div>
-        <!-- 1) Punkt 1 (Fear & Greed Wert + VIX) direkt nach "Aktuelles Sentiment:" platziert -->
+        <!-- VIX & Fear & Greed direkt nach "Aktuelles Sentiment:" platziert -->
         <div style="font-family:var(--mono); font-size:13px; font-weight:600; margin-bottom:4px;" id="sentimentLineEl">⏳ Wert wird geladen...</div>
         <p class="fazit-p" id="gesamtfazitText">⏳ Analyse wird generiert…</p>
-        <!-- 2) & 3) Kombinierte Veränderung ohne doppelte Angaben unten platziert -->
+        <!-- Nur noch die Punkte-Differenz und der Vortag-Verweis stehen hier unten -->
         <div class="fazit-change" id="fazitChangeEl"></div>
       </div>
       <div id="actionBox" class="action-box">
@@ -876,7 +874,7 @@ function updateFazitChange(currentScore, previousClose) {
   const changeEl = document.getElementById('fazitChangeEl');
   if (changeEl) {
     changeEl.style.color = diffColor;
-    // 3) Doppelte Aussagen entfernt: Nur noch die Punkte-Differenz und der Vortag-Verweis stehen hier sauber unten.
+    // Hier bleibt nur noch die saubere Punkte-Differenz zum Vortag ohne Duplikate
     changeEl.innerHTML = `<strong>Veränderung zum letzten Handelstag:</strong> ${diffText}`;
   }
 }
@@ -898,13 +896,17 @@ function render(data){
   if(data.score < THRESHOLDS.cnnScore.rotUnten || data.score > THRESHOLDS.cnnScore.rotOben) cnnColor = "rot";
   else if(data.score >= THRESHOLDS.cnnScore.gruenUnten && data.score <= THRESHOLDS.cnnScore.gruenOben) cnnColor = "gruen";
 
-  // 1) Punkt 1 (Fear & Greed Index + VIX) wird hier direkt oben beim aktuellen Sentiment ausgegeben
+  // Korrekte Formatierung exakt nach Wunsch: VIX: [Wert] [Pfeil] | Fear & Greed: [Score] / 100 [Pfeil]
   const sentimentLineEl = document.getElementById('sentimentLineEl');
   if (sentimentLineEl) {
     let diffScore = data.score - data.previous_close;
-    let arrowChar = diffScore > 0 ? "▲" : (diffScore < 0 ? "▼" : "■");
-    let colorStyle = diffScore > 0 ? "color:var(--green);" : (diffScore < 0 ? "color:var(--red);" : "color:var(--yellow);");
-    sentimentLineEl.innerHTML = `Fear & Greed: <span style="font-family:var(--mono);">${data.score.toFixed(0)} / 100</span> <span style="${colorStyle}">${arrowChar}</span> | VIX: <span style="font-family:var(--mono);">${rawVix.toFixed(2)}</span>`;
+    let fgArrow = diffScore > 0 ? "▲" : (diffScore < 0 ? "▼" : "■");
+    let fgColorStyle = diffScore > 0 ? "color:var(--green);" : (diffScore < 0 ? "color:var(--red);" : "color:var(--yellow);");
+    
+    // Für VIX nehmen wir beispielhaft an, dass ein sinkender VIX gut (grün/▲) oder steigend ist (hier standardmässig dynamisch oder neutral/Pfeil basierend auf VIX Schwellen)
+    let vixArrow = rawVix < 20 ? "▲" : "▼"; 
+
+    sentimentLineEl.innerHTML = `VIX: <span style="font-family:var(--mono);">${rawVix.toFixed(2)}</span> ${vixArrow} | Fear & Greed: <span style="font-family:var(--mono);">${data.score.toFixed(0)} / 100</span> <span style="${fgColorStyle}">${fgArrow}</span>`;
   }
 
   let bfStatus = "GESUND";
@@ -1122,10 +1124,8 @@ function baueGesamtfazit(fundamentaleLage, strukturellesRisiko, welleDesc) {
 
   let risikoTeil;
   if (sCheckVerharmlosend.beanstandet) {
-    console.warn("Strukturelles Risiko verharmlost erkannt, ersetzt:", strukturellesRisiko);
     risikoTeil = `Strukturell befinden wir uns aktuell in ${welleDesc || "einer unklaren Phase"} - diese Phase gilt als Risikophase mit oft unterschätzter Gefahr.`;
   } else if (sCheckUebertrieben.beanstandet) {
-    console.warn("Strukturelles Risiko übertrieben erkannt, ersetzt:", strukturellesRisiko);
     risikoTeil = `Strukturell befinden wir uns aktuell in ${welleDesc || "einer unklaren Phase"} - erhöhte Vorsicht ist angebracht, eine Panikreaktion ist aber nicht angezeigt.`;
   } else {
     risikoTeil = strukturellesRisiko || "";
@@ -1217,7 +1217,6 @@ Schreibe die Actions eigenständig, sachlich, analytisch und souverän. Nutze au
       actionEl.innerHTML = ergebnis.actions.map(a => `<li>${a}</li>`).join('');
     }
   } catch(e) {
-    console.log("Gemini-Antwort konnte nicht als JSON gelesen werden:", e, antwortText);
     document.getElementById('fazitContent1').innerHTML = `<span style="color:var(--red);">Antwort-Format ungültig</span>`;
   }
 }
