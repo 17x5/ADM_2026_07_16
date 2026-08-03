@@ -1235,11 +1235,24 @@ function setApiDot(id, state) {
   else if (state === false) dot.classList.add('fail');
 }
 
+// Führt fetch mit hartem Timeout aus. Verhindert, dass eine hängende
+// API-Antwort den Rest der App blockiert (Promise löst spätestens nach
+// timeoutMs mit Fehler auf, statt ewig zu warten).
+async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function callGemini(prompt) {
   if (!GEMINI_API_KEY) return null;
   try {
     const url = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`;
-    const res = await fetch(url, {
+    const res = await fetchWithTimeout(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GEMINI_API_KEY}` },
       body: JSON.stringify({
@@ -1247,7 +1260,7 @@ async function callGemini(prompt) {
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.4
       })
-    });
+    }, 15000);
     if (!res.ok) {
       setApiDot('apiDotGemini', false); return null;
     }
@@ -1261,79 +1274,93 @@ async function callGemini(prompt) {
   }
 }
 
+// Jede Teil-Abfrage in eine eigene Funktion, die NIE wirft (immer ein
+// Ergebnisobjekt zurückgibt) und ihr eigenes Timeout hat. So kann eine
+// einzelne hängende/fehlerhafte API die anderen drei nicht verzögern.
+
+async function holeCrypto() {
+  let btcPreis = null, btcAenderung = 0, live = false;
+  try {
+    const res = await fetchWithTimeout('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true', {}, 6000);
+    if (res.ok) {
+      const json = await res.json();
+      if (json.bitcoin) {
+        btcPreis = json.bitcoin.usd;
+        btcAenderung = json.bitcoin.usd_24h_change;
+        live = true;
+      }
+    }
+  } catch (e) { /* Timeout/Netzwerkfehler -> live bleibt false */ }
+  setApiDot('apiDotCrypto', live);
+  return { btcPreis, btcAenderung, live };
+}
+
+async function holeMetalle() {
+  let goldPreis = null, oelPreis = null, live = false;
+  try {
+    const res = await fetchWithTimeout('https://api.metalpriceapi.com/v1/latest?api_key=9ea216f35e8e7a6bab73a5f3c04853f5&base=USD&currencies=XAU,WTI', {}, 6000);
+    if (res.ok) {
+      const json = await res.json();
+      if (json && json.success && json.rates) {
+        if (json.rates.XAU) goldPreis = 1 / json.rates.XAU;
+        if (json.rates.WTI) oelPreis = 1 / json.rates.WTI;
+        live = true;
+      }
+    }
+  } catch (e) { /* Timeout/Netzwerkfehler -> live bleibt false */ }
+  setApiDot('apiDotMetal', live);
+  return { goldPreis, oelPreis, live };
+}
+
+async function holeEtf() {
+  let etfPreis = null, etfAenderung = 0, live = false;
+  try {
+    const res = await fetchWithTimeout('etf.json?t=' + Date.now(), {}, 6000);
+    if (res && res.ok) {
+      const json = await res.json();
+      const close = parseFloat(json.price);
+      const percentChange = parseFloat(json.change_percent);
+      if (!isNaN(close) && !isNaN(percentChange)) {
+        etfPreis = close;
+        etfAenderung = percentChange;
+        live = true;
+      }
+    }
+  } catch (e) { /* etf.json fehlt/Timeout -> live bleibt false */ }
+  setApiDot('apiDotEtf', live);
+  return { etfPreis, etfAenderung, live };
+}
+
+async function holeFearGreed() {
+  const res = await fetchWithTimeout('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', { headers: {'Accept':'application/json'} }, 8000);
+  if (!res.ok) throw new Error('Fear&Greed HTTP-Fehler');
+  return await res.json();
+}
+
 async function ladeDaten(){
   const btn = document.getElementById('refreshBtn');
   btn.disabled = true;
 
-  let btcPreis = null;
-  let btcAenderung = 0;
-  cryptoIstLive = false;
+  // Alle vier Abfragen parallel starten - keine blockiert die andere.
+  const [cryptoErg, metalErg, etfErg, fgErg] = await Promise.allSettled([
+    holeCrypto(),
+    holeMetalle(),
+    holeEtf(),
+    holeFearGreed()
+  ]);
 
-  try {
-    const cryptoRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true');
-    if(cryptoRes.ok) {
-      const cryptoJson = await cryptoRes.json();
-      if(cryptoJson.bitcoin) {
-        btcPreis = cryptoJson.bitcoin.usd;
-        btcAenderung = cryptoJson.bitcoin.usd_24h_change;
-        setApiDot('apiDotCrypto', true);
-        cryptoIstLive = true;
-      } else {
-        setApiDot('apiDotCrypto', false);
-      }
-    } else {
-      setApiDot('apiDotCrypto', false);
-    }
-  } catch(e) {
-    setApiDot('apiDotCrypto', false);
-  }
+  const { btcPreis, btcAenderung } = cryptoErg.status === 'fulfilled' ? cryptoErg.value : { btcPreis: null, btcAenderung: 0 };
+  cryptoIstLive = cryptoErg.status === 'fulfilled' && cryptoErg.value.live;
 
-  let goldPreis = null;
-  let oelPreis = null;
-  metalIstLive = false;
-  try {
-    const metalRes = await fetch('https://api.metalpriceapi.com/v1/latest?api_key=9ea216f35e8e7a6bab73a5f3c04853f5&base=USD&currencies=XAU,WTI');
-    if(metalRes.ok) {
-      const metalJson = await metalRes.json();
-      if(metalJson && metalJson.success && metalJson.rates) {
-        if(metalJson.rates.XAU) goldPreis = 1 / metalJson.rates.XAU;
-        if(metalJson.rates.WTI) oelPreis = 1 / metalJson.rates.WTI;
-        setApiDot('apiDotMetal', true);
-        metalIstLive = true;
-      } else {
-        setApiDot('apiDotMetal', false);
-      }
-    } else {
-      setApiDot('apiDotMetal', false);
-    }
-  } catch(e) {
-    setApiDot('apiDotMetal', false);
-  }
+  const { goldPreis, oelPreis } = metalErg.status === 'fulfilled' ? metalErg.value : { goldPreis: null, oelPreis: null };
+  metalIstLive = metalErg.status === 'fulfilled' && metalErg.value.live;
 
-  let etfPreis = null;
-  let etfAenderung = 0;
-  etfIstLive = false;
-  try {
-    const etfRes = await fetch('etf.json?t=' + Date.now());
-    if (etfRes && etfRes.ok) {
-      const etfJson = await etfRes.json();
-      const close = parseFloat(etfJson.price);
-      const percentChange = parseFloat(etfJson.change_percent);
-      if (!isNaN(close) && !isNaN(percentChange)) {
-        etfPreis = close;
-        etfAenderung = percentChange;
-        etfIstLive = true;
-      }
-    }
-  } catch (e) {
-    // Fallback: etf.json nicht vorhanden, wird ignoriert
-  }
-  setApiDot('apiDotEtf', etfIstLive);
+  const { etfPreis, etfAenderung } = etfErg.status === 'fulfilled' ? etfErg.value : { etfPreis: null, etfAenderung: 0 };
+  etfIstLive = etfErg.status === 'fulfilled' && etfErg.value.live;
 
   try{
-    const res = await fetch('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', { headers: {'Accept':'application/json'} });
-    if(!res.ok) throw new Error();
-    const json = await res.json();
+    if (fgErg.status !== 'fulfilled') throw fgErg.reason || new Error('Fear&Greed fehlgeschlagen');
+    const json = fgErg.value;
 
     let extrahierterVixUSD = null;
     if(json.market_volatility_vix && json.market_volatility_vix.data && json.market_volatility_vix.data.length > 0){
