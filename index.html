@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-03 16:03";
+    const APP_VERSION = "TEST BUILD 2026-08-03 13:32";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -1300,18 +1300,16 @@ async function holeCrypto() {
   return { btcPreis, btcAenderung, live };
 }
 
-const OILPRICEAPI_KEY = 'cc5e787054a4b8fdf9271f62c38b112f8165a1de0a34cfd9ce9489147134d40f';
-
 async function holeGold() {
   try {
-    // Kein X-Api-Key-Header: der Header löst einen CORS-Preflight aus,
-    // den goldprice.dev nicht beantwortet. Der Key-lose Endpoint erlaubt
-    // 100 Requests/Stunde/IP und funktioniert ohne Preflight aus dem Browser.
-    const res = await fetchWithTimeout('https://api.goldprice.dev/v1/prices?symbol=XAU-USD-SPOT', {}, 6000);
+    // Wird jetzt server-seitig per GitHub Actions in gold.json geschrieben
+    // (goldprice.dev unterstützt keine Browser-CORS-Anfragen).
+    const res = await fetchWithTimeout('gold.json?t=' + Date.now(), {}, 6000);
     if (!res.ok) return { preis: null, ok: false };
     const json = await res.json();
-    const preis = parseFloat(json.symbols?.[0]?.price);
-    return { preis: isNaN(preis) ? null : preis, ok: !isNaN(preis) };
+    const preis = parseFloat(json.price);
+    const ok = !!json.ok && !isNaN(preis);
+    return { preis: ok ? preis : null, ok };
   } catch (e) {
     return { preis: null, ok: false };
   }
@@ -1319,21 +1317,23 @@ async function holeGold() {
 
 async function holeOel() {
   try {
-    const res = await fetchWithTimeout('https://api.oilpriceapi.com/v1/prices/latest?by_code=WTI_USD', {
-      headers: { 'Authorization': `Token ${OILPRICEAPI_KEY}` }
-    }, 6000);
+    // Wird server-seitig per GitHub Actions in oil.json geschrieben
+    // (Key bleibt im Workflow-Secret, nicht im Client-Code).
+    const res = await fetchWithTimeout('oil.json?t=' + Date.now(), {}, 6000);
     if (!res.ok) return { preis: null, ok: false };
     const json = await res.json();
-    const preis = parseFloat(json.data?.price);
-    return { preis: isNaN(preis) ? null : preis, ok: !isNaN(preis) };
+    const preis = parseFloat(json.price);
+    const ok = !!json.ok && !isNaN(preis);
+    return { preis: ok ? preis : null, ok };
   } catch (e) {
     return { preis: null, ok: false };
   }
 }
 
 async function holeMetalle() {
-  // Gold und Öl unabhängig voneinander abfragen (Ninja-API), damit eine
-  // hängende/fehlerhafte Teilabfrage die andere nicht blockiert.
+  // Gold und Öl unabhängig voneinander abfragen (je eigene lokale JSON-
+  // Datei), damit eine fehlende/fehlerhafte Teilabfrage die andere nicht
+  // blockiert.
   const [goldErg, oelErg] = await Promise.allSettled([holeGold(), holeOel()]);
 
   const goldOk = goldErg.status === 'fulfilled' && goldErg.value.ok;
