@@ -1,0 +1,52 @@
+name: Goldpreis aktualisieren
+
+on:
+  schedule:
+    - cron: '*/30 6-21 * * 1-5'   # alle 30 Min, Mo-Fr, 6-21 Uhr UTC (wie ETF)
+  workflow_dispatch:               # manueller Start im Actions-Tab möglich
+
+permissions:
+  contents: write
+
+jobs:
+  update-gold:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Goldpreis von goldprice.dev holen
+        run: |
+          curl -s -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
+            "https://api.goldprice.dev/v1/prices?symbol=XAU-USD-SPOT" -o raw_gold.json
+          cat raw_gold.json
+
+      - name: JSON auswerten
+        run: |
+          python3 - <<'EOF'
+          import json
+
+          price = None
+          ok = False
+          try:
+              with open('raw_gold.json') as f:
+                  raw = json.load(f)
+              price = float(raw['symbols'][0]['price'])
+              ok = True
+          except Exception as e:
+              print('Gold-Parsing fehlgeschlagen:', e)
+
+          data = {"price": price, "ok": ok}
+
+          with open('gold.json', 'w') as out:
+              json.dump(data, out)
+
+          print(data)
+          EOF
+
+      - name: Änderung committen
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add gold.json
+          git diff --quiet --cached || git commit -m "Goldpreis aktualisiert"
+          git push

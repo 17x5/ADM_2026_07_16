@@ -1,0 +1,54 @@
+name: Ölpreis aktualisieren
+
+on:
+  schedule:
+    - cron: '0 7,15 * * 1-5'   # 2x täglich (7:00 & 15:00 UTC), Mo-Fr - schont das 200/Monat-Limit
+  workflow_dispatch:            # manueller Start im Actions-Tab möglich
+
+permissions:
+  contents: write
+
+jobs:
+  update-oil:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ölpreis von oilpriceapi.com holen
+        env:
+          OILPRICEAPI_KEY: ${{ secrets.OILPRICEAPI_KEY }}
+        run: |
+          curl -s -H "Authorization: Token ${OILPRICEAPI_KEY}" \
+            "https://api.oilpriceapi.com/v1/prices/latest?by_code=WTI_USD" -o raw_oil.json
+          cat raw_oil.json
+
+      - name: JSON auswerten
+        run: |
+          python3 - <<'EOF'
+          import json
+
+          price = None
+          ok = False
+          try:
+              with open('raw_oil.json') as f:
+                  raw = json.load(f)
+              price = float(raw['data']['price'])
+              ok = True
+          except Exception as e:
+              print('Öl-Parsing fehlgeschlagen:', e)
+
+          data = {"price": price, "ok": ok}
+
+          with open('oil.json', 'w') as out:
+              json.dump(data, out)
+
+          print(data)
+          EOF
+
+      - name: Änderung committen
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add oil.json
+          git diff --quiet --cached || git commit -m "Ölpreis aktualisiert"
+          git push
