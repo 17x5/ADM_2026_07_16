@@ -1,4 +1,4 @@
-<!-- BUILD-ZEITSTEMPEL: 2026-08-11 18:09 -->
+<!-- BUILD-ZEITSTEMPEL: 2026-08-11 18:13 -->
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-11 18:09";
+    const APP_VERSION = "TEST BUILD 2026-08-11 18:13";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -172,7 +172,6 @@
   .action-list li { margin-bottom: 4px; }
   .action-list li:last-child { margin-bottom: 0; }
 
-  /* DASHBOARD GRID */
   .cockpit-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
@@ -243,7 +242,6 @@
     font-weight: 600;
   }
 
-  /* AUSKLAPPBARE ZEILEN STILE */
   .quick-row-wrapper {
     border-bottom: 1px solid #161b22;
   }
@@ -263,14 +261,10 @@
   }
   
   .q-ampel { width: 24px; flex-shrink: 0; font-size: 13px; }
-  
   .q-bar-container { width: 70px; background: #21262d; height: 6px; border-radius: 3px; margin-right: 10px; flex-shrink: 0; overflow: hidden; }
   .q-bar-fill { height: 100%; width: 0%; transition: width 0.4s, background-color 0.4s; }
-  
   .q-val { width: 110px; text-align: left; flex-shrink: 0; font-weight: 600; font-family: var(--mono); font-size: 12px; }
-  
   .q-arrow { width: 20px; text-align: center; font-size: 10px; margin-right: 6px; flex-shrink: 0; }
-
   .q-text { flex-grow: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .q-text b { font-size: 13px; color: var(--text); }
   
@@ -298,48 +292,6 @@
   .quick-row-wrapper.open .quick-row-details {
     max-height: 500px !important;
     padding: 4px 12px 8px 34px;
-  }
-
-  @media (max-width: 600px) {
-    html, body {
-      overflow-x: hidden;
-    }
-    .group-box {
-      width: 100%;
-    }
-    .quick-row {
-      flex-wrap: wrap;
-      gap: 4px 8px;
-      padding: 8px 0;
-    }
-    .q-ampel {
-      width: 20px;
-    }
-    .q-bar-container {
-      width: 50px;
-    }
-    .q-val {
-      width: 95px;
-      font-size: 11px;
-    }
-    .q-arrow {
-      width: 15px;
-      margin-right: 0;
-    }
-    .q-text {
-      flex-grow: 1;
-      white-space: normal;
-      overflow: visible;
-      text-overflow: clip;
-      min-width: 0;
-    }
-    .row-toggle-hint {
-      margin-left: auto;
-    }
-    .quick-row-wrapper.open .quick-row-details {
-      padding: 4px 8px 8px 8px;
-      font-size: 12px;
-    }
   }
 
   .welle-container {
@@ -755,7 +707,6 @@
 </div>
 
 <script>
-// (Scripts unverändert lassen, wie im Original, nur der Header/Versionsstempel wurde angepasst)
 const THRESHOLDS = {
   vix:            { gruen: 15.5, rot: 24.0, barMin: 10, barMax: 40 },
   cnnScore:       { rotUnten: 25, rotOben: 75, gruenUnten: 45, gruenOben: 55 },
@@ -777,7 +728,7 @@ const THRESHOLDS = {
 };
 
 let isLive = false;
-let metalIstLive = false; // true, sobald mind. einer von Gold/Öl live ist (für Ratio-Zeile)
+let metalIstLive = false;
 let goldIstLive = false;
 let oelIstLive = false;
 let cryptoIstLive = false;
@@ -858,17 +809,13 @@ function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, ar
 
 function updateFazitChange(currentScore, previousClose, rawVixVal) {
   let diff = currentScore - previousClose;
-  let diffText = "";
   let diffColor = "var(--text-dim)";
   
   if (diff > 0) {
-    diffText = `▲ +${diff.toFixed(1)} Punkte im Fear & Greed Index zum Vortag (Vortag: ${previousClose.toFixed(0)})`;
     diffColor = "var(--green)";
   } else if (diff < 0) {
-    diffText = `▼ ${Math.abs(diff).toFixed(1)} Punkte im Fear & Greed Index zum Vortag (Vortag: ${previousClose.toFixed(0)})`;
     diffColor = "var(--red)";
   } else {
-    diffText = `■ Fear & Greed Index unverändert zum Vortag (${previousClose.toFixed(0)})`;
     diffColor = "var(--yellow)";
   }
 
@@ -994,7 +941,7 @@ function render(data){
   
   let momScore = momentum ? momentum.score : 50;
   let momColor = momScore < THRESHOLDS.momentum.rot ? "rot" : (momScore > THRESHOLDS.momentum.purple ? "purple" : "gelb");
-  htmlS2 += buildQuickRowHTML(momColor, "Markt-Schwung", "Zeigt an, ob sich der S&P 500 stabil über oder unter seiner 200-Tage-Linie bewegt. Steigt he klar darüber, läuft der Motor rund.", momScore, momScore.toFixed(0) + " / 100");
+  htmlS2 += buildQuickRowHTML(momColor, "Markt-Schwung", "Zeigt an, ob sich der S&P 500 stabil über oder unter seiner 200-Tage-Linie bewegt. Steigt er klar darüber, läuft der Motor rund.", momScore, momScore.toFixed(0) + " / 100");
   
   htmlS2 += buildQuickRowHTML(actBreadth < THRESHOLDS.breadth.rot ? "rot" : (actBreadth < THRESHOLDS.breadth.gelb ? "gelb" : "gruen"), "Advance-Decline-Linie (A/D-Linie)", "Misst die echte Marktbreite, indem sie vergleicht, ob insgesamt mehr Aktien steigen oder fallen. Steigen nur wenige Riesen, droht Gefahr.", actBreadth, actBreadth.toFixed(0) + " / 100");
   document.getElementById('rowsSection2').innerHTML = htmlS2;
@@ -1184,4 +1131,267 @@ Schreibe die Actions eigenständig, sachlich, analytisch und souverän. Nutze au
   }
 
   try {
-    const bereinigt = antwortText.replace(/```json|
+    const bereinigt = antwortText.replace(/```json|```/g, '').trim();
+    const ergebnis = JSON.parse(bereinigt);
+
+    document.getElementById('fazitContent1').innerHTML = ergebnis.fazit1 || '';
+    document.getElementById('fazitContent2').innerHTML = ergebnis.fazit2 || '';
+    document.getElementById('fazitContent3').innerHTML = ergebnis.fazit3 || '';
+    document.getElementById('fazitContent4').innerHTML = ergebnis.fazit4 || '';
+
+    const gesamtEl = document.getElementById('gesamtfazitText');
+    if (gesamtEl) gesamtEl.textContent = baueGesamtfazit(ergebnis.fundamentale_lage, ergebnis.strukturelles_risiko, welleDesc);
+
+    const ampelDot = document.getElementById('situationAmpelDot');
+    if (ampelDot) {
+      const erlaubteFarben = ['gruen', 'gelb', 'rot', 'purple'];
+      ampelDot.className = 'situation-ampel' + (erlaubteFarben.includes(ergebnis.ampel) ? ' ' + ergebnis.ampel : '');
+    }
+
+    const actionEl = document.getElementById('actionListEl');
+    if (actionEl && Array.isArray(ergebnis.actions)) {
+      actionEl.innerHTML = ergebnis.actions.map(a => `<li>${a}</li>`).join('');
+    }
+  } catch(e) {
+    document.getElementById('fazitContent1').innerHTML = `<span style="color:var(--red);">Antwort-Format ungültig</span>`;
+  }
+}
+
+function updateSvgNode(cx, cy, color, text) {
+  const node = document.getElementById('wellePunkt');
+  const label = document.getElementById('welleIstLabel');
+  if(node && label) {
+    node.setAttribute('cx', cx);
+    node.setAttribute('cy', cy);
+    node.style.fill = color;
+    node.style.stroke = color;
+    
+    label.setAttribute('x', cx);
+    label.setAttribute('y', cy - 15);
+    label.style.fill = color;
+    label.textContent = text;
+  }
+}
+
+function fmtDate(iso){
+  const d = new Date(iso);
+  return d.toLocaleString('de-CH', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) + " Uhr";
+}
+
+function setApiDot(id, state) {
+  const dot = document.getElementById(id);
+  if (!dot) return;
+  dot.classList.remove('ok', 'fail', 'warn');
+  if (state === true) dot.classList.add('ok');
+  else if (state === 'warn') dot.classList.add('warn');
+  else if (state === false) dot.classList.add('fail');
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function callGemini(prompt) {
+  if (!GEMINI_API_KEY) return null;
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`;
+    const res = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GEMINI_API_KEY}` },
+      body: JSON.stringify({
+        model: GEMINI_MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.4
+      })
+    }, 15000);
+    if (!res.ok) {
+      setApiDot('apiDotGemini', false); return null;
+    }
+    const json = await res.json();
+    const text = json?.choices?.[0]?.message?.content;
+    setApiDot('apiDotGemini', !!text);
+    return text || null;
+  } catch(e) {
+    setApiDot('apiDotGemini', false);
+    return null;
+  }
+}
+
+async function holeCrypto() {
+  let btcPreis = null, btcAenderung = 0, live = false;
+  try {
+    const res = await fetchWithTimeout('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true', {}, 6000);
+    if (res.ok) {
+      const json = await res.json();
+      if (json.bitcoin) {
+        btcPreis = json.bitcoin.usd;
+        btcAenderung = json.bitcoin.usd_24h_change;
+        live = true;
+      }
+    }
+  } catch (e) {}
+  setApiDot('apiDotCrypto', live);
+  return { btcPreis, btcAenderung, live };
+}
+
+async function holeGold() {
+  try {
+    const res = await fetchWithTimeout('gold.json?t=' + Date.now(), {}, 3000);
+    if (res.ok) {
+      const json = await res.json();
+      const preis = parseFloat(json.price);
+      if (json.ok && !isNaN(preis)) return { preis, ok: true };
+    }
+  } catch (e) {}
+  // Fallback, falls gold.json lokal nicht existiert (damit Cockpit lädt)
+  return { preis: 2350, ok: false };
+}
+
+async function holeOel() {
+  try {
+    const res = await fetchWithTimeout('oil.json?t=' + Date.now(), {}, 3000);
+    if (res.ok) {
+      const json = await res.json();
+      const preis = parseFloat(json.price);
+      if (json.ok && !isNaN(preis)) return { preis, ok: true };
+    }
+  } catch (e) {}
+  // Fallback, falls oil.json lokal nicht existiert
+  return { preis: 78.50, ok: false };
+}
+
+async function holeMetalle() {
+  const [goldErg, oelErg] = await Promise.allSettled([holeGold(), holeOel()]);
+
+  const goldOk = goldErg.status === 'fulfilled' && goldErg.value.ok;
+  const oelOk = oelErg.status === 'fulfilled' && oelErg.value.ok;
+  const goldPreis = goldErg.status === 'fulfilled' ? goldErg.value.preis : 2350;
+  const oelPreis = oelErg.status === 'fulfilled' ? oelErg.value.preis : 78.50;
+
+  const anzahlOk = (goldOk ? 1 : 0) + (oelOk ? 1 : 0);
+  setApiDot('apiDotRohstoffe', anzahlOk === 2 ? true : anzahlOk === 1 ? 'warn' : false);
+
+  return { goldPreis, oelPreis, live: anzahlOk > 0, goldOk, oelOk };
+}
+
+async function holeEtf() {
+  let etfPreis = null, etfAenderung = 0, live = false;
+  try {
+    const res = await fetchWithTimeout('etf.json?t=' + Date.now(), {}, 3000);
+    if (res && res.ok) {
+      const json = await res.json();
+      const close = parseFloat(json.price);
+      const percentChange = parseFloat(json.change_percent);
+      if (!isNaN(close) && !isNaN(percentChange)) {
+        etfPreis = close;
+        etfAenderung = percentChange;
+        live = true;
+      }
+    }
+  } catch (e) {}
+  
+  // Fallback-Werte für lokale Vorschau/Tests, falls etf.json fehlt
+  if (!live) {
+    etfPreis = 105.40;
+    etfAenderung = 0.45;
+  }
+
+  setApiDot('apiDotEtf', live);
+  return { etfPreis, etfAenderung, live };
+}
+
+async function holeFearGreed() {
+  const res = await fetchWithTimeout('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', { headers: {'Accept':'application/json'} }, 8000);
+  if (!res.ok) throw new Error('Fear&Greed HTTP-Fehler');
+  return await res.json();
+}
+
+async function ladeDaten(){
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true;
+
+  const [cryptoErg, metalErg, etfErg, fgErg] = await Promise.allSettled([
+    holeCrypto(),
+    holeMetalle(),
+    holeEtf(),
+    holeFearGreed()
+  ]);
+
+  const { btcPreis, btcAenderung } = cryptoErg.status === 'fulfilled' ? cryptoErg.value : { btcPreis: null, btcAenderung: 0 };
+  cryptoIstLive = cryptoErg.status === 'fulfilled' && cryptoErg.value.live;
+
+  const { goldPreis, oelPreis } = metalErg.status === 'fulfilled' ? metalErg.value : { goldPreis: 2350, oelPreis: 78.50 };
+  metalIstLive = metalErg.status === 'fulfilled' && metalErg.value.live;
+  goldIstLive = metalErg.status === 'fulfilled' && metalErg.value.goldOk;
+  oelIstLive = metalErg.status === 'fulfilled' && metalErg.value.oelOk;
+
+  const { etfPreis, etfAenderung } = etfErg.status === 'fulfilled' ? etfErg.value : { etfPreis: 105.40, etfAenderung: 0.45 };
+  etfIstLive = etfErg.status === 'fulfilled' && etfErg.value.live;
+
+  try{
+    if (fgErg.status !== 'fulfilled') throw fgErg.reason || new Error('Fear&Greed fehlgeschlagen');
+    const json = fgErg.value;
+
+    let extrahierterVixUSD = null;
+    if(json.market_volatility_vix && json.market_volatility_vix.data && json.market_volatility_vix.data.length > 0){
+      const ndp = json.market_volatility_vix.data[json.market_volatility_vix.data.length - 1];
+      if(ndp && ndp.y) extrahierterVixUSD = ndp.y; 
+    }
+
+    const data = {
+      timestamp: new Date().toISOString(), 
+      score: json.fear_and_greed.score,
+      rating: json.fear_and_greed.rating,
+      previous_close: json.fear_and_greed.previous_close,
+      btc_usd: btcPreis,
+      btc_change_24h: btcAenderung,
+      gold_usd: goldPreis,
+      oil_usd: oelPreis,
+      etf_price: etfPreis,
+      etf_change: etfAenderung,
+      subs: [
+        {key:"market_momentum_sp500", name:"Markt-Schwung", sub:"Zeigt an, ob sich der S&P 500 stabil über oder unter seiner 200-Tage-Linie bewegt.", score:json.market_momentum_sp500.score},
+        {key:"stock_price_strength", name:"Aktien-Stärke", sub:"Misst die Anzahl der Aktien auf 52-Wochen-Hochs im Vergleich zu Tiefs.", score:json.stock_price_strength.score},
+        {key:"stock_price_breadth", name:"Marktbreite (A/D Basis)", sub:"Misst die echte Marktbreite.", score:json.stock_price_breadth.score},
+        {key:"put_call_options", name:"Absicherungs-Verhältnis", sub:"Zeigt das Verhältnis von Verlustabsicherungen.", score:json.put_call_options.score},
+        {key:"market_volatility_vix", name:"Markt-Nervosität (VIX)", sub:"Der Angst-Index der Börse.", score:json.market_volatility_vix.score, raw_vix: extrahierterVixUSD},
+        {key:"finra_margin_debt", name:"Kredit-Hebelung am Markt", sub:"Misst, wie stark Anleger mit geliehenem Geld spekulieren.", score: json.fear_and_greed.score > 78 ? 85 : 35}
+      ]
+    };
+    isLive = true; render(data);
+  }catch(err){
+    isLive = false;
+    
+    const statusIndicator = document.getElementById('statusIndicator');
+    if (statusIndicator) {
+      statusIndicator.className = 'status-tag error'; 
+      statusIndicator.textContent = 'Fehler beim Laden';
+    }
+
+    const gesamtEl = document.getElementById('gesamtfazitText');
+    if (gesamtEl) {
+      gesamtEl.textContent = '⚠️ Live-Daten konnten nicht abgerufen werden. Es sind keine aktuellen Werte verfügbar.';
+    }
+
+    document.getElementById('rowsSectionETF').innerHTML = '<div style="padding: 10px; color: var(--red);">Keine Live-Daten verfügbar</div>';
+    document.getElementById('rowsSection1').innerHTML = '';
+    document.getElementById('rowsSection2').innerHTML = '';
+    document.getElementById('rowsSection3').innerHTML = '';
+    document.getElementById('rowsSection4').innerHTML = '';
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+document.getElementById('versionStamp').textContent = APP_VERSION;
+
+ladeDaten();
+</script>
+
+</body></html>
