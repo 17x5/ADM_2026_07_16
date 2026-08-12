@@ -1,0 +1,70 @@
+name: Zinskurve aktualisieren
+
+on:
+  schedule:
+    - cron: '0 7 * * 1-5'   # 1x täglich, Mo-Fr, 07:00 UTC (FRED aktualisiert mit ca. 1 Tag Verzug)
+  workflow_dispatch:          # manueller Start im Actions-Tab möglich
+
+permissions:
+  contents: write
+
+jobs:
+  update-zinskurve:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Zinskurve (T10Y2Y) von FRED holen
+        run: |
+          curl -s -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
+            "https://fred.stlouisfed.org/graph/fredgraph.csv?id=T10Y2Y" -o raw.csv
+          cat raw.csv | tail -5
+
+      - name: CSV auswerten
+        run: |
+          python3 - <<'EOF'
+          import csv
+          import json
+
+          zeilen = []
+          with open('raw.csv') as f:
+              reader = csv.reader(f)
+              next(reader)  # Header ueberspringen (DATE,T10Y2Y)
+              for row in reader:
+                  if len(row) < 2:
+                      continue
+                  datum, wert = row[0], row[1]
+                  if wert == '.':
+                      continue  # Feiertag/keine Daten
+                  zeilen.append((datum, float(wert)))
+
+          if len(zeilen) < 1:
+              raise RuntimeError("Keine gueltigen T10Y2Y-Werte in der CSV gefunden.")
+
+          aktuell_datum, aktuell_wert = zeilen[-1]
+
+          if len(zeilen) >= 2:
+              _, vortag_wert = zeilen[-2]
+              aenderung = round(aktuell_wert - vortag_wert, 3)
+          else:
+              aenderung = 0
+
+          data = {
+              "value": aktuell_wert,
+              "change": aenderung,
+              "date": aktuell_datum
+          }
+
+          with open('zinskurve.json', 'w') as out:
+              json.dump(data, out)
+
+          print(data)
+          EOF
+
+      - name: Änderung committen
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add zinskurve.json
+          git diff --quiet --cached || git commit -m "Zinskurve aktualisiert"
+          git push
