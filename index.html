@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-12 09:30";
+    const APP_VERSION = "TEST BUILD 2026-08-12 14:04";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -1035,7 +1035,7 @@ function render(data){
   let csColor = csScore < THRESHOLDS.creditSpread.rot ? "rot" : (csScore < THRESHOLDS.creditSpread.gelb ? "gelb" : (csScore >= THRESHOLDS.creditSpread.gruen ? "gruen" : "gelb"));
   let csArrow = csColor === "rot" ? "▼" : (csColor === "gruen" ? "▲" : "▲");
   let csValString = (creditSpread && creditSpread.raw_spread !== undefined && creditSpread.raw_spread !== null && !isNaN(creditSpread.raw_spread))
-    ? creditSpread.raw_spread.toFixed(2) + " pp"
+    ? creditSpread.raw_spread.toFixed(2) + " / 24"
     : csScore.toFixed(0) + " / 100";
   htmlS3 += buildQuickRowHTML(csColor, "Credit Spreads (High-Yield-Aufschlag)", "Misst den Renditeaufschlag von Ramsch-Anleihen (Junk Bonds) gegenüber sicheren Staatsanleihen. Ein enger Aufschlag zeigt Sorglosigkeit im Kreditmarkt, ein breiter Aufschlag Stress und Risikoscheu.", csScore, csValString, false, csArrow);
 
