@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-12 09:58";
+    const APP_VERSION = "TEST BUILD 2026-08-12 09:30";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -537,6 +537,7 @@
         <span class="api-dot" id="apiDotGemini"></span>Gemini
         <span class="api-dot fail" id="apiDotEtf"></span>ETF
         <span class="api-dot fail" id="apiDotMove"></span>MOVE
+        <span class="api-dot fail" id="apiDotZinskurve"></span>Zinskurve
         <span class="api-dot ok" id="apiDotCrypto"></span>BTC
         <span class="api-dot fail" id="apiDotRohstoffe"></span>Rohst.
       </div>
@@ -764,7 +765,8 @@ const THRESHOLDS = {
   strength:       { rot: 35, gruen: 75 },
   marginDebt:      { rot: 75, gelb: 50 },
   creditSpread:   { rot: 35, gelb: 55, gruen: 70 },
-  moveIndex:      { gruen: 70, rot: 110, barMin: 40, barMax: 160, displayMax: 200 },
+  moveIndex:      { gruen: 70, rot: 110, barMin: 40, barMax: 160, displayMax: 250 },
+  zinskurve:      { rot: 0, gelb: 0.5, barMin: -1.5, barMax: 2.0 },
   bfStatus: {
     ueberhitztScore: 76, ueberhitztDebt: 80,
     illusionBreadth: 35, illusionScoreMin: 35,
@@ -785,6 +787,7 @@ let oelIstLive = false;
 let cryptoIstLive = false;
 let etfIstLive = false;
 let moveIstLive = false;
+let zinskurveIstLive = false;
 
 function toggleActionBox() {
   const box = document.getElementById('actionBox');
@@ -894,6 +897,8 @@ function render(data){
   const creditSpread = data?.subs?.find(s => s.key === "junk_bond_demand");
   const moveWert = data?.move_wert;
   const moveAenderung = data?.move_change;
+  const zkWert = data?.zinskurve_wert;
+  const zkAenderung = data?.zinskurve_change;
 
   let rawVix = vix ? (vix.raw_vix ?? 16.07) : 16.07;
   let vixColor = "gelb";
@@ -1025,7 +1030,7 @@ function render(data){
   let csColor = csScore < THRESHOLDS.creditSpread.rot ? "rot" : (csScore < THRESHOLDS.creditSpread.gelb ? "gelb" : (csScore >= THRESHOLDS.creditSpread.gruen ? "gruen" : "gelb"));
   let csArrow = csColor === "rot" ? "▼" : (csColor === "gruen" ? "▲" : "▲");
   let csValString = (creditSpread && creditSpread.raw_spread !== undefined && creditSpread.raw_spread !== null && !isNaN(creditSpread.raw_spread))
-    ? creditSpread.raw_spread.toFixed(2) + " % / 24"
+    ? creditSpread.raw_spread.toFixed(2) + " pp"
     : csScore.toFixed(0) + " / 100";
   htmlS3 += buildQuickRowHTML(csColor, "Credit Spreads (High-Yield-Aufschlag)", "Misst den Renditeaufschlag von Ramsch-Anleihen (Junk Bonds) gegenüber sicheren Staatsanleihen. Ein enger Aufschlag zeigt Sorglosigkeit im Kreditmarkt, ein breiter Aufschlag Stress und Risikoscheu.", csScore, csValString, false, csArrow);
 
@@ -1037,6 +1042,18 @@ function render(data){
     htmlS3 += buildQuickRowHTML(mvColor, "MOVE-Index (Anleihen-Volatilität)", "Misst die erwartete Schwankungsbreite am US-Staatsanleihenmarkt - das Pendant zum VIX für Anleihen. Steigt er stark, herrscht Stress im Zinsmarkt.", mvPercent, mvValString, false, mvArrow);
   } else {
     htmlS3 += buildQuickRowHTML("grau", "MOVE-Index (Anleihen-Volatilität)", "Misst die erwartete Schwankungsbreite am US-Staatsanleihenmarkt - das Pendant zum VIX für Anleihen. Steigt er stark, herrscht Stress im Zinsmarkt.<br><br>⚠ Live-Daten aktuell nicht verfügbar (move.json fehlt oder Workflow noch nicht gelaufen).", 0, "⚠ Keine Daten", true, "–");
+  }
+
+  if (zinskurveIstLive && zkWert !== null && zkWert !== undefined && !isNaN(zkWert)) {
+    let zkColor = zkWert < THRESHOLDS.zinskurve.rot ? "rot" : (zkWert < THRESHOLDS.zinskurve.gelb ? "gelb" : "gruen");
+    let zkPercent = Math.max(0, Math.min(100, ((zkWert - THRESHOLDS.zinskurve.barMin) / (THRESHOLDS.zinskurve.barMax - THRESHOLDS.zinskurve.barMin)) * 100));
+    let zkArrow = zkAenderung > 0 ? "▲" : (zkAenderung < 0 ? "▼" : "■");
+    let zkValString = (zkWert >= 0 ? "+" : "") + zkWert.toFixed(2) + " pp";
+    let zkSub = "Misst den Renditeunterschied zwischen 10- und 2-jährigen US-Staatsanleihen. Wird die Kurve negativ (invertiert), gilt das historisch als zuverlässiger Rezessions-Frühindikator.";
+    if (zkWert < THRESHOLDS.zinskurve.rot) zkSub += "<br><br>⚠ Aktuell invertiert - erhöhte Vorsicht angebracht.";
+    htmlS3 += buildQuickRowHTML(zkColor, "Zinskurve (10J-2J Spread)", zkSub, zkPercent, zkValString, false, zkArrow);
+  } else {
+    htmlS3 += buildQuickRowHTML("grau", "Zinskurve (10J-2J Spread)", "Misst den Renditeunterschied zwischen 10- und 2-jährigen US-Staatsanleihen. Wird die Kurve negativ (invertiert), gilt das historisch als zuverlässiger Rezessions-Frühindikator.<br><br>⚠ Live-Daten aktuell nicht verfügbar (zinskurve.json fehlt oder Workflow noch nicht gelaufen).", 0, "⚠ Keine Daten", true, "–");
   }
 
   document.getElementById('rowsSection3').innerHTML = htmlS3;
@@ -1077,7 +1094,7 @@ function render(data){
     data, bfStatus, sfColor, welleDesc,
     vixColor, rawVix, cnnColor,
     momentum, strength, marginDebt, options, actBreadth,
-    goldPreisWert, oelPreisWert, creditSpread, moveWert, moveAenderung
+    goldPreisWert, oelPreisWert, creditSpread, moveWert, moveAenderung, zkWert, zkAenderung
   });
 }
 
@@ -1155,7 +1172,7 @@ async function generiereGeminiTexte(ctx) {
 
   const { data, bfStatus, sfColor, welleDesc, vixColor, rawVix, cnnColor,
           momentum, strength, marginDebt, options, actBreadth,
-          goldPreisWert, oelPreisWert, creditSpread, moveWert, moveAenderung } = ctx;
+          goldPreisWert, oelPreisWert, creditSpread, moveWert, moveAenderung, zkWert, zkAenderung } = ctx;
 
   const stilAnweisung = STYLE_LEVELS[getStyleLevel()].anweisung;
 
@@ -1175,6 +1192,8 @@ async function generiereGeminiTexte(ctx) {
     credit_spread_pp: creditSpread && creditSpread.raw_spread !== undefined ? creditSpread.raw_spread : null,
     move_index: (moveWert !== null && moveWert !== undefined) ? moveWert : null,
     move_index_change_prozent: (moveAenderung !== null && moveAenderung !== undefined) ? moveAenderung : null,
+    zinskurve_10j_2j_pp: (zkWert !== null && zkWert !== undefined) ? zkWert : null,
+    zinskurve_invertiert: (zkWert !== null && zkWert !== undefined) ? (zkWert < 0) : null,
     put_call_score: options ? options.score : null,
     gold_usd: goldPreisWert, oel_usd_wti: oelPreisWert
   };
@@ -1193,7 +1212,7 @@ Erzeuge NUR ein valides JSON-Objekt (keine Markdown-Codeblöcke, kein Fliesstext
 {
   "fazit1": "1-2 Sätze sachliche Einschätzung zu Sentiment/Nervosität/Bitcoin (Kachel 1)",
   "fazit2": "1-2 Sätze sachliche Einschätzung zu Trend/Momentum/Marktbreite (Kachel 2)",
-  "fazit3": "1-2 Sätze sachliche Einschätzung zu Struktur/Kredit-Hebelung/Credit Spreads/MOVE-Index (Anleihen-Volatilität) (Kachel 3)",
+  "fazit3": "1-2 Sätze sachliche Einschätzung zu Struktur/Kredit-Hebelung/Credit Spreads/MOVE-Index/Zinskurve (Kachel 3)",
   "fazit4": "1-2 Sätze sachliche Einschätzung zu Gold/Öl/Rohstoffen (Kachel 4)",
   "fundamentale_lage": "1 knapper, sachlicher Satz NUR zu Unternehmensgewinnen/Fundamentaldaten - keine Bewertung des Gesamtrisikos, keine Beruhigung, nur der fundamentale Fakt.",
   "strukturelles_risiko": "1 knapper, sachlicher Satz NUR zur aktuellen Wellen-Phase/Marktbreite/Struktur-Risiko gemäss 'marktphase'. Muss die Phase beim Namen nennen (z.B. Welle A/B/C) falls zutreffend. Weder beschönigen noch dramatisieren - nur der strukturelle Fakt.",
@@ -1417,6 +1436,25 @@ async function holeMove() {
   return { moveWert, moveAenderung, live };
 }
 
+async function holeZinskurve() {
+  let zkWert = null, zkAenderung = 0, live = false;
+  try {
+    const res = await fetchWithTimeout('zinskurve.json?t=' + Date.now(), {}, 6000);
+    if (res && res.ok) {
+      const json = await res.json();
+      const wert = parseFloat(json.value);
+      const aenderung = parseFloat(json.change);
+      if (!isNaN(wert)) {
+        zkWert = wert;
+        zkAenderung = !isNaN(aenderung) ? aenderung : 0;
+        live = true;
+      }
+    }
+  } catch (e) { /* zinskurve.json fehlt/Timeout -> live bleibt false */ }
+  setApiDot('apiDotZinskurve', live);
+  return { zkWert, zkAenderung, live };
+}
+
 async function holeFearGreed() {
   const res = await fetchWithTimeout('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', { headers: {'Accept':'application/json'} }, 8000);
   if (!res.ok) throw new Error('Fear&Greed HTTP-Fehler');
@@ -1428,11 +1466,12 @@ async function ladeDaten(){
   btn.disabled = true;
 
   // Alle vier Abfragen parallel starten - keine blockiert die andere.
-  const [cryptoErg, metalErg, etfErg, moveErg, fgErg] = await Promise.allSettled([
+  const [cryptoErg, metalErg, etfErg, moveErg, zinskurveErg, fgErg] = await Promise.allSettled([
     holeCrypto(),
     holeMetalle(),
     holeEtf(),
     holeMove(),
+    holeZinskurve(),
     holeFearGreed()
   ]);
 
@@ -1449,6 +1488,9 @@ async function ladeDaten(){
 
   const { moveWert, moveAenderung } = moveErg.status === 'fulfilled' ? moveErg.value : { moveWert: null, moveAenderung: 0 };
   moveIstLive = moveErg.status === 'fulfilled' && moveErg.value.live;
+
+  const { zkWert, zkAenderung } = zinskurveErg.status === 'fulfilled' ? zinskurveErg.value : { zkWert: null, zkAenderung: 0 };
+  zinskurveIstLive = zinskurveErg.status === 'fulfilled' && zinskurveErg.value.live;
 
   try{
     if (fgErg.status !== 'fulfilled') throw fgErg.reason || new Error('Fear&Greed fehlgeschlagen');
@@ -1479,6 +1521,8 @@ async function ladeDaten(){
       etf_change: etfAenderung,
       move_wert: moveWert,
       move_change: moveAenderung,
+      zinskurve_wert: zkWert,
+      zinskurve_change: zkAenderung,
       subs: [
         {key:"market_momentum_sp500", name:"Markt-Schwung", sub:"Zeigt an, ob sich der S&P 500 stabil über oder unter seiner 200-Tage-Linie bewegt. Steigt der Kurs klar darüber, läuft der Motor rund.", score:json.market_momentum_sp500.score},
         {key:"stock_price_strength", name:"Aktien-Stärke", sub:"Misst die Anzahl der Aktien auf 52-Wochen-Hochs im Vergleich zu Tiefs. Das zeigt, wie stark der innere Kern des Marktes ist.", score:json.stock_price_strength.score},
