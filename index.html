@@ -1,4 +1,4 @@
-<!-- BUILD-ZEITSTEMPEL: 2026-08-11 18:13 -->
+<!-- BUILD-ZEITSTEMPEL manuell -->
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-11 18:13";
+    const APP_VERSION = "TEST BUILD 2026-08-11 14:00";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -172,6 +172,7 @@
   .action-list li { margin-bottom: 4px; }
   .action-list li:last-child { margin-bottom: 0; }
 
+  /* DASHBOARD GRID */
   .cockpit-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
@@ -242,6 +243,7 @@
     font-weight: 600;
   }
 
+  /* AUSKLAPPBARE ZEILEN STILE */
   .quick-row-wrapper {
     border-bottom: 1px solid #161b22;
   }
@@ -261,10 +263,14 @@
   }
   
   .q-ampel { width: 24px; flex-shrink: 0; font-size: 13px; }
+  
   .q-bar-container { width: 70px; background: #21262d; height: 6px; border-radius: 3px; margin-right: 10px; flex-shrink: 0; overflow: hidden; }
   .q-bar-fill { height: 100%; width: 0%; transition: width 0.4s, background-color 0.4s; }
+  
   .q-val { width: 110px; text-align: left; flex-shrink: 0; font-weight: 600; font-family: var(--mono); font-size: 12px; }
+  
   .q-arrow { width: 20px; text-align: center; font-size: 10px; margin-right: 6px; flex-shrink: 0; }
+
   .q-text { flex-grow: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .q-text b { font-size: 13px; color: var(--text); }
   
@@ -292,6 +298,48 @@
   .quick-row-wrapper.open .quick-row-details {
     max-height: 500px !important;
     padding: 4px 12px 8px 34px;
+  }
+
+  @media (max-width: 600px) {
+    html, body {
+      overflow-x: hidden;
+    }
+    .group-box {
+      width: 100%;
+    }
+    .quick-row {
+      flex-wrap: wrap;
+      gap: 4px 8px;
+      padding: 8px 0;
+    }
+    .q-ampel {
+      width: 20px;
+    }
+    .q-bar-container {
+      width: 50px;
+    }
+    .q-val {
+      width: 95px;
+      font-size: 11px;
+    }
+    .q-arrow {
+      width: 15px;
+      margin-right: 0;
+    }
+    .q-text {
+      flex-grow: 1;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      min-width: 0;
+    }
+    .row-toggle-hint {
+      margin-left: auto;
+    }
+    .quick-row-wrapper.open .quick-row-details {
+      padding: 4px 8px 8px 8px;
+      font-size: 12px;
+    }
   }
 
   .welle-container {
@@ -714,6 +762,7 @@ const THRESHOLDS = {
   breadth:        { rot: 35, gelb: 50 },
   strength:       { rot: 35, gruen: 75 },
   marginDebt:      { rot: 75, gelb: 50 },
+  creditSpread:   { rot: 35, gelb: 55, gruen: 70 },
   bfStatus: {
     ueberhitztScore: 76, ueberhitztDebt: 80,
     illusionBreadth: 35, illusionScoreMin: 35,
@@ -728,7 +777,7 @@ const THRESHOLDS = {
 };
 
 let isLive = false;
-let metalIstLive = false;
+let metalIstLive = false; // true, sobald mind. einer von Gold/Öl live ist (für Ratio-Zeile)
 let goldIstLive = false;
 let oelIstLive = false;
 let cryptoIstLive = false;
@@ -809,13 +858,17 @@ function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, ar
 
 function updateFazitChange(currentScore, previousClose, rawVixVal) {
   let diff = currentScore - previousClose;
+  let diffText = "";
   let diffColor = "var(--text-dim)";
   
   if (diff > 0) {
+    diffText = `▲ +${diff.toFixed(1)} Punkte im Fear & Greed Index zum Vortag (Vortag: ${previousClose.toFixed(0)})`;
     diffColor = "var(--green)";
   } else if (diff < 0) {
+    diffText = `▼ ${Math.abs(diff).toFixed(1)} Punkte im Fear & Greed Index zum Vortag (Vortag: ${previousClose.toFixed(0)})`;
     diffColor = "var(--red)";
   } else {
+    diffText = `■ Fear & Greed Index unverändert zum Vortag (${previousClose.toFixed(0)})`;
     diffColor = "var(--yellow)";
   }
 
@@ -835,6 +888,7 @@ function render(data){
   const strength = data?.subs?.find(s => s.key === "stock_price_strength");
   const options = data?.subs?.find(s => s.key === "put_call_options");
   const marginDebt = data?.subs?.find(s => s.key === "finra_margin_debt");
+  const creditSpread = data?.subs?.find(s => s.key === "junk_bond_demand");
 
   let rawVix = vix ? (vix.raw_vix ?? 16.07) : 16.07;
   let vixColor = "gelb";
@@ -941,7 +995,7 @@ function render(data){
   
   let momScore = momentum ? momentum.score : 50;
   let momColor = momScore < THRESHOLDS.momentum.rot ? "rot" : (momScore > THRESHOLDS.momentum.purple ? "purple" : "gelb");
-  htmlS2 += buildQuickRowHTML(momColor, "Markt-Schwung", "Zeigt an, ob sich der S&P 500 stabil über oder unter seiner 200-Tage-Linie bewegt. Steigt er klar darüber, läuft der Motor rund.", momScore, momScore.toFixed(0) + " / 100");
+  htmlS2 += buildQuickRowHTML(momColor, "Markt-Schwung", "Zeigt an, ob sich der S&P 500 stabil über oder unter seiner 200-Tage-Linie bewegt. Steigt he klar darüber, läuft der Motor rund.", momScore, momScore.toFixed(0) + " / 100");
   
   htmlS2 += buildQuickRowHTML(actBreadth < THRESHOLDS.breadth.rot ? "rot" : (actBreadth < THRESHOLDS.breadth.gelb ? "gelb" : "gruen"), "Advance-Decline-Linie (A/D-Linie)", "Misst die echte Marktbreite, indem sie vergleicht, ob insgesamt mehr Aktien steigen oder fallen. Steigen nur wenige Riesen, droht Gefahr.", actBreadth, actBreadth.toFixed(0) + " / 100");
   document.getElementById('rowsSection2').innerHTML = htmlS2;
@@ -961,6 +1015,17 @@ function render(data){
     debtColor = "gelb";
   }
   htmlS3 += buildQuickRowHTML(debtColor, "Kredit-Hebelung am Markt", "Misst, wie stark Anleger mit geliehenem Geld spekulieren. Zu viel Fremdkapital verstärkt die Wucht von Crashs massiv.", debtDisplayPercent, debtScore.toFixed(0) + " / 100");
+
+  let csScore = creditSpread ? creditSpread.score : 50;
+  let csColor = csScore < THRESHOLDS.creditSpread.rot ? "rot" : (csScore < THRESHOLDS.creditSpread.gelb ? "gelb" : (csScore >= THRESHOLDS.creditSpread.gruen ? "gruen" : "gelb"));
+  let csArrow = csColor === "rot" ? "▼" : (csColor === "gruen" ? "▲" : "▲");
+  let csValString = (creditSpread && creditSpread.raw_spread !== undefined && creditSpread.raw_spread !== null && !isNaN(creditSpread.raw_spread))
+    ? creditSpread.raw_spread.toFixed(2) + " pp"
+    : csScore.toFixed(0) + " / 100";
+  htmlS3 += buildQuickRowHTML(csColor, "Credit Spreads (High-Yield-Aufschlag)", "Misst den Renditeaufschlag von Ramsch-Anleihen (Junk Bonds) gegenüber sicheren Staatsanleihen. Ein enger Aufschlag zeigt Sorglosigkeit im Kreditmarkt, ein breiter Aufschlag Stress und Risikoscheu.", csScore, csValString, false, csArrow);
+
+  htmlS3 += buildQuickRowHTML("grau", "MOVE-Index (Anleihen-Volatilität)", "Misst die erwartete Schwankungsbreite am US-Staatsanleihenmarkt - das Pendant zum VIX für Anleihen. Steigt er stark, herrscht Stress im Zinsmarkt.<br><br>🚧 <b>Coming Soon</b> - Datenanbindung ist in Vorbereitung.", 0, "🚧 Coming Soon", false, "–");
+
   document.getElementById('rowsSection3').innerHTML = htmlS3;
 
   let htmlS4 = "";
@@ -999,7 +1064,7 @@ function render(data){
     data, bfStatus, sfColor, welleDesc,
     vixColor, rawVix, cnnColor,
     momentum, strength, marginDebt, options, actBreadth,
-    goldPreisWert, oelPreisWert
+    goldPreisWert, oelPreisWert, creditSpread
   });
 }
 
@@ -1077,7 +1142,7 @@ async function generiereGeminiTexte(ctx) {
 
   const { data, bfStatus, sfColor, welleDesc, vixColor, rawVix, cnnColor,
           momentum, strength, marginDebt, options, actBreadth,
-          goldPreisWert, oelPreisWert } = ctx;
+          goldPreisWert, oelPreisWert, creditSpread } = ctx;
 
   const stilAnweisung = STYLE_LEVELS[getStyleLevel()].anweisung;
 
@@ -1093,6 +1158,8 @@ async function generiereGeminiTexte(ctx) {
     aktienstaerke_score: strength ? strength.score : null,
     marktbreite_score: actBreadth,
     margin_debt_score: marginDebt ? marginDebt.score : null,
+    credit_spread_score: creditSpread ? creditSpread.score : null,
+    credit_spread_pp: creditSpread && creditSpread.raw_spread !== undefined ? creditSpread.raw_spread : null,
     put_call_score: options ? options.score : null,
     gold_usd: goldPreisWert, oel_usd_wti: oelPreisWert
   };
@@ -1111,7 +1178,7 @@ Erzeuge NUR ein valides JSON-Objekt (keine Markdown-Codeblöcke, kein Fliesstext
 {
   "fazit1": "1-2 Sätze sachliche Einschätzung zu Sentiment/Nervosität/Bitcoin (Kachel 1)",
   "fazit2": "1-2 Sätze sachliche Einschätzung zu Trend/Momentum/Marktbreite (Kachel 2)",
-  "fazit3": "1-2 Sätze sachliche Einschätzung zu Struktur/Kredit-Hebelung (Kachel 3)",
+  "fazit3": "1-2 Sätze sachliche Einschätzung zu Struktur/Kredit-Hebelung/Credit Spreads (Kachel 3)",
   "fazit4": "1-2 Sätze sachliche Einschätzung zu Gold/Öl/Rohstoffen (Kachel 4)",
   "fundamentale_lage": "1 knapper, sachlicher Satz NUR zu Unternehmensgewinnen/Fundamentaldaten - keine Bewertung des Gesamtrisikos, keine Beruhigung, nur der fundamentale Fakt.",
   "strukturelles_risiko": "1 knapper, sachlicher Satz NUR zur aktuellen Wellen-Phase/Marktbreite/Struktur-Risiko gemäss 'marktphase'. Muss die Phase beim Namen nennen (z.B. Welle A/B/C) falls zutreffend. Weder beschönigen noch dramatisieren - nur der strukturelle Fakt.",
@@ -1178,6 +1245,7 @@ function fmtDate(iso){
   return d.toLocaleString('de-CH', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) + " Uhr";
 }
 
+// state: true = ok (grün), false = fail (rot), 'warn' = teilweise ok (gelb)
 function setApiDot(id, state) {
   const dot = document.getElementById(id);
   if (!dot) return;
@@ -1187,6 +1255,9 @@ function setApiDot(id, state) {
   else if (state === false) dot.classList.add('fail');
 }
 
+// Führt fetch mit hartem Timeout aus. Verhindert, dass eine hängende
+// API-Antwort den Rest der App blockiert (Promise löst spätestens nach
+// timeoutMs mit Fehler auf, statt ewig zu warten).
 async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -1223,6 +1294,10 @@ async function callGemini(prompt) {
   }
 }
 
+// Jede Teil-Abfrage in eine eigene Funktion, die NIE wirft (immer ein
+// Ergebnisobjekt zurückgibt) und ihr eigenes Timeout hat. So kann eine
+// einzelne hängende/fehlerhafte API die anderen drei nicht verzögern.
+
 async function holeCrypto() {
   let btcPreis = null, btcAenderung = 0, live = false;
   try {
@@ -1235,55 +1310,64 @@ async function holeCrypto() {
         live = true;
       }
     }
-  } catch (e) {}
+  } catch (e) { /* Timeout/Netzwerkfehler -> live bleibt false */ }
   setApiDot('apiDotCrypto', live);
   return { btcPreis, btcAenderung, live };
 }
 
 async function holeGold() {
   try {
-    const res = await fetchWithTimeout('gold.json?t=' + Date.now(), {}, 3000);
-    if (res.ok) {
-      const json = await res.json();
-      const preis = parseFloat(json.price);
-      if (json.ok && !isNaN(preis)) return { preis, ok: true };
-    }
-  } catch (e) {}
-  // Fallback, falls gold.json lokal nicht existiert (damit Cockpit lädt)
-  return { preis: 2350, ok: false };
+    // Wird jetzt server-seitig per GitHub Actions in gold.json geschrieben
+    // (goldprice.dev unterstützt keine Browser-CORS-Anfragen).
+    const res = await fetchWithTimeout('gold.json?t=' + Date.now(), {}, 6000);
+    if (!res.ok) return { preis: null, ok: false };
+    const json = await res.json();
+    const preis = parseFloat(json.price);
+    const ok = !!json.ok && !isNaN(preis);
+    return { preis: ok ? preis : null, ok };
+  } catch (e) {
+    return { preis: null, ok: false };
+  }
 }
 
 async function holeOel() {
   try {
-    const res = await fetchWithTimeout('oil.json?t=' + Date.now(), {}, 3000);
-    if (res.ok) {
-      const json = await res.json();
-      const preis = parseFloat(json.price);
-      if (json.ok && !isNaN(preis)) return { preis, ok: true };
-    }
-  } catch (e) {}
-  // Fallback, falls oil.json lokal nicht existiert
-  return { preis: 78.50, ok: false };
+    // Wird server-seitig per GitHub Actions in oil.json geschrieben
+    // (Key bleibt im Workflow-Secret, nicht im Client-Code).
+    const res = await fetchWithTimeout('oil.json?t=' + Date.now(), {}, 6000);
+    if (!res.ok) return { preis: null, ok: false };
+    const json = await res.json();
+    const preis = parseFloat(json.price);
+    const ok = !!json.ok && !isNaN(preis);
+    return { preis: ok ? preis : null, ok };
+  } catch (e) {
+    return { preis: null, ok: false };
+  }
 }
 
 async function holeMetalle() {
+  // Gold und Öl unabhängig voneinander abfragen (je eigene lokale JSON-
+  // Datei), damit eine fehlende/fehlerhafte Teilabfrage die andere nicht
+  // blockiert.
   const [goldErg, oelErg] = await Promise.allSettled([holeGold(), holeOel()]);
 
   const goldOk = goldErg.status === 'fulfilled' && goldErg.value.ok;
   const oelOk = oelErg.status === 'fulfilled' && oelErg.value.ok;
-  const goldPreis = goldErg.status === 'fulfilled' ? goldErg.value.preis : 2350;
-  const oelPreis = oelErg.status === 'fulfilled' ? oelErg.value.preis : 78.50;
+  const goldPreis = goldOk ? goldErg.value.preis : null;
+  const oelPreis = oelOk ? oelErg.value.preis : null;
 
   const anzahlOk = (goldOk ? 1 : 0) + (oelOk ? 1 : 0);
   setApiDot('apiDotRohstoffe', anzahlOk === 2 ? true : anzahlOk === 1 ? 'warn' : false);
 
+  // "live" (kombiniert) bleibt true, sobald mindestens ein Wert verfügbar
+  // ist; goldOk/oelOk liefern den Status je Wert für die Stale-Anzeige.
   return { goldPreis, oelPreis, live: anzahlOk > 0, goldOk, oelOk };
 }
 
 async function holeEtf() {
   let etfPreis = null, etfAenderung = 0, live = false;
   try {
-    const res = await fetchWithTimeout('etf.json?t=' + Date.now(), {}, 3000);
+    const res = await fetchWithTimeout('etf.json?t=' + Date.now(), {}, 6000);
     if (res && res.ok) {
       const json = await res.json();
       const close = parseFloat(json.price);
@@ -1294,14 +1378,7 @@ async function holeEtf() {
         live = true;
       }
     }
-  } catch (e) {}
-  
-  // Fallback-Werte für lokale Vorschau/Tests, falls etf.json fehlt
-  if (!live) {
-    etfPreis = 105.40;
-    etfAenderung = 0.45;
-  }
-
+  } catch (e) { /* etf.json fehlt/Timeout -> live bleibt false */ }
   setApiDot('apiDotEtf', live);
   return { etfPreis, etfAenderung, live };
 }
@@ -1316,6 +1393,7 @@ async function ladeDaten(){
   const btn = document.getElementById('refreshBtn');
   btn.disabled = true;
 
+  // Alle vier Abfragen parallel starten - keine blockiert die andere.
   const [cryptoErg, metalErg, etfErg, fgErg] = await Promise.allSettled([
     holeCrypto(),
     holeMetalle(),
@@ -1326,12 +1404,12 @@ async function ladeDaten(){
   const { btcPreis, btcAenderung } = cryptoErg.status === 'fulfilled' ? cryptoErg.value : { btcPreis: null, btcAenderung: 0 };
   cryptoIstLive = cryptoErg.status === 'fulfilled' && cryptoErg.value.live;
 
-  const { goldPreis, oelPreis } = metalErg.status === 'fulfilled' ? metalErg.value : { goldPreis: 2350, oelPreis: 78.50 };
+  const { goldPreis, oelPreis } = metalErg.status === 'fulfilled' ? metalErg.value : { goldPreis: null, oelPreis: null };
   metalIstLive = metalErg.status === 'fulfilled' && metalErg.value.live;
   goldIstLive = metalErg.status === 'fulfilled' && metalErg.value.goldOk;
   oelIstLive = metalErg.status === 'fulfilled' && metalErg.value.oelOk;
 
-  const { etfPreis, etfAenderung } = etfErg.status === 'fulfilled' ? etfErg.value : { etfPreis: 105.40, etfAenderung: 0.45 };
+  const { etfPreis, etfAenderung } = etfErg.status === 'fulfilled' ? etfErg.value : { etfPreis: null, etfAenderung: 0 };
   etfIstLive = etfErg.status === 'fulfilled' && etfErg.value.live;
 
   try{
@@ -1342,6 +1420,12 @@ async function ladeDaten(){
     if(json.market_volatility_vix && json.market_volatility_vix.data && json.market_volatility_vix.data.length > 0){
       const ndp = json.market_volatility_vix.data[json.market_volatility_vix.data.length - 1];
       if(ndp && ndp.y) extrahierterVixUSD = ndp.y; 
+    }
+
+    let extrahierterCreditSpread = null;
+    if(json.junk_bond_demand && json.junk_bond_demand.data && json.junk_bond_demand.data.length > 0){
+      const ndp = json.junk_bond_demand.data[json.junk_bond_demand.data.length - 1];
+      if(ndp && ndp.y !== undefined && ndp.y !== null) extrahierterCreditSpread = ndp.y;
     }
 
     const data = {
@@ -1356,12 +1440,13 @@ async function ladeDaten(){
       etf_price: etfPreis,
       etf_change: etfAenderung,
       subs: [
-        {key:"market_momentum_sp500", name:"Markt-Schwung", sub:"Zeigt an, ob sich der S&P 500 stabil über oder unter seiner 200-Tage-Linie bewegt.", score:json.market_momentum_sp500.score},
-        {key:"stock_price_strength", name:"Aktien-Stärke", sub:"Misst die Anzahl der Aktien auf 52-Wochen-Hochs im Vergleich zu Tiefs.", score:json.stock_price_strength.score},
-        {key:"stock_price_breadth", name:"Marktbreite (A/D Basis)", sub:"Misst die echte Marktbreite.", score:json.stock_price_breadth.score},
-        {key:"put_call_options", name:"Absicherungs-Verhältnis", sub:"Zeigt das Verhältnis von Verlustabsicherungen.", score:json.put_call_options.score},
-        {key:"market_volatility_vix", name:"Markt-Nervosität (VIX)", sub:"Der Angst-Index der Börse.", score:json.market_volatility_vix.score, raw_vix: extrahierterVixUSD},
-        {key:"finra_margin_debt", name:"Kredit-Hebelung am Markt", sub:"Misst, wie stark Anleger mit geliehenem Geld spekulieren.", score: json.fear_and_greed.score > 78 ? 85 : 35}
+        {key:"market_momentum_sp500", name:"Markt-Schwung", sub:"Zeigt an, ob sich der S&P 500 stabil über oder unter seiner 200-Tage-Linie bewegt. Steigt der Kurs klar darüber, läuft der Motor rund.", score:json.market_momentum_sp500.score},
+        {key:"stock_price_strength", name:"Aktien-Stärke", sub:"Misst die Anzahl der Aktien auf 52-Wochen-Hochs im Vergleich zu Tiefs. Das zeigt, wie stark der innere Kern des Marktes ist.", score:json.stock_price_strength.score},
+        {key:"stock_price_breadth", name:"Marktbreite (A/D Basis)", sub:"Misst die echte Marktbreite, indem sie vergleicht, ob insgesamt mehr Aktien steigen oder fallen. Steigen nur wenige Riesen, droht Gefahr.", score:json.stock_price_breadth.score},
+        {key:"put_call_options", name:"Absicherungs-Verhältnis", sub:"Zeigt das Verhältnis von Verlustabsicherungen zu Wetten auf steigende Kurse. Sichert sich niemand mehr ab, herrscht blinde Sorglosigkeit.", score:json.put_call_options.score},
+        {key:"market_volatility_vix", name:"Markt-Nervosität (VIX)", sub:"Das ist der Angst-Index der Börse. Er misst, wie panisch oder schwankungsanfällig die Anleger gerade sind.", score:json.market_volatility_vix.score, raw_vix: extrahierterVixUSD},
+        {key:"finra_margin_debt", name:"Kredit-Hebelung am Markt", sub:"Misst, wie stark Anleger mit geliehenem Geld spekulieren. Zu viel Fremdkapital verstärkt die Wucht von Crashs massiv.", score: json.fear_and_greed.score > 78 ? 85 : 35},
+        {key:"junk_bond_demand", name:"Credit Spreads (High-Yield-Aufschlag)", sub:"Misst den Renditeaufschlag von Ramsch-Anleihen (Junk Bonds) gegenüber sicheren Staatsanleihen. Ein enger Aufschlag zeigt Sorglosigkeit, ein breiter Aufschlag Stress im Kreditmarkt.", score: json.junk_bond_demand ? json.junk_bond_demand.score : 50, raw_spread: extrahierterCreditSpread}
       ]
     };
     isLive = true; render(data);
