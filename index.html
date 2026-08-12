@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-12 09:28";
+    const APP_VERSION = "TEST BUILD 2026-08-12 09:00";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -764,7 +764,7 @@ const THRESHOLDS = {
   strength:       { rot: 35, gruen: 75 },
   marginDebt:      { rot: 75, gelb: 50 },
   creditSpread:   { rot: 35, gelb: 55, gruen: 70 },
-  moveIndex:      { gruen: 70, rot: 110, barMin: 40, barMax: 160, displayMax: 250 },
+  moveIndex:      { gruen: 70, rot: 110, barMin: 40, barMax: 160, displayMax: 200 },
   bfStatus: {
     ueberhitztScore: 76, ueberhitztDebt: 80,
     illusionBreadth: 35, illusionScoreMin: 35,
@@ -1025,7 +1025,7 @@ function render(data){
   let csColor = csScore < THRESHOLDS.creditSpread.rot ? "rot" : (csScore < THRESHOLDS.creditSpread.gelb ? "gelb" : (csScore >= THRESHOLDS.creditSpread.gruen ? "gruen" : "gelb"));
   let csArrow = csColor === "rot" ? "▼" : (csColor === "gruen" ? "▲" : "▲");
   let csValString = (creditSpread && creditSpread.raw_spread !== undefined && creditSpread.raw_spread !== null && !isNaN(creditSpread.raw_spread))
-    ? creditSpread.raw_spread.toFixed(2) + " % / 24"
+    ? creditSpread.raw_spread.toFixed(2) + " pp"
     : csScore.toFixed(0) + " / 100";
   htmlS3 += buildQuickRowHTML(csColor, "Credit Spreads (High-Yield-Aufschlag)", "Misst den Renditeaufschlag von Ramsch-Anleihen (Junk Bonds) gegenüber sicheren Staatsanleihen. Ein enger Aufschlag zeigt Sorglosigkeit im Kreditmarkt, ein breiter Aufschlag Stress und Risikoscheu.", csScore, csValString, false, csArrow);
 
@@ -1077,7 +1077,7 @@ function render(data){
     data, bfStatus, sfColor, welleDesc,
     vixColor, rawVix, cnnColor,
     momentum, strength, marginDebt, options, actBreadth,
-    goldPreisWert, oelPreisWert, creditSpread
+    goldPreisWert, oelPreisWert, creditSpread, moveWert, moveAenderung
   });
 }
 
@@ -1155,7 +1155,7 @@ async function generiereGeminiTexte(ctx) {
 
   const { data, bfStatus, sfColor, welleDesc, vixColor, rawVix, cnnColor,
           momentum, strength, marginDebt, options, actBreadth,
-          goldPreisWert, oelPreisWert, creditSpread } = ctx;
+          goldPreisWert, oelPreisWert, creditSpread, moveWert, moveAenderung } = ctx;
 
   const stilAnweisung = STYLE_LEVELS[getStyleLevel()].anweisung;
 
@@ -1173,6 +1173,8 @@ async function generiereGeminiTexte(ctx) {
     margin_debt_score: marginDebt ? marginDebt.score : null,
     credit_spread_score: creditSpread ? creditSpread.score : null,
     credit_spread_pp: creditSpread && creditSpread.raw_spread !== undefined ? creditSpread.raw_spread : null,
+    move_index: (moveWert !== null && moveWert !== undefined) ? moveWert : null,
+    move_index_change_prozent: (moveAenderung !== null && moveAenderung !== undefined) ? moveAenderung : null,
     put_call_score: options ? options.score : null,
     gold_usd: goldPreisWert, oel_usd_wti: oelPreisWert
   };
@@ -1191,7 +1193,7 @@ Erzeuge NUR ein valides JSON-Objekt (keine Markdown-Codeblöcke, kein Fliesstext
 {
   "fazit1": "1-2 Sätze sachliche Einschätzung zu Sentiment/Nervosität/Bitcoin (Kachel 1)",
   "fazit2": "1-2 Sätze sachliche Einschätzung zu Trend/Momentum/Marktbreite (Kachel 2)",
-  "fazit3": "1-2 Sätze sachliche Einschätzung zu Struktur/Kredit-Hebelung/Credit Spreads (Kachel 3)",
+  "fazit3": "1-2 Sätze sachliche Einschätzung zu Struktur/Kredit-Hebelung/Credit Spreads/MOVE-Index (Anleihen-Volatilität) (Kachel 3)",
   "fazit4": "1-2 Sätze sachliche Einschätzung zu Gold/Öl/Rohstoffen (Kachel 4)",
   "fundamentale_lage": "1 knapper, sachlicher Satz NUR zu Unternehmensgewinnen/Fundamentaldaten - keine Bewertung des Gesamtrisikos, keine Beruhigung, nur der fundamentale Fakt.",
   "strukturelles_risiko": "1 knapper, sachlicher Satz NUR zur aktuellen Wellen-Phase/Marktbreite/Struktur-Risiko gemäss 'marktphase'. Muss die Phase beim Namen nennen (z.B. Welle A/B/C) falls zutreffend. Weder beschönigen noch dramatisieren - nur der strukturelle Fakt.",
