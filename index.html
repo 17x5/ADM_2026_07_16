@@ -764,7 +764,7 @@ const THRESHOLDS = {
   strength:       { rot: 35, gruen: 75 },
   marginDebt:      { rot: 75, gelb: 50 },
   creditSpread:   { rot: 35, gelb: 55, gruen: 70 },
-  moveIndex:      { gruen: 70, rot: 110, barMin: 40, barMax: 160 },
+  moveIndex:      { gruen: 70, rot: 110, barMin: 40, barMax: 160, displayMax: 200 },
   bfStatus: {
     ueberhitztScore: 76, ueberhitztDebt: 80,
     illusionBreadth: 35, illusionScoreMin: 35,
@@ -1033,7 +1033,7 @@ function render(data){
     let mvColor = moveWert >= THRESHOLDS.moveIndex.rot ? "rot" : (moveWert <= THRESHOLDS.moveIndex.gruen ? "gruen" : "gelb");
     let mvPercent = Math.max(0, Math.min(100, ((moveWert - THRESHOLDS.moveIndex.barMin) / (THRESHOLDS.moveIndex.barMax - THRESHOLDS.moveIndex.barMin)) * 100));
     let mvArrow = moveAenderung > 0 ? "▲" : (moveAenderung < 0 ? "▼" : "■");
-    let mvValString = moveWert.toFixed(2) + (moveAenderung ? ` (${moveAenderung > 0 ? '+' : ''}${moveAenderung.toFixed(2)}%)` : "");
+    let mvValString = moveWert.toFixed(2) + " / " + THRESHOLDS.moveIndex.displayMax;
     htmlS3 += buildQuickRowHTML(mvColor, "MOVE-Index (Anleihen-Volatilität)", "Misst die erwartete Schwankungsbreite am US-Staatsanleihenmarkt - das Pendant zum VIX für Anleihen. Steigt er stark, herrscht Stress im Zinsmarkt.", mvPercent, mvValString, false, mvArrow);
   } else {
     htmlS3 += buildQuickRowHTML("grau", "MOVE-Index (Anleihen-Volatilität)", "Misst die erwartete Schwankungsbreite am US-Staatsanleihenmarkt - das Pendant zum VIX für Anleihen. Steigt er stark, herrscht Stress im Zinsmarkt.<br><br>⚠ Live-Daten aktuell nicht verfügbar (move.json fehlt oder Workflow noch nicht gelaufen).", 0, "⚠ Keine Daten", true, "–");
