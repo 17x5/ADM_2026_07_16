@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-12 12:17";
+    const APP_VERSION = "TEST BUILD 2026-08-12 09:30";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -264,8 +264,9 @@
   
   .q-ampel { width: 24px; flex-shrink: 0; font-size: 13px; }
   
-  .q-bar-container { width: 70px; background: #21262d; height: 6px; border-radius: 3px; margin-right: 10px; flex-shrink: 0; overflow: hidden; }
+  .q-bar-container { width: 70px; background: #21262d; height: 6px; border-radius: 3px; margin-right: 10px; flex-shrink: 0; overflow: hidden; position: relative; }
   .q-bar-fill { height: 100%; width: 0%; transition: width 0.4s, background-color 0.4s; }
+  .q-bar-marker { position: absolute; top: 0; bottom: 0; width: 2px; background: #fff; opacity: 0.6; }
   
   .q-val { width: 110px; text-align: left; flex-shrink: 0; font-weight: 600; font-family: var(--mono); font-size: 12px; }
   
@@ -839,15 +840,19 @@ function getHexColor(color) {
   return '#8b98a5';
 }
 
-function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, arrowChar) {
+function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, arrowChar, markerPercent) {
   const dim = isStale ? 'opacity:0.45;' : '';
   const arrow = arrowChar || '▲';
+  const marker = (markerPercent !== undefined && markerPercent !== null)
+    ? `<div class="q-bar-marker" style="left: ${Math.max(0, Math.min(100, markerPercent))}%;"></div>`
+    : '';
   return `
     <div class="quick-row-wrapper" onclick="toggleQuickRow(this)">
       <div class="quick-row">
         <div class="q-ampel" style="${dim}">${getEmojiColor(color)}</div>
         <div class="q-bar-container" style="${dim}">
           <div class="q-bar-fill" style="width: ${valPercent}%; background-color: ${getHexColor(color)};"></div>
+          ${marker}
         </div>
         <div class="q-val" style="${dim}">${valString}</div>
         <div class="q-arrow" style="color: ${getHexColor(color)}; ${dim}">${arrow}</div>
@@ -1030,7 +1035,7 @@ function render(data){
   let csColor = csScore < THRESHOLDS.creditSpread.rot ? "rot" : (csScore < THRESHOLDS.creditSpread.gelb ? "gelb" : (csScore >= THRESHOLDS.creditSpread.gruen ? "gruen" : "gelb"));
   let csArrow = csColor === "rot" ? "▼" : (csColor === "gruen" ? "▲" : "▲");
   let csValString = (creditSpread && creditSpread.raw_spread !== undefined && creditSpread.raw_spread !== null && !isNaN(creditSpread.raw_spread))
-    ? creditSpread.raw_spread.toFixed(2) + " % / 24"
+    ? creditSpread.raw_spread.toFixed(2) + " pp"
     : csScore.toFixed(0) + " / 100";
   htmlS3 += buildQuickRowHTML(csColor, "Credit Spreads (High-Yield-Aufschlag)", "Misst den Renditeaufschlag von Ramsch-Anleihen (Junk Bonds) gegenüber sicheren Staatsanleihen. Ein enger Aufschlag zeigt Sorglosigkeit im Kreditmarkt, ein breiter Aufschlag Stress und Risikoscheu.", csScore, csValString, false, csArrow);
 
@@ -1049,9 +1054,10 @@ function render(data){
     let zkPercent = Math.max(0, Math.min(100, ((zkWert - THRESHOLDS.zinskurve.barMin) / (THRESHOLDS.zinskurve.barMax - THRESHOLDS.zinskurve.barMin)) * 100));
     let zkArrow = zkAenderung > 0 ? "▲" : (zkAenderung < 0 ? "▼" : "■");
     let zkValString = (zkWert >= 0 ? "+" : "") + zkWert.toFixed(2) + " %";
-    let zkSub = "Misst den Renditeunterschied zwischen 10- und 2-jährigen US-Staatsanleihen. Wird die Kurve negativ (invertiert), gilt das historisch als zuverlässiger Rezessions-Frühindikator.<br><br>Bandbreite dieser Anzeige: " + THRESHOLDS.zinskurve.barMin.toFixed(1) + "% bis +" + THRESHOLDS.zinskurve.barMax.toFixed(1) + "% &bull; 0% = Inversions-Schwelle (rot darunter).";
+    let zkNullMarker = ((0 - THRESHOLDS.zinskurve.barMin) / (THRESHOLDS.zinskurve.barMax - THRESHOLDS.zinskurve.barMin)) * 100;
+    let zkSub = "Misst den Renditeunterschied zwischen 10- und 2-jährigen US-Staatsanleihen. Wird die Kurve negativ (invertiert), gilt das historisch als zuverlässiger Rezessions-Frühindikator.<br><br>Bandbreite dieser Anzeige: " + THRESHOLDS.zinskurve.barMin.toFixed(1) + "% bis +" + THRESHOLDS.zinskurve.barMax.toFixed(1) + "% &bull; die weisse Linie im Balken markiert 0% (Inversions-Schwelle, darunter = rot).";
     if (zkWert < THRESHOLDS.zinskurve.rot) zkSub += "<br><br>⚠ Aktuell invertiert - erhöhte Vorsicht angebracht.";
-    htmlS3 += buildQuickRowHTML(zkColor, "Zinskurve (10J-2J Spread)", zkSub, zkPercent, zkValString, false, zkArrow);
+    htmlS3 += buildQuickRowHTML(zkColor, "Zinskurve (10J-2J Spread)", zkSub, zkPercent, zkValString, false, zkArrow, zkNullMarker);
   } else {
     htmlS3 += buildQuickRowHTML("grau", "Zinskurve (10J-2J Spread)", "Misst den Renditeunterschied zwischen 10- und 2-jährigen US-Staatsanleihen. Wird die Kurve negativ (invertiert), gilt das historisch als zuverlässiger Rezessions-Frühindikator.<br><br>⚠ Live-Daten aktuell nicht verfügbar (zinskurve.json fehlt oder Workflow noch nicht gelaufen).", 0, "⚠ Keine Daten", true, "–");
   }
