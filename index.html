@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-12 10:39";
+    const APP_VERSION = "TEST BUILD 2026-08-12 09:30";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -1030,7 +1030,7 @@ function render(data){
   let csColor = csScore < THRESHOLDS.creditSpread.rot ? "rot" : (csScore < THRESHOLDS.creditSpread.gelb ? "gelb" : (csScore >= THRESHOLDS.creditSpread.gruen ? "gruen" : "gelb"));
   let csArrow = csColor === "rot" ? "▼" : (csColor === "gruen" ? "▲" : "▲");
   let csValString = (creditSpread && creditSpread.raw_spread !== undefined && creditSpread.raw_spread !== null && !isNaN(creditSpread.raw_spread))
-    ? creditSpread.raw_spread.toFixed(2) + " % / 24"
+    ? creditSpread.raw_spread.toFixed(2) + " pp"
     : csScore.toFixed(0) + " / 100";
   htmlS3 += buildQuickRowHTML(csColor, "Credit Spreads (High-Yield-Aufschlag)", "Misst den Renditeaufschlag von Ramsch-Anleihen (Junk Bonds) gegenüber sicheren Staatsanleihen. Ein enger Aufschlag zeigt Sorglosigkeit im Kreditmarkt, ein breiter Aufschlag Stress und Risikoscheu.", csScore, csValString, false, csArrow);
 
@@ -1048,8 +1048,8 @@ function render(data){
     let zkColor = zkWert < THRESHOLDS.zinskurve.rot ? "rot" : (zkWert < THRESHOLDS.zinskurve.gelb ? "gelb" : "gruen");
     let zkPercent = Math.max(0, Math.min(100, ((zkWert - THRESHOLDS.zinskurve.barMin) / (THRESHOLDS.zinskurve.barMax - THRESHOLDS.zinskurve.barMin)) * 100));
     let zkArrow = zkAenderung > 0 ? "▲" : (zkAenderung < 0 ? "▼" : "■");
-    let zkValString = (zkWert >= 0 ? "+" : "") + zkWert.toFixed(2) + " pp";
-    let zkSub = "Misst den Renditeunterschied zwischen 10- und 2-jährigen US-Staatsanleihen. Wird die Kurve negativ (invertiert), gilt das historisch als zuverlässiger Rezessions-Frühindikator.";
+    let zkValString = (zkWert >= 0 ? "+" : "") + zkWert.toFixed(2) + " %";
+    let zkSub = "Misst den Renditeunterschied zwischen 10- und 2-jährigen US-Staatsanleihen. Wird die Kurve negativ (invertiert), gilt das historisch als zuverlässiger Rezessions-Frühindikator.<br><br>Bandbreite dieser Anzeige: " + THRESHOLDS.zinskurve.barMin.toFixed(1) + "% bis +" + THRESHOLDS.zinskurve.barMax.toFixed(1) + "% &bull; 0% = Inversions-Schwelle (rot darunter).";
     if (zkWert < THRESHOLDS.zinskurve.rot) zkSub += "<br><br>⚠ Aktuell invertiert - erhöhte Vorsicht angebracht.";
     htmlS3 += buildQuickRowHTML(zkColor, "Zinskurve (10J-2J Spread)", zkSub, zkPercent, zkValString, false, zkArrow);
   } else {
