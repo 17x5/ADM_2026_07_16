@@ -41,6 +41,7 @@
     color:var(--text);
     font-family:var(--sans);
     padding:10px 16px 20px;
+    transition: background-color 0.5s ease;
   }
   .wrap{max-width:1200px;margin:0 auto;}
 
@@ -1258,6 +1259,17 @@ Schreibe die Actions eigenständig, sachlich, analytisch und souverän. Nutze au
     if (ampelDot) {
       const erlaubteFarben = ['gruen', 'gelb', 'rot', 'purple'];
       ampelDot.className = 'situation-ampel' + (erlaubteFarben.includes(ergebnis.ampel) ? ' ' + ergebnis.ampel : '');
+    }
+
+    // =========================================================================
+    // NEU: HINTERGRUNDFARBE JE NACH GESAMTSENTIMENT-AMPEL ANPASSEN
+    // =========================================================================
+    if (ergebnis.ampel === 'gruen') {
+      document.body.style.backgroundColor = '#0b1a10'; // Dunkles Grün
+    } else if (ergebnis.ampel === 'rot') {
+      document.body.style.backgroundColor = '#1a0b0b'; // Dunkles Rot
+    } else {
+      document.body.style.backgroundColor = '#0d1117'; // Schwarz (Gelb/Neutral oder Fallback)
     }
 
     const actionEl = document.getElementById('actionListEl');
