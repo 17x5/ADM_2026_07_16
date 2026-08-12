@@ -1,0 +1,53 @@
+name: MOVE-Index aktualisieren
+
+on:
+  schedule:
+    - cron: '*/30 6-21 * * 1-5'   # alle 30 Min, Mo-Fr, 6-21 Uhr UTC
+  workflow_dispatch:               # manueller Start im Actions-Tab möglich
+
+permissions:
+  contents: write
+
+jobs:
+  update-move:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Kurs von Yahoo Finance holen
+        run: |
+          curl -s -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
+            "https://query1.finance.yahoo.com/v8/finance/chart/%5EMOVE" -o raw.json
+          cat raw.json
+
+      - name: JSON auswerten
+        run: |
+          python3 - <<'EOF'
+          import json
+
+          with open('raw.json') as f:
+              raw = json.load(f)
+
+          meta = raw['chart']['result'][0]['meta']
+          close_preis = meta['regularMarketPrice']
+          previous_close = meta['previousClose']
+          aenderung = (close_preis - previous_close) / previous_close * 100
+
+          data = {
+              "price": close_preis,
+              "change_percent": round(aenderung, 2)
+          }
+
+          with open('move.json', 'w') as out:
+              json.dump(data, out)
+
+          print(data)
+          EOF
+
+      - name: Änderung committen
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add move.json
+          git diff --quiet --cached || git commit -m "MOVE-Index aktualisiert"
+          git push
