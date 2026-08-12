@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-12 08:47";
+    const APP_VERSION = "TEST BUILD 2026-08-12 09:00";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -536,6 +536,7 @@
       <div class="api-status" title="Zeigt, ob die externen API-Keys aktuell funktionieren">
         <span class="api-dot" id="apiDotGemini"></span>Gemini
         <span class="api-dot fail" id="apiDotEtf"></span>ETF
+        <span class="api-dot fail" id="apiDotMove"></span>MOVE
         <span class="api-dot ok" id="apiDotCrypto"></span>BTC
         <span class="api-dot fail" id="apiDotRohstoffe"></span>Rohst.
       </div>
@@ -763,6 +764,7 @@ const THRESHOLDS = {
   strength:       { rot: 35, gruen: 75 },
   marginDebt:      { rot: 75, gelb: 50 },
   creditSpread:   { rot: 35, gelb: 55, gruen: 70 },
+  moveIndex:      { gruen: 70, rot: 110, barMin: 40, barMax: 160 },
   bfStatus: {
     ueberhitztScore: 76, ueberhitztDebt: 80,
     illusionBreadth: 35, illusionScoreMin: 35,
@@ -782,6 +784,7 @@ let goldIstLive = false;
 let oelIstLive = false;
 let cryptoIstLive = false;
 let etfIstLive = false;
+let moveIstLive = false;
 
 function toggleActionBox() {
   const box = document.getElementById('actionBox');
@@ -889,6 +892,8 @@ function render(data){
   const options = data?.subs?.find(s => s.key === "put_call_options");
   const marginDebt = data?.subs?.find(s => s.key === "finra_margin_debt");
   const creditSpread = data?.subs?.find(s => s.key === "junk_bond_demand");
+  const moveWert = data?.move_wert;
+  const moveAenderung = data?.move_change;
 
   let rawVix = vix ? (vix.raw_vix ?? 16.07) : 16.07;
   let vixColor = "gelb";
@@ -1020,11 +1025,19 @@ function render(data){
   let csColor = csScore < THRESHOLDS.creditSpread.rot ? "rot" : (csScore < THRESHOLDS.creditSpread.gelb ? "gelb" : (csScore >= THRESHOLDS.creditSpread.gruen ? "gruen" : "gelb"));
   let csArrow = csColor === "rot" ? "▼" : (csColor === "gruen" ? "▲" : "▲");
   let csValString = (creditSpread && creditSpread.raw_spread !== undefined && creditSpread.raw_spread !== null && !isNaN(creditSpread.raw_spread))
-    ? creditSpread.raw_spread.toFixed(2) + " % / 24"
+    ? creditSpread.raw_spread.toFixed(2) + " pp"
     : csScore.toFixed(0) + " / 100";
   htmlS3 += buildQuickRowHTML(csColor, "Credit Spreads (High-Yield-Aufschlag)", "Misst den Renditeaufschlag von Ramsch-Anleihen (Junk Bonds) gegenüber sicheren Staatsanleihen. Ein enger Aufschlag zeigt Sorglosigkeit im Kreditmarkt, ein breiter Aufschlag Stress und Risikoscheu.", csScore, csValString, false, csArrow);
 
-  htmlS3 += buildQuickRowHTML("grau", "MOVE-Index (Anleihen-Volatilität)", "Misst die erwartete Schwankungsbreite am US-Staatsanleihenmarkt - das Pendant zum VIX für Anleihen. Steigt er stark, herrscht Stress im Zinsmarkt.<br><br>🚧 <b>Coming Soon</b> - Datenanbindung ist in Vorbereitung.", 0, "🚧 Coming Soon", false, "–");
+  if (moveIstLive && moveWert !== null && moveWert !== undefined && !isNaN(moveWert)) {
+    let mvColor = moveWert >= THRESHOLDS.moveIndex.rot ? "rot" : (moveWert <= THRESHOLDS.moveIndex.gruen ? "gruen" : "gelb");
+    let mvPercent = Math.max(0, Math.min(100, ((moveWert - THRESHOLDS.moveIndex.barMin) / (THRESHOLDS.moveIndex.barMax - THRESHOLDS.moveIndex.barMin)) * 100));
+    let mvArrow = moveAenderung > 0 ? "▲" : (moveAenderung < 0 ? "▼" : "■");
+    let mvValString = moveWert.toFixed(2) + (moveAenderung ? ` (${moveAenderung > 0 ? '+' : ''}${moveAenderung.toFixed(2)}%)` : "");
+    htmlS3 += buildQuickRowHTML(mvColor, "MOVE-Index (Anleihen-Volatilität)", "Misst die erwartete Schwankungsbreite am US-Staatsanleihenmarkt - das Pendant zum VIX für Anleihen. Steigt er stark, herrscht Stress im Zinsmarkt.", mvPercent, mvValString, false, mvArrow);
+  } else {
+    htmlS3 += buildQuickRowHTML("grau", "MOVE-Index (Anleihen-Volatilität)", "Misst die erwartete Schwankungsbreite am US-Staatsanleihenmarkt - das Pendant zum VIX für Anleihen. Steigt er stark, herrscht Stress im Zinsmarkt.<br><br>⚠ Live-Daten aktuell nicht verfügbar (move.json fehlt oder Workflow noch nicht gelaufen).", 0, "⚠ Keine Daten", true, "–");
+  }
 
   document.getElementById('rowsSection3').innerHTML = htmlS3;
 
@@ -1383,6 +1396,25 @@ async function holeEtf() {
   return { etfPreis, etfAenderung, live };
 }
 
+async function holeMove() {
+  let moveWert = null, moveAenderung = 0, live = false;
+  try {
+    const res = await fetchWithTimeout('move.json?t=' + Date.now(), {}, 6000);
+    if (res && res.ok) {
+      const json = await res.json();
+      const close = parseFloat(json.price);
+      const percentChange = parseFloat(json.change_percent);
+      if (!isNaN(close) && !isNaN(percentChange)) {
+        moveWert = close;
+        moveAenderung = percentChange;
+        live = true;
+      }
+    }
+  } catch (e) { /* move.json fehlt/Timeout -> live bleibt false */ }
+  setApiDot('apiDotMove', live);
+  return { moveWert, moveAenderung, live };
+}
+
 async function holeFearGreed() {
   const res = await fetchWithTimeout('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', { headers: {'Accept':'application/json'} }, 8000);
   if (!res.ok) throw new Error('Fear&Greed HTTP-Fehler');
@@ -1394,10 +1426,11 @@ async function ladeDaten(){
   btn.disabled = true;
 
   // Alle vier Abfragen parallel starten - keine blockiert die andere.
-  const [cryptoErg, metalErg, etfErg, fgErg] = await Promise.allSettled([
+  const [cryptoErg, metalErg, etfErg, moveErg, fgErg] = await Promise.allSettled([
     holeCrypto(),
     holeMetalle(),
     holeEtf(),
+    holeMove(),
     holeFearGreed()
   ]);
 
@@ -1411,6 +1444,9 @@ async function ladeDaten(){
 
   const { etfPreis, etfAenderung } = etfErg.status === 'fulfilled' ? etfErg.value : { etfPreis: null, etfAenderung: 0 };
   etfIstLive = etfErg.status === 'fulfilled' && etfErg.value.live;
+
+  const { moveWert, moveAenderung } = moveErg.status === 'fulfilled' ? moveErg.value : { moveWert: null, moveAenderung: 0 };
+  moveIstLive = moveErg.status === 'fulfilled' && moveErg.value.live;
 
   try{
     if (fgErg.status !== 'fulfilled') throw fgErg.reason || new Error('Fear&Greed fehlgeschlagen');
@@ -1439,6 +1475,8 @@ async function ladeDaten(){
       oil_usd: oelPreis,
       etf_price: etfPreis,
       etf_change: etfAenderung,
+      move_wert: moveWert,
+      move_change: moveAenderung,
       subs: [
         {key:"market_momentum_sp500", name:"Markt-Schwung", sub:"Zeigt an, ob sich der S&P 500 stabil über oder unter seiner 200-Tage-Linie bewegt. Steigt der Kurs klar darüber, läuft der Motor rund.", score:json.market_momentum_sp500.score},
         {key:"stock_price_strength", name:"Aktien-Stärke", sub:"Misst die Anzahl der Aktien auf 52-Wochen-Hochs im Vergleich zu Tiefs. Das zeigt, wie stark der innere Kern des Marktes ist.", score:json.stock_price_strength.score},
