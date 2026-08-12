@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-12 15:07";
+    const APP_VERSION = "TEST BUILD 2026-08-12 15:10";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -1058,11 +1058,10 @@ if (zinskurveIstLive && zkWert !== null && zkWert !== undefined && !isNaN(zkWert
     let zkNullMarker = ((0 - THRESHOLDS.zinskurve.barMin) / (THRESHOLDS.zinskurve.barMax - THRESHOLDS.zinskurve.barMin)) * 100;
     
     // HIER WIRD zkSUB DEFINIERT UND EINGETAUSCHT:
-    let zkSub = "Misst den Renditeunterschied zwischen 10- und 2-jährigen US-Staatsanleihen.<br><br>" +
+    let zkSub = "Misst den Renditeunterschied zwischen 10- und 2-jährigen US-Staatsanleihen. Eine negative Differenz deutet auf einen restriktiven Zinsmarkt und ökonomischen Stress hin<br><br>" +
                   "<strong>Weisse Linie im Balken (0 %):</strong> Die Schwelle zur Inversion.<br><br>" +
                   "<strong>Rot (unter 0 %):</strong> Invertierte Zinskurve – historisch ein hochzuverlässiger Vorbote für eine Rezession.<br><br>" +
-                  "<strong>Normalbereich (über 0 %):</strong> Ein Anstieg signalisiert eine Normalisierung der Zinsstruktur.<br><br>" +
-                  "<em>Hinweis: Eine negative Differenz deutet auf einen restriktiven Zinsmarkt und ökonomischen Stress hin.</em>";
+                  "<strong>Normalbereich (über 0 %):</strong> Ein Anstieg signalisiert eine Normalisierung der Zinsstruktur.<br><br>";
 
     if (zkWert < THRESHOLDS.zinskurve.rot) zkSub += "<br><br>⚠ Aktuell invertiert - erhöhte Vorsicht angebracht.";
     htmlS3 += buildQuickRowHTML(zkColor, "Zinskurve (10J-2J Spread)", zkSub, zkPercent, zkValString, false, zkArrow, zkNullMarker);
