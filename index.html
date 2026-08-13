@@ -41,7 +41,12 @@
     color:var(--text);
     font-family:var(--sans);
     padding:10px 16px 20px;
+    transition: background-color 0.5s ease;
   }
+  body.sent-rot   { background: color-mix(in srgb, var(--red) 25%, var(--bg) 75%); }
+  body.sent-gelb  { background: var(--bg); }
+  body.sent-gruen { background: color-mix(in srgb, var(--green) 25%, var(--bg) 75%); }
+  body.sent-purple{ background: var(--bg); }
   .wrap{max-width:1200px;margin:0 auto;}
 
   header{
@@ -1257,7 +1262,11 @@ Schreibe die Actions eigenständig, sachlich, analytisch und souverän. Nutze au
     const ampelDot = document.getElementById('situationAmpelDot');
     if (ampelDot) {
       const erlaubteFarben = ['gruen', 'gelb', 'rot', 'purple'];
-      ampelDot.className = 'situation-ampel' + (erlaubteFarben.includes(ergebnis.ampel) ? ' ' + ergebnis.ampel : '');
+      const farbeOk = erlaubteFarben.includes(ergebnis.ampel);
+      ampelDot.className = 'situation-ampel' + (farbeOk ? ' ' + ergebnis.ampel : '');
+
+      document.body.classList.remove('sent-gruen', 'sent-gelb', 'sent-rot', 'sent-purple');
+      if (farbeOk) document.body.classList.add('sent-' + ergebnis.ampel);
     }
 
     const actionEl = document.getElementById('actionListEl');
