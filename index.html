@@ -531,6 +531,14 @@
     color: var(--text);
   }
 
+  .frage-row { display:flex; gap:8px; }
+  .frage-input {
+    flex:1; background:var(--bg); border:1px solid var(--panel-border); border-radius:6px;
+    color:var(--text); font-family:var(--mono); font-size:12px; padding:8px 10px;
+  }
+  .frage-input:focus { outline:none; border-color:var(--accent); }
+  .frage-input:disabled { opacity:0.5; }
+
   footer{margin-top:16px;font-size:11px;color:var(--text-dim);text-align:center;line-height:1.6;}
 </style>
 </head>
@@ -708,6 +716,23 @@
         <div class="legende-name" style="color: var(--red);">WELLE C: DIE KAPITULATION</div>
         <div class="legende-desc">Die zerstörerische Panikphase. Ein scharfer, rücksichtsloser Abverkauf weit unter das Niveau der Welle A. Erst danach startet der neue Zyklus.</div>
       </div>
+    </div>
+  </div>
+
+  <div class="group-box" style="margin-top:15px;">
+    <div class="group-title">💬 Frage an Gemini</div>
+    <div class="frage-row">
+      <input type="text" id="geminiFrageInput" class="frage-input"
+             placeholder="z.B. Was bedeutet ein MOVE-Index über 140?"
+             onkeydown="if(event.key==='Enter'){ event.preventDefault(); fragGemini(); }">
+      <button class="refresh-btn" id="geminiFrageBtn" onclick="fragGemini()">Fragen</button>
+    </div>
+    <div class="kachel-fazit-box" id="geminiAntwortBox" style="margin-top:8px;">
+      <div class="kachel-fazit-header" onclick="toggleKachelFazit('geminiAntwortBox')">
+        <h4>Antwort</h4>
+        <span class="action-toggle-icon">▶ Anzeigen</span>
+      </div>
+      <div class="kachel-fazit-content" id="geminiAntwortContent"><span style="color:var(--text-dim);">Noch keine Frage gestellt.</span></div>
     </div>
   </div>
 
@@ -1286,6 +1311,57 @@ Schreibe die Actions eigenständig, sachlich, analytisch und souverän. Nutze au
   } catch(e) {
     document.getElementById('fazitContent1').innerHTML = `<span style="color:var(--red);">Antwort-Format ungültig</span>`;
   }
+}
+
+async function fragGemini() {
+  const input = document.getElementById('geminiFrageInput');
+  const btn = document.getElementById('geminiFrageBtn');
+  const box = document.getElementById('geminiAntwortBox');
+  const content = document.getElementById('geminiAntwortContent');
+  const icon = box ? box.querySelector('.action-toggle-icon') : null;
+  if (!input || !content) return;
+
+  const frage = input.value.trim();
+  if (!frage) return;
+
+  input.disabled = true;
+  if (btn) btn.disabled = true;
+  content.innerHTML = `<span style="color:var(--text-dim);">⏳ Frage wird beantwortet…</span>`;
+  if (box && !box.classList.contains('open')) {
+    box.classList.add('open');
+    if (icon) icon.textContent = '▼ Verbergen';
+  }
+
+  const stilAnweisung = STYLE_LEVELS[getStyleLevel()].anweisung;
+  const kontextZeile = lastGeminiCtx
+    ? `Aktuelle Kennzahlen des Cockpits (als Kontext, nur falls relevant für die Frage): ${JSON.stringify({
+        gesamtstatus: lastGeminiCtx.bfStatus,
+        sicherheitsampel: lastGeminiCtx.sfColor,
+        marktphase: lastGeminiCtx.welleDesc,
+        vix: lastGeminiCtx.rawVix,
+        cnn_fear_greed_score: lastGeminiCtx.data ? lastGeminiCtx.data.score : null
+      })}`
+    : '';
+
+  const prompt = `Du bist ein erfahrener und besonnener Marktstratege, der einem Privatanleger eine konkrete Frage beantwortet.
+Sprachniveau der Antwort: ${stilAnweisung}
+${kontextZeile}
+
+Frage des Nutzers: "${frage}"
+
+Antworte direkt, sachlich und in maximal 3-4 Sätzen als Fliesstext (kein JSON, kein Markdown).`;
+
+  const antwortText = await callGemini(prompt);
+
+  input.disabled = false;
+  if (btn) btn.disabled = false;
+
+  if (!antwortText) {
+    content.innerHTML = `<span style="color:var(--red);">Gemini nicht verfügbar</span>`;
+    return;
+  }
+
+  content.textContent = antwortText.trim();
 }
 
 function updateSvgNode(cx, cy, color, text) {
