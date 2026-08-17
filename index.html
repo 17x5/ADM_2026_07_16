@@ -1019,7 +1019,7 @@ function render(data){
   
   let momScoreETFTrend = momentum ? momentum.score : 50;
   const formattedEtfPreis = (data.etf_price !== undefined && data.etf_price !== null && !isNaN(data.etf_price)) 
-    ? new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(data.etf_price) 
+    ? new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 2 }).format(data.etf_price) 
     : '–';
   
   const etfPercent = Math.min(100, Math.max(10, momScoreETFTrend));
