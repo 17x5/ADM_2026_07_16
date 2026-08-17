@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-17 12:43";
+    const APP_VERSION = "TEST BUILD 2026-08-14 15:00";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -588,6 +588,23 @@
   </div>
 
   <div class="group-box" style="margin-bottom: 15px;">
+    <div class="group-title">💬 Frage an Gemini</div>
+    <div class="frage-row">
+      <input type="text" id="geminiFrageInput" class="frage-input"
+             placeholder="z.B. Was bedeutet ein MOVE-Index über 140?"
+             onkeydown="if(event.key==='Enter'){ event.preventDefault(); fragGemini(); }">
+      <button class="refresh-btn" id="geminiFrageBtn" onclick="fragGemini()">Fragen</button>
+    </div>
+    <div class="kachel-fazit-box" id="geminiAntwortBox" style="margin-top:8px;">
+      <div class="kachel-fazit-header" onclick="toggleKachelFazit('geminiAntwortBox')">
+        <h4>Antwort</h4>
+        <span class="action-toggle-icon">▶ Anzeigen</span>
+      </div>
+      <div class="kachel-fazit-content" id="geminiAntwortContent"><span style="color:var(--text-dim);">Noch keine Frage gestellt.</span></div>
+    </div>
+  </div>
+
+  <div class="group-box" style="margin-bottom: 15px;">
     <div class="group-title">Mein ETF</div>
     <div id="rowsSectionETF"></div>
   </div>
@@ -716,23 +733,6 @@
         <div class="legende-name" style="color: var(--red);">WELLE C: DIE KAPITULATION</div>
         <div class="legende-desc">Die zerstörerische Panikphase. Ein scharfer, rücksichtsloser Abverkauf weit unter das Niveau der Welle A. Erst danach startet der neue Zyklus.</div>
       </div>
-    </div>
-  </div>
-
-  <div class="group-box" style="margin-top:15px;">
-    <div class="group-title">💬 Frage an Gemini</div>
-    <div class="frage-row">
-      <input type="text" id="geminiFrageInput" class="frage-input"
-             placeholder="z.B. Was bedeutet ein MOVE-Index über 140?"
-             onkeydown="if(event.key==='Enter'){ event.preventDefault(); fragGemini(); }">
-      <button class="refresh-btn" id="geminiFrageBtn" onclick="fragGemini()">Fragen</button>
-    </div>
-    <div class="kachel-fazit-box" id="geminiAntwortBox" style="margin-top:8px;">
-      <div class="kachel-fazit-header" onclick="toggleKachelFazit('geminiAntwortBox')">
-        <h4>Antwort</h4>
-        <span class="action-toggle-icon">▶ Anzeigen</span>
-      </div>
-      <div class="kachel-fazit-content" id="geminiAntwortContent"><span style="color:var(--text-dim);">Noch keine Frage gestellt.</span></div>
     </div>
   </div>
 
@@ -1292,7 +1292,10 @@ Schreibe die Actions eigenständig, sachlich, analytisch und souverän. Nutze au
     document.getElementById('fazitContent4').innerHTML = ergebnis.fazit4 || '';
 
     const gesamtEl = document.getElementById('gesamtfazitText');
-    if (gesamtEl) gesamtEl.textContent = baueGesamtfazit(ergebnis.fundamentale_lage, ergebnis.strukturelles_risiko, welleDesc);
+    if (gesamtEl) {
+      gesamtEl.textContent = baueGesamtfazit(ergebnis.fundamentale_lage, ergebnis.strukturelles_risiko, welleDesc);
+      gesamtEl.style.color = '';
+    }
 
     const ampelDot = document.getElementById('situationAmpelDot');
     if (ampelDot) {
@@ -1658,6 +1661,7 @@ async function ladeDaten(){
     const gesamtEl = document.getElementById('gesamtfazitText');
     if (gesamtEl) {
       gesamtEl.textContent = '⚠️ Live-Daten konnten nicht abgerufen werden. Es sind keine aktuellen Werte verfügbar.';
+      gesamtEl.style.color = 'var(--red)';
     }
 
     document.getElementById('rowsSectionETF').innerHTML = '<div style="padding: 10px; color: var(--red);">Keine Live-Daten verfügbar</div>';
