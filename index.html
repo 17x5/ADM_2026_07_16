@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-21 17:02";
+    const APP_VERSION = "TEST BUILD 2026-08-14 15:00";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -572,7 +572,7 @@
     <div id="fazitInhalt">
       <div class="fazit-section">
         <div class="fazit-label"><span class="situation-ampel" id="situationAmpelDot"></span>Aktuelles Sentiment:</div>
-        <p class="fazit-p" id="gesamtfazitText">⏳ Verbindung zu Gemini wird aufgebaut…</p>
+        <p class="fazit-p" id="gesamtfazitText">⏳ Analyse wird generiert…</p>
         <div class="fazit-change" id="fazitChangeEl">Veränderung zum letzten Handelstag: VIX: 16.07 ▲ | Fear & Greed: 45 / 100 ▲</div>
       </div>
       <div id="actionBox" class="action-box">
@@ -584,23 +584,6 @@
           <ul class="action-list" id="actionListEl"><li>⏳ Empfehlungen werden geladen…</li></ul>
         </div>
       </div>
-    </div>
-  </div>
-
-  <div class="group-box" style="margin-bottom: 15px;">
-    <div class="group-title">💬 Frage an Gemini</div>
-    <div class="frage-row">
-      <input type="text" id="geminiFrageInput" class="frage-input"
-             placeholder="z.B. Was bedeutet ein MOVE-Index über 140?"
-             onkeydown="if(event.key==='Enter'){ event.preventDefault(); fragGemini(); }">
-      <button class="refresh-btn" id="geminiFrageBtn" onclick="fragGemini()">Fragen</button>
-    </div>
-    <div class="kachel-fazit-box" id="geminiAntwortBox" style="margin-top:8px;">
-      <div class="kachel-fazit-header" onclick="toggleKachelFazit('geminiAntwortBox')">
-        <h4>Antwort</h4>
-        <span class="action-toggle-icon">▶ Anzeigen</span>
-      </div>
-      <div class="kachel-fazit-content" id="geminiAntwortContent"><span style="color:var(--text-dim);">Noch keine Frage gestellt.</span></div>
     </div>
   </div>
 
@@ -618,7 +601,7 @@
           <h4>📋 Kachel-Fazit: Sentiment &amp; Liquidität</h4>
           <span class="action-toggle-icon">▶ Anzeigen</span>
         </div>
-        <div class="kachel-fazit-content" id="fazitContent1"><span style="color:var(--text-dim);">⏳ Verbindung zu Gemini wird aufgebaut…</span></div>
+        <div class="kachel-fazit-content" id="fazitContent1"><span style="color:var(--text-dim);">⏳ Analyse wird generiert…</span></div>
       </div>
     </div>
 
@@ -630,7 +613,7 @@
           <h4>📋 Kachel-Fazit: Trend &amp; Marktbreite</h4>
           <span class="action-toggle-icon">▶ Anzeigen</span>
         </div>
-        <div class="kachel-fazit-content" id="fazitContent2"><span style="color:var(--text-dim);">⏳ Verbindung zu Gemini wird aufgebaut…</span></div>
+        <div class="kachel-fazit-content" id="fazitContent2"><span style="color:var(--text-dim);">⏳ Analyse wird generiert…</span></div>
       </div>
     </div>
 
@@ -642,7 +625,7 @@
           <h4>📋 Kachel-Fazit: Struktur &amp; Fremdkapital-Hebel</h4>
           <span class="action-toggle-icon">▶ Anzeigen</span>
         </div>
-        <div class="kachel-fazit-content" id="fazitContent3"><span style="color:var(--text-dim);">⏳ Verbindung zu Gemini wird aufgebaut…</span></div>
+        <div class="kachel-fazit-content" id="fazitContent3"><span style="color:var(--text-dim);">⏳ Analyse wird generiert…</span></div>
       </div>
     </div>
 
@@ -654,7 +637,7 @@
           <h4>📋 Kachel-Fazit: Gold-Öl-Ratio</h4>
           <span class="action-toggle-icon">▶ Anzeigen</span>
         </div>
-        <div class="kachel-fazit-content" id="fazitContent4"><span style="color:var(--text-dim);">⏳ Verbindung zu Gemini wird aufgebaut…</span></div>
+        <div class="kachel-fazit-content" id="fazitContent4"><span style="color:var(--text-dim);">⏳ Analyse wird generiert…</span></div>
       </div>
     </div>
   </div>
@@ -733,6 +716,23 @@
         <div class="legende-name" style="color: var(--red);">WELLE C: DIE KAPITULATION</div>
         <div class="legende-desc">Die zerstörerische Panikphase. Ein scharfer, rücksichtsloser Abverkauf weit unter das Niveau der Welle A. Erst danach startet der neue Zyklus.</div>
       </div>
+    </div>
+  </div>
+
+  <div class="group-box" style="margin-top:15px;">
+    <div class="group-title">💬 Frage an Gemini</div>
+    <div class="frage-row">
+      <input type="text" id="geminiFrageInput" class="frage-input"
+             placeholder="z.B. Was bedeutet ein MOVE-Index über 140?"
+             onkeydown="if(event.key==='Enter'){ event.preventDefault(); fragGemini(); }">
+      <button class="refresh-btn" id="geminiFrageBtn" onclick="fragGemini()">Fragen</button>
+    </div>
+    <div class="kachel-fazit-box" id="geminiAntwortBox" style="margin-top:8px;">
+      <div class="kachel-fazit-header" onclick="toggleKachelFazit('geminiAntwortBox')">
+        <h4>Antwort</h4>
+        <span class="action-toggle-icon">▶ Anzeigen</span>
+      </div>
+      <div class="kachel-fazit-content" id="geminiAntwortContent"><span style="color:var(--text-dim);">Noch keine Frage gestellt.</span></div>
     </div>
   </div>
 
@@ -1019,7 +1019,7 @@ function render(data){
   
   let momScoreETFTrend = momentum ? momentum.score : 50;
   const formattedEtfPreis = (data.etf_price !== undefined && data.etf_price !== null && !isNaN(data.etf_price)) 
-    ? new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 2 }).format(data.etf_price) 
+    ? new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(data.etf_price) 
     : '–';
   
   const etfPercent = Math.min(100, Math.max(10, momScoreETFTrend));
@@ -1278,7 +1278,7 @@ Schreibe die Actions eigenständig, sachlich, analytisch und souverän. Nutze au
 
   const antwortText = await callGemini(prompt);
   if (!antwortText) {
-    setGeminiFehlerStatus();
+    document.getElementById('fazitContent1').innerHTML = `<span style="color:var(--red);">Gemini nicht verfügbar</span>`;
     return;
   }
 
@@ -1292,10 +1292,7 @@ Schreibe die Actions eigenständig, sachlich, analytisch und souverän. Nutze au
     document.getElementById('fazitContent4').innerHTML = ergebnis.fazit4 || '';
 
     const gesamtEl = document.getElementById('gesamtfazitText');
-    if (gesamtEl) {
-      gesamtEl.textContent = baueGesamtfazit(ergebnis.fundamentale_lage, ergebnis.strukturelles_risiko, welleDesc);
-      gesamtEl.style.color = '';
-    }
+    if (gesamtEl) gesamtEl.textContent = baueGesamtfazit(ergebnis.fundamentale_lage, ergebnis.strukturelles_risiko, welleDesc);
 
     const ampelDot = document.getElementById('situationAmpelDot');
     if (ampelDot) {
@@ -1312,31 +1309,8 @@ Schreibe die Actions eigenständig, sachlich, analytisch und souverän. Nutze au
       actionEl.innerHTML = ergebnis.actions.map(a => `<li>${a}</li>`).join('');
     }
   } catch(e) {
-    setGeminiFehlerStatus();
+    document.getElementById('fazitContent1').innerHTML = `<span style="color:var(--red);">Antwort-Format ungültig</span>`;
   }
-}
-
-function setGeminiFehlerStatus() {
-  const fehlerHtml = `<span style="color:var(--red);">Gemini nicht verfügbar</span>`;
-  ['fazitContent1', 'fazitContent2', 'fazitContent3', 'fazitContent4'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = fehlerHtml;
-  });
-
-  const gesamtEl = document.getElementById('gesamtfazitText');
-  if (gesamtEl) {
-    gesamtEl.textContent = 'Gemini nicht verfügbar…';
-    gesamtEl.style.color = 'var(--red)';
-  }
-
-  const ampelDot = document.getElementById('situationAmpelDot');
-  if (ampelDot) {
-    ampelDot.className = 'situation-ampel';
-  }
-  // Ampel bleibt grau bei Verbindungsfehler - "rot" ist ausschliesslich für ein
-  // echtes negatives Sentiment aus dem Gemini-Fazit reserviert.
-  document.body.classList.remove('sent-gruen', 'sent-gelb', 'sent-rot', 'sent-purple');
-  // Background bleibt neutral/schwarz, bis ein gültiges Sentiment vorliegt.
 }
 
 async function fragGemini() {
@@ -1684,7 +1658,6 @@ async function ladeDaten(){
     const gesamtEl = document.getElementById('gesamtfazitText');
     if (gesamtEl) {
       gesamtEl.textContent = '⚠️ Live-Daten konnten nicht abgerufen werden. Es sind keine aktuellen Werte verfügbar.';
-      gesamtEl.style.color = 'var(--red)';
     }
 
     document.getElementById('rowsSectionETF').innerHTML = '<div style="padding: 10px; color: var(--red);">Keine Live-Daten verfügbar</div>';
