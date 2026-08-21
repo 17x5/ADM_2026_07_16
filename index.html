@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-14 15:00";
+    const APP_VERSION = "TEST BUILD 2026-08-04 07:08";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -41,12 +41,7 @@
     color:var(--text);
     font-family:var(--sans);
     padding:10px 16px 20px;
-    transition: background-color 0.5s ease;
   }
-  body.sent-rot   { background: color-mix(in srgb, var(--red) 25%, var(--bg) 75%); }
-  body.sent-gelb  { background: var(--bg); }
-  body.sent-gruen { background: color-mix(in srgb, var(--green) 25%, var(--bg) 75%); }
-  body.sent-purple{ background: var(--bg); }
   .wrap{max-width:1200px;margin:0 auto;}
 
   header{
@@ -269,10 +264,8 @@
   
   .q-ampel { width: 24px; flex-shrink: 0; font-size: 13px; }
   
-  .q-bar-container { width: 70px; background: #21262d; height: 6px; border-radius: 3px; margin-right: 10px; flex-shrink: 0; overflow: hidden; position: relative; }
+  .q-bar-container { width: 70px; background: #21262d; height: 6px; border-radius: 3px; margin-right: 10px; flex-shrink: 0; overflow: hidden; }
   .q-bar-fill { height: 100%; width: 0%; transition: width 0.4s, background-color 0.4s; }
-  .q-bar-container { position: relative; overflow: visible; background: #000; }
-  .q-bar-marker { position: absolute; top: -3px; bottom: -3px; width: 2px; background: #fff; }
   
   .q-val { width: 110px; text-align: left; flex-shrink: 0; font-weight: 600; font-family: var(--mono); font-size: 12px; }
   
@@ -531,14 +524,6 @@
     color: var(--text);
   }
 
-  .frage-row { display:flex; gap:8px; }
-  .frage-input {
-    flex:1; background:var(--bg); border:1px solid var(--panel-border); border-radius:6px;
-    color:var(--text); font-family:var(--mono); font-size:12px; padding:8px 10px;
-  }
-  .frage-input:focus { outline:none; border-color:var(--accent); }
-  .frage-input:disabled { opacity:0.5; }
-
   footer{margin-top:16px;font-size:11px;color:var(--text-dim);text-align:center;line-height:1.6;}
 </style>
 </head>
@@ -551,8 +536,6 @@
       <div class="api-status" title="Zeigt, ob die externen API-Keys aktuell funktionieren">
         <span class="api-dot" id="apiDotGemini"></span>Gemini
         <span class="api-dot fail" id="apiDotEtf"></span>ETF
-        <span class="api-dot fail" id="apiDotMove"></span>MOVE
-        <span class="api-dot fail" id="apiDotZinskurve"></span>Zinskurve
         <span class="api-dot ok" id="apiDotCrypto"></span>BTC
         <span class="api-dot fail" id="apiDotRohstoffe"></span>Rohst.
       </div>
@@ -719,23 +702,6 @@
     </div>
   </div>
 
-  <div class="group-box" style="margin-top:15px;">
-    <div class="group-title">💬 Frage an Gemini</div>
-    <div class="frage-row">
-      <input type="text" id="geminiFrageInput" class="frage-input"
-             placeholder="z.B. Was bedeutet ein MOVE-Index über 140?"
-             onkeydown="if(event.key==='Enter'){ event.preventDefault(); fragGemini(); }">
-      <button class="refresh-btn" id="geminiFrageBtn" onclick="fragGemini()">Fragen</button>
-    </div>
-    <div class="kachel-fazit-box" id="geminiAntwortBox" style="margin-top:8px;">
-      <div class="kachel-fazit-header" onclick="toggleKachelFazit('geminiAntwortBox')">
-        <h4>Antwort</h4>
-        <span class="action-toggle-icon">▶ Anzeigen</span>
-      </div>
-      <div class="kachel-fazit-content" id="geminiAntwortContent"><span style="color:var(--text-dim);">Noch keine Frage gestellt.</span></div>
-    </div>
-  </div>
-
   <a class="link-kachel" href="https://de.tradingview.com/script/9iof2PC9/" target="_blank">
     <div class="link-kachel-header">
       <div class="link-kachel-title">🌐 S&amp;P 500 Bottom Finder, von Eric Ludwig</div>
@@ -796,9 +762,6 @@ const THRESHOLDS = {
   breadth:        { rot: 35, gelb: 50 },
   strength:       { rot: 35, gruen: 75 },
   marginDebt:      { rot: 75, gelb: 50 },
-  creditSpread:   { rot: 35, gelb: 55, gruen: 70 },
-  moveIndex:      { gruen: 70, rot: 110, barMin: 40, barMax: 160, displayMax: 250 },
-  zinskurve:      { rot: 0, gelb: 0.5, barMin: -1.5, barMax: 2.0 },
   bfStatus: {
     ueberhitztScore: 76, ueberhitztDebt: 80,
     illusionBreadth: 35, illusionScoreMin: 35,
@@ -818,8 +781,6 @@ let goldIstLive = false;
 let oelIstLive = false;
 let cryptoIstLive = false;
 let etfIstLive = false;
-let moveIstLive = false;
-let zinskurveIstLive = false;
 
 function toggleActionBox() {
   const box = document.getElementById('actionBox');
@@ -871,19 +832,15 @@ function getHexColor(color) {
   return '#8b98a5';
 }
 
-function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, arrowChar, markerPercent) {
+function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, arrowChar) {
   const dim = isStale ? 'opacity:0.45;' : '';
   const arrow = arrowChar || '▲';
-  const marker = (markerPercent !== undefined && markerPercent !== null)
-    ? `<div class="q-bar-marker" style="left: ${Math.max(0, Math.min(100, markerPercent))}%;"></div>`
-    : '';
   return `
     <div class="quick-row-wrapper" onclick="toggleQuickRow(this)">
       <div class="quick-row">
         <div class="q-ampel" style="${dim}">${getEmojiColor(color)}</div>
         <div class="q-bar-container" style="${dim}">
           <div class="q-bar-fill" style="width: ${valPercent}%; background-color: ${getHexColor(color)};"></div>
-          ${marker}
         </div>
         <div class="q-val" style="${dim}">${valString}</div>
         <div class="q-arrow" style="color: ${getHexColor(color)}; ${dim}">${arrow}</div>
@@ -898,7 +855,7 @@ function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, ar
   `;
 }
 
-function updateFazitChange(currentScore, previousClose, rawVixVal, rawVixVortag) {
+function updateFazitChange(currentScore, previousClose, rawVixVal) {
   let diff = currentScore - previousClose;
   let diffText = "";
   let diffColor = "var(--text-dim)";
@@ -916,19 +873,10 @@ function updateFazitChange(currentScore, previousClose, rawVixVal, rawVixVortag)
 
   const changeEl = document.getElementById('fazitChangeEl');
   if (changeEl) {
+    changeEl.style.color = diffColor;
     let fgArrow = diff > 0 ? "▲" : (diff < 0 ? "▼" : "■");
     let vixValFormatted = (rawVixVal !== undefined && rawVixVal !== null) ? rawVixVal.toFixed(2) : "16.07";
-
-    let vixArrow = "■";
-    let vixColorCss = "var(--text-dim)";
-    if (rawVixVortag !== undefined && rawVixVortag !== null && rawVixVal !== undefined && rawVixVal !== null) {
-      let vixDiff = rawVixVal - rawVixVortag;
-      if (vixDiff > 0) { vixArrow = "▲"; vixColorCss = "var(--red)"; }
-      else if (vixDiff < 0) { vixArrow = "▼"; vixColorCss = "var(--green)"; }
-      else { vixArrow = "■"; vixColorCss = "var(--yellow)"; }
-    }
-
-    changeEl.innerHTML = `Veränderung zum letzten Handelstag: VIX: <span style="color:${vixColorCss};">${vixValFormatted} ${vixArrow}</span> | <span style="color:${diffColor};">Fear & Greed: ${currentScore.toFixed(0)} / 100 ${fgArrow}</span>`;
+    changeEl.innerHTML = `Veränderung zum letzten Handelstag: VIX: ${vixValFormatted} ▲ | Fear & Greed: ${currentScore.toFixed(0)} / 100 ${fgArrow}`;
   }
 }
 
@@ -939,14 +887,8 @@ function render(data){
   const strength = data?.subs?.find(s => s.key === "stock_price_strength");
   const options = data?.subs?.find(s => s.key === "put_call_options");
   const marginDebt = data?.subs?.find(s => s.key === "finra_margin_debt");
-  const creditSpread = data?.subs?.find(s => s.key === "junk_bond_demand");
-  const moveWert = data?.move_wert;
-  const moveAenderung = data?.move_change;
-  const zkWert = data?.zinskurve_wert;
-  const zkAenderung = data?.zinskurve_change;
 
   let rawVix = vix ? (vix.raw_vix ?? 16.07) : 16.07;
-  let rawVixVortag = vix ? (vix.raw_vix_vortag ?? null) : null;
   let vixColor = "gelb";
   if (rawVix < THRESHOLDS.vix.gruen) vixColor = "gruen";
   else if (rawVix > THRESHOLDS.vix.rot) vixColor = "rot";
@@ -1071,42 +1013,6 @@ function render(data){
     debtColor = "gelb";
   }
   htmlS3 += buildQuickRowHTML(debtColor, "Kredit-Hebelung am Markt", "Misst, wie stark Anleger mit geliehenem Geld spekulieren. Zu viel Fremdkapital verstärkt die Wucht von Crashs massiv.", debtDisplayPercent, debtScore.toFixed(0) + " / 100");
-
-  let csScore = creditSpread ? creditSpread.score : 50;
-  let csColor = csScore < THRESHOLDS.creditSpread.rot ? "rot" : (csScore < THRESHOLDS.creditSpread.gelb ? "gelb" : (csScore >= THRESHOLDS.creditSpread.gruen ? "gruen" : "gelb"));
-  let csArrow = csColor === "rot" ? "▼" : (csColor === "gruen" ? "▲" : "▲");
-  let csValString = (creditSpread && creditSpread.raw_spread !== undefined && creditSpread.raw_spread !== null && !isNaN(creditSpread.raw_spread))
-    ? creditSpread.raw_spread.toFixed(2) + " / 24"
-    : csScore.toFixed(0) + " / 100";
-  htmlS3 += buildQuickRowHTML(csColor, "Credit Spreads (High-Yield-Aufschlag)", "Misst den Renditeaufschlag von Ramsch-Anleihen (Junk Bonds) gegenüber sicheren Staatsanleihen. Ein enger Aufschlag zeigt Sorglosigkeit im Kreditmarkt, ein breiter Aufschlag Stress und Risikoscheu.", csScore, csValString, false, csArrow);
-
-  if (moveIstLive && moveWert !== null && moveWert !== undefined && !isNaN(moveWert)) {
-    let mvColor = moveWert >= THRESHOLDS.moveIndex.rot ? "rot" : (moveWert <= THRESHOLDS.moveIndex.gruen ? "gruen" : "gelb");
-    let mvPercent = Math.max(0, Math.min(100, ((moveWert - THRESHOLDS.moveIndex.barMin) / (THRESHOLDS.moveIndex.barMax - THRESHOLDS.moveIndex.barMin)) * 100));
-    let mvArrow = moveAenderung > 0 ? "▲" : (moveAenderung < 0 ? "▼" : "■");
-    let mvValString = moveWert.toFixed(2) + " / " + THRESHOLDS.moveIndex.displayMax;
-    htmlS3 += buildQuickRowHTML(mvColor, "MOVE-Index (Anleihen-Volatilität)", "Misst die erwartete Schwankungsbreite am US-Staatsanleihenmarkt - das Pendant zum VIX für Anleihen. Steigt er stark, herrscht Stress im Zinsmarkt.", mvPercent, mvValString, false, mvArrow);
-  } else {
-    htmlS3 += buildQuickRowHTML("grau", "MOVE-Index (Anleihen-Volatilität)", "Misst die erwartete Schwankungsbreite am US-Staatsanleihenmarkt - das Pendant zum VIX für Anleihen. Steigt er stark, herrscht Stress im Zinsmarkt.<br><br>⚠ Live-Daten aktuell nicht verfügbar (move.json fehlt oder Workflow noch nicht gelaufen).", 0, "⚠ Keine Daten", true, "–");
-  }
-
-if (zinskurveIstLive && zkWert !== null && zkWert !== undefined && !isNaN(zkWert)) {
-    let zkColor = zkWert < THRESHOLDS.zinskurve.rot ? "rot" : (zkWert < THRESHOLDS.zinskurve.gelb ? "gelb" : "gruen");
-    let zkPercent = Math.max(0, Math.min(100, ((zkWert - THRESHOLDS.zinskurve.barMin) / (THRESHOLDS.zinskurve.barMax - THRESHOLDS.zinskurve.barMin)) * 100));
-    let zkArrow = zkAenderung > 0 ? "▲" : (zkAenderung < 0 ? "▼" : "■");
-    let zkValString = (zkWert >= 0 ? "+" : "") + zkWert.toFixed(2) + " %";
-    let zkNullMarker = ((0 - THRESHOLDS.zinskurve.barMin) / (THRESHOLDS.zinskurve.barMax - THRESHOLDS.zinskurve.barMin)) * 100;
-    
-    // HIER WIRD zkSUB DEFINIERT UND EINGETAUSCHT:
-    let zkSub = "Misst den Renditeunterschied zwischen 10- und 2-jährigen US-Staatsanleihen. Eine negative Differenz deutet auf einen restriktiven Zinsmarkt und ökonomischen Stress hin<br><br>" +
-                  "<strong>Weisse Linie im Balken (0 %):</strong> Die Schwelle zur Inversion.<br><br>" +
-                  "<strong>Rot (unter 0 %):</strong> Invertierte Zinskurve – historisch ein hochzuverlässiger Vorbote für eine Rezession.<br><br>" +
-                  "<strong>Normalbereich (über 0 %):</strong> Ein Anstieg signalisiert eine Normalisierung der Zinsstruktur.<br><br>";
-
-    if (zkWert < THRESHOLDS.zinskurve.rot) zkSub += "<br><br>⚠ Aktuell invertiert - erhöhte Vorsicht angebracht.";
-    htmlS3 += buildQuickRowHTML(zkColor, "Zinskurve (10J-2J Spread)", zkSub, zkPercent, zkValString, false, zkArrow, zkNullMarker);
-  }
-
   document.getElementById('rowsSection3').innerHTML = htmlS3;
 
   let htmlS4 = "";
@@ -1135,7 +1041,7 @@ if (zinskurveIstLive && zkWert !== null && zkWert !== undefined && !isNaN(zkWert
 
   document.getElementById('rowsSection4').innerHTML = htmlS4;
 
-  updateFazitChange(data.score, data.previous_close, rawVix, rawVixVortag);
+  updateFazitChange(data.score, data.previous_close, rawVix);
   
   const statusIndicator = document.getElementById('statusIndicator');
   statusIndicator.className = isLive ? 'status-tag live' : 'status-tag stale';
@@ -1145,7 +1051,7 @@ if (zinskurveIstLive && zkWert !== null && zkWert !== undefined && !isNaN(zkWert
     data, bfStatus, sfColor, welleDesc,
     vixColor, rawVix, cnnColor,
     momentum, strength, marginDebt, options, actBreadth,
-    goldPreisWert, oelPreisWert, creditSpread, moveWert, moveAenderung, zkWert, zkAenderung
+    goldPreisWert, oelPreisWert
   });
 }
 
@@ -1223,7 +1129,7 @@ async function generiereGeminiTexte(ctx) {
 
   const { data, bfStatus, sfColor, welleDesc, vixColor, rawVix, cnnColor,
           momentum, strength, marginDebt, options, actBreadth,
-          goldPreisWert, oelPreisWert, creditSpread, moveWert, moveAenderung, zkWert, zkAenderung } = ctx;
+          goldPreisWert, oelPreisWert } = ctx;
 
   const stilAnweisung = STYLE_LEVELS[getStyleLevel()].anweisung;
 
@@ -1239,12 +1145,6 @@ async function generiereGeminiTexte(ctx) {
     aktienstaerke_score: strength ? strength.score : null,
     marktbreite_score: actBreadth,
     margin_debt_score: marginDebt ? marginDebt.score : null,
-    credit_spread_score: creditSpread ? creditSpread.score : null,
-    credit_spread_pp: creditSpread && creditSpread.raw_spread !== undefined ? creditSpread.raw_spread : null,
-    move_index: (moveWert !== null && moveWert !== undefined) ? moveWert : null,
-    move_index_change_prozent: (moveAenderung !== null && moveAenderung !== undefined) ? moveAenderung : null,
-    zinskurve_10j_2j_pp: (zkWert !== null && zkWert !== undefined) ? zkWert : null,
-    zinskurve_invertiert: (zkWert !== null && zkWert !== undefined) ? (zkWert < 0) : null,
     put_call_score: options ? options.score : null,
     gold_usd: goldPreisWert, oel_usd_wti: oelPreisWert
   };
@@ -1263,7 +1163,7 @@ Erzeuge NUR ein valides JSON-Objekt (keine Markdown-Codeblöcke, kein Fliesstext
 {
   "fazit1": "1-2 Sätze sachliche Einschätzung zu Sentiment/Nervosität/Bitcoin (Kachel 1)",
   "fazit2": "1-2 Sätze sachliche Einschätzung zu Trend/Momentum/Marktbreite (Kachel 2)",
-  "fazit3": "1-2 Sätze sachliche Einschätzung zu Struktur/Kredit-Hebelung/Credit Spreads/MOVE-Index/Zinskurve (Kachel 3)",
+  "fazit3": "1-2 Sätze sachliche Einschätzung zu Struktur/Kredit-Hebelung (Kachel 3)",
   "fazit4": "1-2 Sätze sachliche Einschätzung zu Gold/Öl/Rohstoffen (Kachel 4)",
   "fundamentale_lage": "1 knapper, sachlicher Satz NUR zu Unternehmensgewinnen/Fundamentaldaten - keine Bewertung des Gesamtrisikos, keine Beruhigung, nur der fundamentale Fakt.",
   "strukturelles_risiko": "1 knapper, sachlicher Satz NUR zur aktuellen Wellen-Phase/Marktbreite/Struktur-Risiko gemäss 'marktphase'. Muss die Phase beim Namen nennen (z.B. Welle A/B/C) falls zutreffend. Weder beschönigen noch dramatisieren - nur der strukturelle Fakt.",
@@ -1297,11 +1197,7 @@ Schreibe die Actions eigenständig, sachlich, analytisch und souverän. Nutze au
     const ampelDot = document.getElementById('situationAmpelDot');
     if (ampelDot) {
       const erlaubteFarben = ['gruen', 'gelb', 'rot', 'purple'];
-      const farbeOk = erlaubteFarben.includes(ergebnis.ampel);
-      ampelDot.className = 'situation-ampel' + (farbeOk ? ' ' + ergebnis.ampel : '');
-
-      document.body.classList.remove('sent-gruen', 'sent-gelb', 'sent-rot', 'sent-purple');
-      if (farbeOk) document.body.classList.add('sent-' + ergebnis.ampel);
+      ampelDot.className = 'situation-ampel' + (erlaubteFarben.includes(ergebnis.ampel) ? ' ' + ergebnis.ampel : '');
     }
 
     const actionEl = document.getElementById('actionListEl');
@@ -1311,57 +1207,6 @@ Schreibe die Actions eigenständig, sachlich, analytisch und souverän. Nutze au
   } catch(e) {
     document.getElementById('fazitContent1').innerHTML = `<span style="color:var(--red);">Antwort-Format ungültig</span>`;
   }
-}
-
-async function fragGemini() {
-  const input = document.getElementById('geminiFrageInput');
-  const btn = document.getElementById('geminiFrageBtn');
-  const box = document.getElementById('geminiAntwortBox');
-  const content = document.getElementById('geminiAntwortContent');
-  const icon = box ? box.querySelector('.action-toggle-icon') : null;
-  if (!input || !content) return;
-
-  const frage = input.value.trim();
-  if (!frage) return;
-
-  input.disabled = true;
-  if (btn) btn.disabled = true;
-  content.innerHTML = `<span style="color:var(--text-dim);">⏳ Frage wird beantwortet…</span>`;
-  if (box && !box.classList.contains('open')) {
-    box.classList.add('open');
-    if (icon) icon.textContent = '▼ Verbergen';
-  }
-
-  const stilAnweisung = STYLE_LEVELS[getStyleLevel()].anweisung;
-  const kontextZeile = lastGeminiCtx
-    ? `Aktuelle Kennzahlen des Cockpits (als Kontext, nur falls relevant für die Frage): ${JSON.stringify({
-        gesamtstatus: lastGeminiCtx.bfStatus,
-        sicherheitsampel: lastGeminiCtx.sfColor,
-        marktphase: lastGeminiCtx.welleDesc,
-        vix: lastGeminiCtx.rawVix,
-        cnn_fear_greed_score: lastGeminiCtx.data ? lastGeminiCtx.data.score : null
-      })}`
-    : '';
-
-  const prompt = `Du bist ein erfahrener und besonnener Marktstratege, der einem Privatanleger eine konkrete Frage beantwortet.
-Sprachniveau der Antwort: ${stilAnweisung}
-${kontextZeile}
-
-Frage des Nutzers: "${frage}"
-
-Antworte direkt, sachlich und in maximal 3-4 Sätzen als Fliesstext (kein JSON, kein Markdown).`;
-
-  const antwortText = await callGemini(prompt);
-
-  input.disabled = false;
-  if (btn) btn.disabled = false;
-
-  if (!antwortText) {
-    content.innerHTML = `<span style="color:var(--red);">Gemini nicht verfügbar</span>`;
-    return;
-  }
-
-  content.textContent = antwortText.trim();
 }
 
 function updateSvgNode(cx, cy, color, text) {
@@ -1420,7 +1265,7 @@ async function callGemini(prompt) {
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.4
       })
-    }, 25000);
+    }, 15000);
     if (!res.ok) {
       setApiDot('apiDotGemini', false); return null;
     }
@@ -1523,44 +1368,6 @@ async function holeEtf() {
   return { etfPreis, etfAenderung, live };
 }
 
-async function holeMove() {
-  let moveWert = null, moveAenderung = 0, live = false;
-  try {
-    const res = await fetchWithTimeout('move.json?t=' + Date.now(), {}, 6000);
-    if (res && res.ok) {
-      const json = await res.json();
-      const close = parseFloat(json.price);
-      const percentChange = parseFloat(json.change_percent);
-      if (!isNaN(close) && !isNaN(percentChange)) {
-        moveWert = close;
-        moveAenderung = percentChange;
-        live = true;
-      }
-    }
-  } catch (e) { /* move.json fehlt/Timeout -> live bleibt false */ }
-  setApiDot('apiDotMove', live);
-  return { moveWert, moveAenderung, live };
-}
-
-async function holeZinskurve() {
-  let zkWert = null, zkAenderung = 0, live = false;
-  try {
-    const res = await fetchWithTimeout('zinskurve.json?t=' + Date.now(), {}, 6000);
-    if (res && res.ok) {
-      const json = await res.json();
-      const wert = parseFloat(json.value);
-      const aenderung = parseFloat(json.change);
-      if (!isNaN(wert)) {
-        zkWert = wert;
-        zkAenderung = !isNaN(aenderung) ? aenderung : 0;
-        live = true;
-      }
-    }
-  } catch (e) { /* zinskurve.json fehlt/Timeout -> live bleibt false */ }
-  setApiDot('apiDotZinskurve', live);
-  return { zkWert, zkAenderung, live };
-}
-
 async function holeFearGreed() {
   const res = await fetchWithTimeout('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', { headers: {'Accept':'application/json'} }, 8000);
   if (!res.ok) throw new Error('Fear&Greed HTTP-Fehler');
@@ -1572,12 +1379,10 @@ async function ladeDaten(){
   btn.disabled = true;
 
   // Alle vier Abfragen parallel starten - keine blockiert die andere.
-  const [cryptoErg, metalErg, etfErg, moveErg, zinskurveErg, fgErg] = await Promise.allSettled([
+  const [cryptoErg, metalErg, etfErg, fgErg] = await Promise.allSettled([
     holeCrypto(),
     holeMetalle(),
     holeEtf(),
-    holeMove(),
-    holeZinskurve(),
     holeFearGreed()
   ]);
 
@@ -1592,32 +1397,14 @@ async function ladeDaten(){
   const { etfPreis, etfAenderung } = etfErg.status === 'fulfilled' ? etfErg.value : { etfPreis: null, etfAenderung: 0 };
   etfIstLive = etfErg.status === 'fulfilled' && etfErg.value.live;
 
-  const { moveWert, moveAenderung } = moveErg.status === 'fulfilled' ? moveErg.value : { moveWert: null, moveAenderung: 0 };
-  moveIstLive = moveErg.status === 'fulfilled' && moveErg.value.live;
-
-  const { zkWert, zkAenderung } = zinskurveErg.status === 'fulfilled' ? zinskurveErg.value : { zkWert: null, zkAenderung: 0 };
-  zinskurveIstLive = zinskurveErg.status === 'fulfilled' && zinskurveErg.value.live;
-
   try{
     if (fgErg.status !== 'fulfilled') throw fgErg.reason || new Error('Fear&Greed fehlgeschlagen');
     const json = fgErg.value;
 
     let extrahierterVixUSD = null;
-    let extrahierterVixVortag = null;
     if(json.market_volatility_vix && json.market_volatility_vix.data && json.market_volatility_vix.data.length > 0){
-      const vixData = json.market_volatility_vix.data;
-      const ndp = vixData[vixData.length - 1];
-      if(ndp && ndp.y) extrahierterVixUSD = ndp.y;
-      if(vixData.length > 1){
-        const vorletzter = vixData[vixData.length - 2];
-        if(vorletzter && vorletzter.y) extrahierterVixVortag = vorletzter.y;
-      }
-    }
-
-    let extrahierterCreditSpread = null;
-    if(json.junk_bond_demand && json.junk_bond_demand.data && json.junk_bond_demand.data.length > 0){
-      const ndp = json.junk_bond_demand.data[json.junk_bond_demand.data.length - 1];
-      if(ndp && ndp.y !== undefined && ndp.y !== null) extrahierterCreditSpread = ndp.y;
+      const ndp = json.market_volatility_vix.data[json.market_volatility_vix.data.length - 1];
+      if(ndp && ndp.y) extrahierterVixUSD = ndp.y; 
     }
 
     const data = {
@@ -1631,18 +1418,13 @@ async function ladeDaten(){
       oil_usd: oelPreis,
       etf_price: etfPreis,
       etf_change: etfAenderung,
-      move_wert: moveWert,
-      move_change: moveAenderung,
-      zinskurve_wert: zkWert,
-      zinskurve_change: zkAenderung,
       subs: [
         {key:"market_momentum_sp500", name:"Markt-Schwung", sub:"Zeigt an, ob sich der S&P 500 stabil über oder unter seiner 200-Tage-Linie bewegt. Steigt der Kurs klar darüber, läuft der Motor rund.", score:json.market_momentum_sp500.score},
         {key:"stock_price_strength", name:"Aktien-Stärke", sub:"Misst die Anzahl der Aktien auf 52-Wochen-Hochs im Vergleich zu Tiefs. Das zeigt, wie stark der innere Kern des Marktes ist.", score:json.stock_price_strength.score},
         {key:"stock_price_breadth", name:"Marktbreite (A/D Basis)", sub:"Misst die echte Marktbreite, indem sie vergleicht, ob insgesamt mehr Aktien steigen oder fallen. Steigen nur wenige Riesen, droht Gefahr.", score:json.stock_price_breadth.score},
         {key:"put_call_options", name:"Absicherungs-Verhältnis", sub:"Zeigt das Verhältnis von Verlustabsicherungen zu Wetten auf steigende Kurse. Sichert sich niemand mehr ab, herrscht blinde Sorglosigkeit.", score:json.put_call_options.score},
-        {key:"market_volatility_vix", name:"Markt-Nervosität (VIX)", sub:"Das ist der Angst-Index der Börse. Er misst, wie panisch oder schwankungsanfällig die Anleger gerade sind.", score:json.market_volatility_vix.score, raw_vix: extrahierterVixUSD, raw_vix_vortag: extrahierterVixVortag},
-        {key:"finra_margin_debt", name:"Kredit-Hebelung am Markt", sub:"Misst, wie stark Anleger mit geliehenem Geld spekulieren. Zu viel Fremdkapital verstärkt die Wucht von Crashs massiv.", score: json.fear_and_greed.score > 78 ? 85 : 35},
-        {key:"junk_bond_demand", name:"Credit Spreads (High-Yield-Aufschlag)", sub:"Misst den Renditeaufschlag von Ramsch-Anleihen (Junk Bonds) gegenüber sicheren Staatsanleihen. Ein enger Aufschlag zeigt Sorglosigkeit, ein breiter Aufschlag Stress im Kreditmarkt.", score: json.junk_bond_demand ? json.junk_bond_demand.score : 50, raw_spread: extrahierterCreditSpread}
+        {key:"market_volatility_vix", name:"Markt-Nervosität (VIX)", sub:"Das ist der Angst-Index der Börse. Er misst, wie panisch oder schwankungsanfällig die Anleger gerade sind.", score:json.market_volatility_vix.score, raw_vix: extrahierterVixUSD},
+        {key:"finra_margin_debt", name:"Kredit-Hebelung am Markt", sub:"Misst, wie stark Anleger mit geliehenem Geld spekulieren. Zu viel Fremdkapital verstärkt die Wucht von Crashs massiv.", score: json.fear_and_greed.score > 78 ? 85 : 35}
       ]
     };
     isLive = true; render(data);
