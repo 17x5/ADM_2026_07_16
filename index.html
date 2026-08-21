@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-08-21 16:36";
+    const APP_VERSION = "TEST BUILD 2026-08-21 16:41";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -572,7 +572,7 @@
     <div id="fazitInhalt">
       <div class="fazit-section">
         <div class="fazit-label"><span class="situation-ampel" id="situationAmpelDot"></span>Aktuelles Sentiment:</div>
-        <p class="fazit-p" id="gesamtfazitText">🔌 Verbindung zu Gemini wird aufgebaut…</p>
+        <p class="fazit-p" id="gesamtfazitText">⏳ Verbindung zu Gemini wird aufgebaut…</p>
         <div class="fazit-change" id="fazitChangeEl">Veränderung zum letzten Handelstag: VIX: 16.07 ▲ | Fear & Greed: 45 / 100 ▲</div>
       </div>
       <div id="actionBox" class="action-box">
@@ -618,7 +618,7 @@
           <h4>📋 Kachel-Fazit: Sentiment &amp; Liquidität</h4>
           <span class="action-toggle-icon">▶ Anzeigen</span>
         </div>
-        <div class="kachel-fazit-content" id="fazitContent1"><span style="color:var(--text-dim);">🔌 Verbindung zu Gemini wird aufgebaut…</span></div>
+        <div class="kachel-fazit-content" id="fazitContent1"><span style="color:var(--text-dim);">⏳ Verbindung zu Gemini wird aufgebaut…</span></div>
       </div>
     </div>
 
@@ -630,7 +630,7 @@
           <h4>📋 Kachel-Fazit: Trend &amp; Marktbreite</h4>
           <span class="action-toggle-icon">▶ Anzeigen</span>
         </div>
-        <div class="kachel-fazit-content" id="fazitContent2"><span style="color:var(--text-dim);">🔌 Verbindung zu Gemini wird aufgebaut…</span></div>
+        <div class="kachel-fazit-content" id="fazitContent2"><span style="color:var(--text-dim);">⏳ Verbindung zu Gemini wird aufgebaut…</span></div>
       </div>
     </div>
 
@@ -642,7 +642,7 @@
           <h4>📋 Kachel-Fazit: Struktur &amp; Fremdkapital-Hebel</h4>
           <span class="action-toggle-icon">▶ Anzeigen</span>
         </div>
-        <div class="kachel-fazit-content" id="fazitContent3"><span style="color:var(--text-dim);">🔌 Verbindung zu Gemini wird aufgebaut…</span></div>
+        <div class="kachel-fazit-content" id="fazitContent3"><span style="color:var(--text-dim);">⏳ Verbindung zu Gemini wird aufgebaut…</span></div>
       </div>
     </div>
 
@@ -654,7 +654,7 @@
           <h4>📋 Kachel-Fazit: Gold-Öl-Ratio</h4>
           <span class="action-toggle-icon">▶ Anzeigen</span>
         </div>
-        <div class="kachel-fazit-content" id="fazitContent4"><span style="color:var(--text-dim);">🔌 Verbindung zu Gemini wird aufgebaut…</span></div>
+        <div class="kachel-fazit-content" id="fazitContent4"><span style="color:var(--text-dim);">⏳ Verbindung zu Gemini wird aufgebaut…</span></div>
       </div>
     </div>
   </div>
@@ -1225,13 +1225,6 @@ async function generiereGeminiTexte(ctx) {
           momentum, strength, marginDebt, options, actBreadth,
           goldPreisWert, oelPreisWert, creditSpread, moveWert, moveAenderung, zkWert, zkAenderung } = ctx;
 
-  ['fazitContent1','fazitContent2','fazitContent3','fazitContent4'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = '<span style="color:var(--text-dim);">⏳ Analyse wird generiert…</span>';
-  });
-  const gesamtElStart = document.getElementById('gesamtfazitText');
-  if (gesamtElStart) gesamtElStart.textContent = '⏳ Analyse wird generiert…';
-
   const stilAnweisung = STYLE_LEVELS[getStyleLevel()].anweisung;
 
   const kontext = {
@@ -1285,7 +1278,7 @@ Schreibe die Actions eigenständig, sachlich, analytisch und souverän. Nutze au
 
   const antwortText = await callGemini(prompt);
   if (!antwortText) {
-    document.getElementById('fazitContent1').innerHTML = `<span style="color:var(--red);">Gemini nicht verfügbar</span>`;
+    setGeminiFehlerStatus();
     return;
   }
 
@@ -1319,7 +1312,28 @@ Schreibe die Actions eigenständig, sachlich, analytisch und souverän. Nutze au
       actionEl.innerHTML = ergebnis.actions.map(a => `<li>${a}</li>`).join('');
     }
   } catch(e) {
-    document.getElementById('fazitContent1').innerHTML = `<span style="color:var(--red);">Antwort-Format ungültig</span>`;
+    setGeminiFehlerStatus();
+  }
+}
+
+function setGeminiFehlerStatus() {
+  const fehlerHtml = `<span style="color:var(--red);">Gemini nicht verfügbar</span>`;
+  ['fazitContent1', 'fazitContent2', 'fazitContent3', 'fazitContent4'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = fehlerHtml;
+  });
+
+  const gesamtEl = document.getElementById('gesamtfazitText');
+  if (gesamtEl) {
+    gesamtEl.textContent = 'Gemini nicht verfügbar…';
+    gesamtEl.style.color = 'var(--red)';
+  }
+
+  const ampelDot = document.getElementById('situationAmpelDot');
+  if (ampelDot) {
+    ampelDot.className = 'situation-ampel rot';
+    document.body.classList.remove('sent-gruen', 'sent-gelb', 'sent-purple');
+    document.body.classList.add('sent-rot');
   }
 }
 
