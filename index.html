@@ -572,7 +572,7 @@
     <div id="fazitInhalt">
       <div class="fazit-section">
         <div class="fazit-label"><span class="situation-ampel" id="situationAmpelDot"></span>Aktuelles Sentiment:</div>
-        <p class="fazit-p" id="gesamtfazitText">⏳ Analyse wird generiert…</p>
+        <p class="fazit-p" id="gesamtfazitText">🔌 Verbindung zu Gemini wird aufgebaut…</p>
         <div class="fazit-change" id="fazitChangeEl">Veränderung zum letzten Handelstag: VIX: 16.07 ▲ | Fear & Greed: 45 / 100 ▲</div>
       </div>
       <div id="actionBox" class="action-box">
@@ -618,7 +618,7 @@
           <h4>📋 Kachel-Fazit: Sentiment &amp; Liquidität</h4>
           <span class="action-toggle-icon">▶ Anzeigen</span>
         </div>
-        <div class="kachel-fazit-content" id="fazitContent1"><span style="color:var(--text-dim);">⏳ Analyse wird generiert…</span></div>
+        <div class="kachel-fazit-content" id="fazitContent1"><span style="color:var(--text-dim);">🔌 Verbindung zu Gemini wird aufgebaut…</span></div>
       </div>
     </div>
 
@@ -630,7 +630,7 @@
           <h4>📋 Kachel-Fazit: Trend &amp; Marktbreite</h4>
           <span class="action-toggle-icon">▶ Anzeigen</span>
         </div>
-        <div class="kachel-fazit-content" id="fazitContent2"><span style="color:var(--text-dim);">⏳ Analyse wird generiert…</span></div>
+        <div class="kachel-fazit-content" id="fazitContent2"><span style="color:var(--text-dim);">🔌 Verbindung zu Gemini wird aufgebaut…</span></div>
       </div>
     </div>
 
@@ -642,7 +642,7 @@
           <h4>📋 Kachel-Fazit: Struktur &amp; Fremdkapital-Hebel</h4>
           <span class="action-toggle-icon">▶ Anzeigen</span>
         </div>
-        <div class="kachel-fazit-content" id="fazitContent3"><span style="color:var(--text-dim);">⏳ Analyse wird generiert…</span></div>
+        <div class="kachel-fazit-content" id="fazitContent3"><span style="color:var(--text-dim);">🔌 Verbindung zu Gemini wird aufgebaut…</span></div>
       </div>
     </div>
 
@@ -654,7 +654,7 @@
           <h4>📋 Kachel-Fazit: Gold-Öl-Ratio</h4>
           <span class="action-toggle-icon">▶ Anzeigen</span>
         </div>
-        <div class="kachel-fazit-content" id="fazitContent4"><span style="color:var(--text-dim);">⏳ Analyse wird generiert…</span></div>
+        <div class="kachel-fazit-content" id="fazitContent4"><span style="color:var(--text-dim);">🔌 Verbindung zu Gemini wird aufgebaut…</span></div>
       </div>
     </div>
   </div>
@@ -1224,6 +1224,13 @@ async function generiereGeminiTexte(ctx) {
   const { data, bfStatus, sfColor, welleDesc, vixColor, rawVix, cnnColor,
           momentum, strength, marginDebt, options, actBreadth,
           goldPreisWert, oelPreisWert, creditSpread, moveWert, moveAenderung, zkWert, zkAenderung } = ctx;
+
+  ['fazitContent1','fazitContent2','fazitContent3','fazitContent4'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '<span style="color:var(--text-dim);">⏳ Analyse wird generiert…</span>';
+  });
+  const gesamtElStart = document.getElementById('gesamtfazitText');
+  if (gesamtElStart) gesamtElStart.textContent = '⏳ Analyse wird generiert…';
 
   const stilAnweisung = STYLE_LEVELS[getStyleLevel()].anweisung;
 
