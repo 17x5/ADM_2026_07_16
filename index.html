@@ -272,7 +272,10 @@
   .q-bar-container { width: 70px; background: #21262d; height: 6px; border-radius: 3px; margin-right: 10px; flex-shrink: 0; overflow: hidden; position: relative; }
   .q-bar-fill { height: 100%; width: 0%; transition: width 0.4s, background-color 0.4s; }
   .q-bar-container { position: relative; overflow: visible; background: #000; }
-  .q-bar-marker { position: absolute; top: -3px; bottom: -3px; width: 2px; background: #fff; }
+  .q-bar-marker { position: absolute; top: -3px; bottom: -3px; width: 2px; background: #fff; z-index: 2; }
+  .q-bar-endcap { position: absolute; top: -3px; bottom: -3px; width: 3px; z-index: 1; }
+  .q-bar-endcap-left { left: 0; }
+  .q-bar-endcap-right { right: 0; }
   
   .q-val { width: 110px; text-align: left; flex-shrink: 0; font-weight: 600; font-family: var(--mono); font-size: 12px; }
   
@@ -871,11 +874,17 @@ function getHexColor(color) {
   return '#8b98a5';
 }
 
-function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, arrowChar, markerPercent) {
+function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, arrowChar, markerPercent, endCapLeftColor, endCapRightColor) {
   const dim = isStale ? 'opacity:0.45;' : '';
   const arrow = arrowChar || '▲';
   const marker = (markerPercent !== undefined && markerPercent !== null)
     ? `<div class="q-bar-marker" style="left: ${Math.max(0, Math.min(100, markerPercent))}%;"></div>`
+    : '';
+  const endCapLeft = endCapLeftColor
+    ? `<div class="q-bar-endcap q-bar-endcap-left" style="background-color: ${getHexColor(endCapLeftColor)};"></div>`
+    : '';
+  const endCapRight = endCapRightColor
+    ? `<div class="q-bar-endcap q-bar-endcap-right" style="background-color: ${getHexColor(endCapRightColor)};"></div>`
     : '';
   return `
     <div class="quick-row-wrapper" onclick="toggleQuickRow(this)">
@@ -883,6 +892,8 @@ function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, ar
         <div class="q-ampel" style="${dim}">${getEmojiColor(color)}</div>
         <div class="q-bar-container" style="${dim}">
           <div class="q-bar-fill" style="width: ${valPercent}%; background-color: ${getHexColor(color)};"></div>
+          ${endCapLeft}
+          ${endCapRight}
           ${marker}
         </div>
         <div class="q-val" style="${dim}">${valString}</div>
@@ -1090,12 +1101,13 @@ function render(data){
     htmlS3 += buildQuickRowHTML("grau", "MOVE-Index (Anleihen-Volatilität)", "Misst die erwartete Schwankungsbreite am US-Staatsanleihenmarkt - das Pendant zum VIX für Anleihen. Steigt er stark, herrscht Stress im Zinsmarkt.<br><br>⚠ Live-Daten aktuell nicht verfügbar (move.json fehlt oder Workflow noch nicht gelaufen).", 0, "⚠ Keine Daten", true, "–");
   }
 
+const zkNullMarkerFix = ((0 - THRESHOLDS.zinskurve.barMin) / (THRESHOLDS.zinskurve.barMax - THRESHOLDS.zinskurve.barMin)) * 100;
+
 if (zinskurveIstLive && zkWert !== null && zkWert !== undefined && !isNaN(zkWert)) {
     let zkColor = zkWert < THRESHOLDS.zinskurve.rot ? "rot" : (zkWert < THRESHOLDS.zinskurve.gelb ? "gelb" : "gruen");
     let zkPercent = Math.max(0, Math.min(100, ((zkWert - THRESHOLDS.zinskurve.barMin) / (THRESHOLDS.zinskurve.barMax - THRESHOLDS.zinskurve.barMin)) * 100));
     let zkArrow = zkAenderung > 0 ? "▲" : (zkAenderung < 0 ? "▼" : "■");
     let zkValString = (zkWert >= 0 ? "+" : "") + zkWert.toFixed(2) + " %";
-    let zkNullMarker = ((0 - THRESHOLDS.zinskurve.barMin) / (THRESHOLDS.zinskurve.barMax - THRESHOLDS.zinskurve.barMin)) * 100;
     
     let zkSub = "Misst den Renditeunterschied zwischen 10- und 2-jährigen US-Staatsanleihen. Eine negative Differenz deutet auf einen restriktiven Zinsmarkt und ökonomischen Stress hin<br><br>" +
                   "<strong>Weisse Linie im Balken (0 %):</strong> Die Schwelle zur Inversion.<br><br>" +
@@ -1103,7 +1115,9 @@ if (zinskurveIstLive && zkWert !== null && zkWert !== undefined && !isNaN(zkWert
                   "<strong>Normalbereich (über 0 %):</strong> Ein Anstieg signalisiert eine Normalisierung der Zinsstruktur.<br><br>";
 
     if (zkWert < THRESHOLDS.zinskurve.rot) zkSub += "<br><br>⚠ Aktuell invertiert - erhöhte Vorsicht angebracht.";
-    htmlS3 += buildQuickRowHTML(zkColor, "Zinskurve (10J-2J Spread)", zkSub, zkPercent, zkValString, false, zkArrow, zkNullMarker);
+    htmlS3 += buildQuickRowHTML(zkColor, "Zinskurve (10J-2J Spread)", zkSub, zkPercent, zkValString, false, zkArrow, zkNullMarkerFix, "rot", "gruen");
+  } else {
+    htmlS3 += buildQuickRowHTML("grau", "Zinskurve (10J-2J Spread)", "Misst den Renditeunterschied zwischen 10- und 2-jährigen US-Staatsanleihen. Eine negative Differenz deutet auf einen restriktiven Zinsmarkt und ökonomischen Stress hin.<br><br>⚠ Live-Daten aktuell nicht verfügbar (zinskurve.json fehlt oder Workflow noch nicht gelaufen).", 0, "⚠ Keine Daten", true, "–", zkNullMarkerFix, "rot", "gruen");
   }
 
   document.getElementById('rowsSection3').innerHTML = htmlS3;
