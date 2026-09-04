@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "TEST BUILD 2026-09-04 10:58";
+    const APP_VERSION = "TEST BUILD 2026-08-24 21:49";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -872,7 +872,7 @@ function getHexColor(color) {
   return '#8b98a5';
 }
 
-function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, arrowChar, markerPercent, gradientCss, pointerPercent) {
+function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, arrowChar, markerPercent, gradientCss, pointerPercent, streakHtml) {
   const dim = isStale ? 'opacity:0.45;' : '';
   const arrow = arrowChar || '▲';
   let barInner;
@@ -895,6 +895,7 @@ function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, ar
         </div>
         <div class="q-val" style="${dim}">${valString}</div>
         <div class="q-arrow" style="color: ${getHexColor(color)}; ${dim}">${arrow}</div>
+        ${streakHtml || ''}
         <div class="q-text" style="${dim}"><b>${title}</b></div>
         <div class="row-toggle-hint">Info ▼</div>
         ${isStale ? `<div class="q-stale-note" style="color:var(--yellow); font-weight:600;">⚠ Keine Live-Daten</div>` : ''}
@@ -1035,7 +1036,16 @@ function render(data){
     ? new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 2 }).format(data.etf_previous_close)
     : null;
   const etfWertText = formattedEtfPreis + " (" + (etfChangeVal >= 0 ? "+" : "") + etfChangeVal.toFixed(2) + "%)" + (formattedEtfVortag ? " · Vortag: " + formattedEtfVortag : "");
-  const etfRowHtml = buildQuickRowHTML(etfAmpelColor, "Vanguard FTSE All-World (IE00B3RBWM25)", "Dein persönlicher Anlage-ETF, der die Entwicklung der weltweiten Aktienmärkte abbildet.", etfPercent, etfWertText, !etfIstLive, etfArrow);
+  let etfStreakHtml = "";
+  if (data.etf_streak_count !== undefined && data.etf_streak_count !== null && data.etf_streak_direction) {
+    const streakFarbe = (data.etf_streak_direction === 'up') ? getHexColor("gruen") : getHexColor("rot");
+    const streakZeichen = (data.etf_streak_direction === 'up') ? "▲" : "▼";
+    etfStreakHtml = `<div class="q-streak" style="display:flex; align-items:center; gap:6px;">
+        <span style="width:1px; height:14px; background:var(--border-dim, rgba(255,255,255,0.15));"></span>
+        <span style="color:${streakFarbe}; font-size:14px;">${streakZeichen}</span><span style="color:${streakFarbe}; font-size:13px; font-weight:600;">${data.etf_streak_count}</span>
+      </div>`;
+  }
+  const etfRowHtml = buildQuickRowHTML(etfAmpelColor, "Vanguard FTSE All-World (IE00B3RBWM25)", "Dein persönlicher Anlage-ETF, der die Entwicklung der weltweiten Aktienmärkte abbildet.", etfPercent, etfWertText, !etfIstLive, etfArrow, undefined, undefined, undefined, etfStreakHtml);
   document.getElementById('rowsSectionETF').innerHTML = etfRowHtml;
 
   let htmlS1 = "";
@@ -1528,7 +1538,7 @@ async function holeMetalle() {
 }
 
 async function holeEtf() {
-  let etfPreis = null, etfAenderung = 0, etfVortag = null, live = false;
+  let etfPreis = null, etfAenderung = 0, etfVortag = null, etfStreakCount = null, etfStreakDirection = null, live = false;
   try {
     const res = await fetchWithTimeout('etf.json?t=' + Date.now(), {}, 6000);
     if (res && res.ok) {
@@ -1536,16 +1546,21 @@ async function holeEtf() {
       const close = parseFloat(json.price);
       const percentChange = parseFloat(json.change_percent);
       const vortag = parseFloat(json.previous_close);
+      const streakCount = parseInt(json.streak_count, 10);
       if (!isNaN(close) && !isNaN(percentChange)) {
         etfPreis = close;
         etfAenderung = percentChange;
         if (!isNaN(vortag)) etfVortag = vortag;
+        if (!isNaN(streakCount) && (json.streak_direction === 'up' || json.streak_direction === 'down')) {
+          etfStreakCount = streakCount;
+          etfStreakDirection = json.streak_direction;
+        }
         live = true;
       }
     }
   } catch (e) { }
   setApiDot('apiDotEtf', live);
-  return { etfPreis, etfAenderung, etfVortag, live };
+  return { etfPreis, etfAenderung, etfVortag, etfStreakCount, etfStreakDirection, live };
 }
 
 async function holeMove() {
@@ -1613,7 +1628,7 @@ async function ladeDaten(){
   goldIstLive = metalErg.status === 'fulfilled' && metalErg.value.goldOk;
   oelIstLive = metalErg.status === 'fulfilled' && metalErg.value.oelOk;
 
-  const { etfPreis, etfAenderung, etfVortag } = etfErg.status === 'fulfilled' ? etfErg.value : { etfPreis: null, etfAenderung: 0, etfVortag: null };
+  const { etfPreis, etfAenderung, etfVortag, etfStreakCount, etfStreakDirection } = etfErg.status === 'fulfilled' ? etfErg.value : { etfPreis: null, etfAenderung: 0, etfVortag: null, etfStreakCount: null, etfStreakDirection: null };
   etfIstLive = etfErg.status === 'fulfilled' && etfErg.value.live;
 
   const { moveWert, moveAenderung } = moveErg.status === 'fulfilled' ? moveErg.value : { moveWert: null, moveAenderung: 0 };
@@ -1656,6 +1671,8 @@ async function ladeDaten(){
       etf_price: etfPreis,
       etf_change: etfAenderung,
       etf_previous_close: etfVortag,
+      etf_streak_count: etfStreakCount,
+      etf_streak_direction: etfStreakDirection,
       move_wert: moveWert,
       move_change: moveAenderung,
       zinskurve_wert: zkWert,
