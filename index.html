@@ -1032,15 +1032,12 @@ function render(data){
     : '–';
   
   const etfPercent = Math.min(100, Math.max(10, momScoreETFTrend));
-  const formattedEtfVortag = (data.etf_previous_close !== undefined && data.etf_previous_close !== null && !isNaN(data.etf_previous_close))
-    ? new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 2 }).format(data.etf_previous_close)
-    : null;
-  const etfWertText = formattedEtfPreis + " (" + (etfChangeVal >= 0 ? "+" : "") + etfChangeVal.toFixed(2) + "%)" + (formattedEtfVortag ? " · Vortag: " + formattedEtfVortag : "");
+  const etfWertText = formattedEtfPreis + " (" + (etfChangeVal >= 0 ? "+" : "") + etfChangeVal.toFixed(2) + "%)";
   let etfStreakHtml = "";
   if (data.etf_streak_count !== undefined && data.etf_streak_count !== null && data.etf_streak_direction) {
     const streakFarbe = (data.etf_streak_direction === 'up') ? getHexColor("gruen") : getHexColor("rot");
     const streakZeichen = (data.etf_streak_direction === 'up') ? "▲" : "▼";
-    etfStreakHtml = `<div class="q-streak" style="display:flex; align-items:center; gap:6px;">
+    etfStreakHtml = `<div class="q-streak" style="display:flex; align-items:center; gap:6px; margin-right:8px;">
         <span style="width:1px; height:14px; background:var(--border-dim, rgba(255,255,255,0.15));"></span>
         <span style="color:${streakFarbe}; font-size:14px;">${streakZeichen}</span><span style="color:${streakFarbe}; font-size:13px; font-weight:600;">${data.etf_streak_count}</span>
       </div>`;
