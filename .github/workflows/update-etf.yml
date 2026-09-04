@@ -17,7 +17,7 @@ jobs:
       - name: Kurs von Yahoo Finance holen
         run: |
           curl -s -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
-            "https://query1.finance.yahoo.com/v8/finance/chart/WRDUSW.SW" -o raw.json
+            "https://query1.finance.yahoo.com/v8/finance/chart/VWRL.SW" -o raw.json
           cat raw.json
 
       - name: JSON auswerten
@@ -35,7 +35,8 @@ jobs:
 
           data = {
               "price": close_preis,
-              "change_percent": round(aenderung, 2)
+              "change_percent": round(aenderung, 2),
+              "previous_close": previous_close
           }
 
           with open('etf.json', 'w') as out:
