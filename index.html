@@ -1031,7 +1031,11 @@ function render(data){
     : '–';
   
   const etfPercent = Math.min(100, Math.max(10, momScoreETFTrend));
-  const etfRowHtml = buildQuickRowHTML(etfAmpelColor, "UBS Core MSCI World (IE00BD4TXV59)", "Dein persönlicher Anlage-ETF, der die Entwicklung der weltweiten Aktienmärkte abbildet.", etfPercent, formattedEtfPreis + " (" + (etfChangeVal >= 0 ? "+" : "") + etfChangeVal.toFixed(2) + "%)", !etfIstLive, etfArrow);
+  const formattedEtfVortag = (data.etf_previous_close !== undefined && data.etf_previous_close !== null && !isNaN(data.etf_previous_close))
+    ? new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 2 }).format(data.etf_previous_close)
+    : null;
+  const etfWertText = formattedEtfPreis + " (" + (etfChangeVal >= 0 ? "+" : "") + etfChangeVal.toFixed(2) + "%)" + (formattedEtfVortag ? " · Vortag: " + formattedEtfVortag : "");
+  const etfRowHtml = buildQuickRowHTML(etfAmpelColor, "Vanguard FTSE All-World (IE00B3RBWM25)", "Dein persönlicher Anlage-ETF, der die Entwicklung der weltweiten Aktienmärkte abbildet.", etfPercent, etfWertText, !etfIstLive, etfArrow);
   document.getElementById('rowsSectionETF').innerHTML = etfRowHtml;
 
   let htmlS1 = "";
@@ -1524,22 +1528,24 @@ async function holeMetalle() {
 }
 
 async function holeEtf() {
-  let etfPreis = null, etfAenderung = 0, live = false;
+  let etfPreis = null, etfAenderung = 0, etfVortag = null, live = false;
   try {
     const res = await fetchWithTimeout('etf.json?t=' + Date.now(), {}, 6000);
     if (res && res.ok) {
       const json = await res.json();
       const close = parseFloat(json.price);
       const percentChange = parseFloat(json.change_percent);
+      const vortag = parseFloat(json.previous_close);
       if (!isNaN(close) && !isNaN(percentChange)) {
         etfPreis = close;
         etfAenderung = percentChange;
+        if (!isNaN(vortag)) etfVortag = vortag;
         live = true;
       }
     }
   } catch (e) { }
   setApiDot('apiDotEtf', live);
-  return { etfPreis, etfAenderung, live };
+  return { etfPreis, etfAenderung, etfVortag, live };
 }
 
 async function holeMove() {
@@ -1607,7 +1613,7 @@ async function ladeDaten(){
   goldIstLive = metalErg.status === 'fulfilled' && metalErg.value.goldOk;
   oelIstLive = metalErg.status === 'fulfilled' && metalErg.value.oelOk;
 
-  const { etfPreis, etfAenderung } = etfErg.status === 'fulfilled' ? etfErg.value : { etfPreis: null, etfAenderung: 0 };
+  const { etfPreis, etfAenderung, etfVortag } = etfErg.status === 'fulfilled' ? etfErg.value : { etfPreis: null, etfAenderung: 0, etfVortag: null };
   etfIstLive = etfErg.status === 'fulfilled' && etfErg.value.live;
 
   const { moveWert, moveAenderung } = moveErg.status === 'fulfilled' ? moveErg.value : { moveWert: null, moveAenderung: 0 };
@@ -1649,6 +1655,7 @@ async function ladeDaten(){
       oil_usd: oelPreis,
       etf_price: etfPreis,
       etf_change: etfAenderung,
+      etf_previous_close: etfVortag,
       move_wert: moveWert,
       move_change: moveAenderung,
       zinskurve_wert: zkWert,
