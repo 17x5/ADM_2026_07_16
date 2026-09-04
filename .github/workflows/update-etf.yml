@@ -23,7 +23,9 @@ jobs:
       - name: JSON auswerten
         run: |
           python3 - <<'EOF'
-          import json
+          import json, os
+          from datetime import datetime
+          from zoneinfo import ZoneInfo
 
           with open('raw.json') as f:
               raw = json.load(f)
@@ -33,10 +35,44 @@ jobs:
           previous_close = meta['previousClose']
           aenderung = (close_preis - previous_close) / previous_close * 100
 
+          if aenderung > 0:
+              richtung_heute = "up"
+          elif aenderung < 0:
+              richtung_heute = "down"
+          else:
+              richtung_heute = "flat"
+
+          heute = datetime.now(ZoneInfo("Europe/Zurich")).strftime("%Y-%m-%d")
+
+          alt = {}
+          if os.path.exists('etf.json'):
+              try:
+                  with open('etf.json') as f:
+                      alt = json.load(f)
+              except (json.JSONDecodeError, OSError):
+                  alt = {}
+
+          streak_count = alt.get("streak_count", 0) or 0
+          streak_direction = alt.get("streak_direction", richtung_heute)
+          streak_date = alt.get("streak_date")
+
+          if streak_date != heute:
+              if richtung_heute == "flat":
+                  pass  # unveraendert lassen, kein neuer Handelstag-Impuls
+              elif richtung_heute == streak_direction:
+                  streak_count += 1
+              else:
+                  streak_direction = richtung_heute
+                  streak_count = 1
+              streak_date = heute
+
           data = {
               "price": close_preis,
               "change_percent": round(aenderung, 2),
-              "previous_close": previous_close
+              "previous_close": previous_close,
+              "streak_count": streak_count,
+              "streak_direction": streak_direction,
+              "streak_date": streak_date
           }
 
           with open('etf.json', 'w') as out:
