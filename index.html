@@ -11,7 +11,7 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "BUILD 2026-09-04 — ETF: Streak-Layout korrigiert (Vortag raus, Abstand)";
+    const APP_VERSION = "BUILD 2026-09-04 — ETF: Streak-Dreieck-Groesse angeglichen (10px)";
     // =========================================================================
 
     const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
@@ -1039,7 +1039,7 @@ function render(data){
     const streakZeichen = (data.etf_streak_direction === 'up') ? "▲" : "▼";
     etfStreakHtml = `<div class="q-streak" style="display:flex; align-items:center; gap:6px; margin-right:8px;">
         <span style="width:1px; height:14px; background:var(--border-dim, rgba(255,255,255,0.15));"></span>
-        <span style="color:${streakFarbe}; font-size:14px;">${streakZeichen}</span><span style="color:${streakFarbe}; font-size:13px; font-weight:600;">${data.etf_streak_count}</span>
+        <span style="color:${streakFarbe}; font-size:10px;">${streakZeichen}</span><span style="color:${streakFarbe}; font-size:13px; font-weight:600;">${data.etf_streak_count}</span>
       </div>`;
   }
   const etfRowHtml = buildQuickRowHTML(etfAmpelColor, "Vanguard FTSE All-World (IE00B3RBWM25)", "Dein persönlicher Anlage-ETF, der die Entwicklung der weltweiten Aktienmärkte abbildet.", etfPercent, etfWertText, !etfIstLive, etfArrow, undefined, undefined, undefined, etfStreakHtml);
