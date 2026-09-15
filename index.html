@@ -11,11 +11,10 @@
   <script>
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "BUILD 2026-09-09 | 12:00";
+    const APP_VERSION = "BUILD 2026-09-15 | 15:40";
     // =========================================================================
 
-    const GEMINI_API_KEY = "AQ.Ab8RN6IwcJ7tdrNrbAAIn7JY35IphKHxLwXwfANgEYHOGs6jhg";
-    const GEMINI_MODEL = "gemini-3.6-flash";
+    const GEMINI_PROXY_URL = "https://adm-dashboard-proxy-google-api.siciliano-735.workers.dev";
   </script>
 
 <style>
@@ -1241,7 +1240,6 @@ function baueGesamtfazit(fundamentaleLage, strukturellesRisiko, welleDesc) {
 }
 
 async function generiereGeminiTexte(ctx) {
-  if (!GEMINI_API_KEY) return;
 
   lastGeminiCtx = ctx;
 
@@ -1452,12 +1450,11 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
 }
 
 async function callGemini(prompt) {
-  if (!GEMINI_API_KEY) return null;
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+    const url = GEMINI_PROXY_URL;
     const res = await fetchWithTimeout(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: { temperature: 0.4 }
