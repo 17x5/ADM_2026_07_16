@@ -14,7 +14,7 @@
     // ===========================================================================
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "BUILD 2026-09-15 | 09:15";
+    const APP_VERSION = "BUILD 2026-09-18 | 17:17";
     // =========================================================================
 
     const GEMINI_PROXY_URL = "https://adm-dashboard-proxy-google-api.siciliano-735.workers.dev";
@@ -1044,7 +1044,7 @@ function render(data){
   
   let momScoreETFTrend = momentum ? momentum.score : 50;
   const formattedEtfPreis = (data.etf_price !== undefined && data.etf_price !== null && !isNaN(data.etf_price)) 
-    ? new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 2 }).format(data.etf_price) 
+    ? new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(data.etf_price) 
     : '–';
   
   const etfPercent = Math.min(100, Math.max(10, momScoreETFTrend));
@@ -1058,7 +1058,7 @@ function render(data){
         <span style="color:${streakFarbe}; font-size:10px;">${streakZeichen}</span><span style="color:${streakFarbe}; font-size:13px; font-weight:600;">${data.etf_streak_count}</span>
       </div>`;
   }
-  const etfRowHtml = buildQuickRowHTML(etfAmpelColor, "Vanguard FTSE All-World (IE00B3RBWM25)", "Dein persönlicher Anlage-ETF, der die Entwicklung der weltweiten Aktienmärkte abbildet.", etfPercent, etfWertText, !etfIstLive, etfArrow, undefined, undefined, undefined, etfStreakHtml);
+  const etfRowHtml = buildQuickRowHTML(etfAmpelColor, 'Vanguard FTSE All-World (<a href="https://live.euronext.com/en/product/etfs/IE00B3RBWM25-XAMS" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">IE00B3RBWM25</a>)', "Dein persönlicher Anlage-ETF, der die Entwicklung der weltweiten Aktienmärkte abbildet.", etfPercent, etfWertText, !etfIstLive, etfArrow, undefined, undefined, undefined, etfStreakHtml);
   document.getElementById('rowsSectionETF').innerHTML = etfRowHtml;
 
   let htmlS1 = "";
