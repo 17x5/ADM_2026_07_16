@@ -14,7 +14,7 @@
     // ===========================================================================
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "BUILD 2026-09-18 | 17:17";
+    const APP_VERSION = "BUILD 2026-09-20 | 21:58";
     // =========================================================================
 
     const GEMINI_PROXY_URL = "https://adm-dashboard-proxy-google-api.siciliano-735.workers.dev";
@@ -1058,7 +1058,7 @@ function render(data){
         <span style="color:${streakFarbe}; font-size:10px;">${streakZeichen}</span><span style="color:${streakFarbe}; font-size:13px; font-weight:600;">${data.etf_streak_count}</span>
       </div>`;
   }
-  const etfRowHtml = buildQuickRowHTML(etfAmpelColor, 'Vanguard FTSE All-World (<a href="https://live.euronext.com/en/product/etfs/IE00B3RBWM25-XAMS" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">IE00B3RBWM25</a>)', "Dein persönlicher Anlage-ETF, der die Entwicklung der weltweiten Aktienmärkte abbildet.", etfPercent, etfWertText, !etfIstLive, etfArrow, undefined, undefined, undefined, etfStreakHtml);
+  const etfRowHtml = buildQuickRowHTML(etfAmpelColor, 'Vanguard FTSE All-World (<a href="https://live.euronext.com/en/product/etfs/IE00B3RBWM25-XAMS" target="_blank" rel="noopener noreferrer" style="color:inherit;" onclick="event.stopPropagation()">IE00B3RBWM25</a>)', "Dein persönlicher Anlage-ETF, der die Entwicklung der weltweiten Aktienmärkte abbildet.", etfPercent, etfWertText, !etfIstLive, etfArrow, undefined, undefined, undefined, etfStreakHtml);
   document.getElementById('rowsSectionETF').innerHTML = etfRowHtml;
 
   let htmlS1 = "";
@@ -1239,25 +1239,169 @@ const UEBERTREIBUNGS_MUSTER = [
   /katastrophe/i, /es\s*ist\s*vorbei/i
 ];
 
-function baueGesamtfazit(fundamentaleLage, strukturellesRisiko, welleDesc) {
-  const fCheck = pruefeTextSegment(fundamentaleLage, UEBERTREIBUNGS_MUSTER);
-  const sCheckVerharmlosend = pruefeTextSegment(strukturellesRisiko, VERHARMLOSUNGS_MUSTER);
-  const sCheckUebertrieben = pruefeTextSegment(strukturellesRisiko, UEBERTREIBUNGS_MUSTER);
+// ---------------------------------------------------------------------------
+// Tages-Snapshots & Veränderungen seit gestern (Verlauf pro Gerät in localStorage)
+// ---------------------------------------------------------------------------
+const FAZIT_SNAPSHOT_KEY = 'fazitSnapshotsV1';
+const AMPEL_LABEL = { gruen: 'Grün', gelb: 'Gelb', rot: 'Rot', purple: 'Violett' };
 
-  let fundamentalTeil = fCheck.beanstandet
-    ? "Die fundamentale Lage der Unternehmen wird gesondert bewertet."
-    : (fundamentaleLage || "");
+function escHtml(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
-  let risikoTeil;
-  if (sCheckVerharmlosend.beanstandet) {
-    risikoTeil = `Strukturell befinden wir uns aktuell in ${welleDesc || "einer unklaren Phase"} - diese Phase gilt als Risikophase mit oft unterschätzter Gefahr.`;
-  } else if (sCheckUebertrieben.beanstandet) {
-    risikoTeil = `Strukturell befinden wir uns aktuell in ${welleDesc || "einer unklaren Phase"} - erhöhte Vorsicht ist angebracht, eine Panikreaktion ist aber nicht angezeigt.`;
-  } else {
-    risikoTeil = strukturellesRisiko || "";
+function heuteZuerich() {
+  return new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Zurich' }); // YYYY-MM-DD
+}
+
+function ladeSnapshots() {
+  try {
+    const o = JSON.parse(localStorage.getItem(FAZIT_SNAPSHOT_KEY) || '{}');
+    return (o && typeof o === 'object') ? o : {};
+  } catch (e) { return {}; }
+}
+
+function speichereSnapshot(datum, snap) {
+  try {
+    const alle = ladeSnapshots();
+    alle[datum] = snap;
+    const keys = Object.keys(alle).sort();
+    while (keys.length > 14) delete alle[keys.shift()];
+    localStorage.setItem(FAZIT_SNAPSHOT_KEY, JSON.stringify(alle));
+  } catch (e) { /* localStorage nicht verfügbar - Fazit funktioniert trotzdem */ }
+}
+
+function vorherigerSnapshot(heute) {
+  const alle = ladeSnapshots();
+  const keys = Object.keys(alle).filter(k => k < heute).sort();
+  if (!keys.length) return null;
+  const k = keys[keys.length - 1];
+  return Object.assign({ datum: k }, alle[k]);
+}
+
+function zahlOderNull(v) {
+  const n = parseFloat(v);
+  return isFinite(n) ? n : null;
+}
+
+function baueSnapshotWerte(ctx) {
+  return {
+    fg:     zahlOderNull(ctx.data && ctx.data.score),
+    vix:    zahlOderNull(ctx.rawVix),
+    breite: zahlOderNull(ctx.actBreadth),
+    spread: zahlOderNull(ctx.creditSpread && ctx.creditSpread.raw_spread),
+    move:   zahlOderNull(ctx.moveWert),
+    zk:     zahlOderNull(ctx.zkWert)
+  };
+}
+
+// Tendenz Angst-&-Gier: Anstieg ist positiv, ausser er treibt in die Gier-Überhitzung;
+// Rückgang ist negativ, ausser er löst eine Überhitzung auf oder ist Erholung aus Extremangst.
+function fgTendenz(alt, neu) {
+  const t = THRESHOLDS.cnnScore;
+  const d = neu - alt;
+  if (d > 0) return (neu > t.rotOben) ? 'negativ' : 'positiv';
+  if (d < 0) return (alt > t.rotOben) ? 'positiv' : 'negativ';
+  return null;
+}
+
+function baueVeraenderungen(ctx, gestern) {
+  const heute = baueSnapshotWerte(ctx);
+  const alt = (gestern && gestern.werte) ? gestern.werte : {};
+  const liste = [];
+
+  // Kennzahlen mit Vergleich zum gespeicherten Vortag
+  // [key, Name, Dezimalstellen, Mindest-Änderung, relativ?, Polarität (+1 = Anstieg positiv)]
+  const regeln = [
+    ['fg',     'Angst-&-Gier-Index',        0, 3,    false, 'fg'],
+    ['vix',    'VIX',                       1, 5,    true,  -1],
+    ['breite', 'Marktbreite (A/D-Linie)',   0, 3,    false, +1],
+    ['spread', 'Credit Spread (pp)',        2, 0.05, false, -1],
+    ['move',   'MOVE-Index',                0, 5,    true,  -1],
+    ['zk',     'Zinskurve 10J-2J (pp)',     2, 0.05, false, +1]
+  ];
+
+  // Fallback für den Angst-&-Gier-Index: Vortageswert von CNN, falls kein eigener Snapshot existiert
+  if (alt.fg === undefined || alt.fg === null) {
+    const v = zahlOderNull(ctx.data && ctx.data.previous_close);
+    if (v !== null) alt.fg = v;
   }
 
-  return `${fundamentalTeil} Gleichzeitig: ${risikoTeil}`.trim();
+  regeln.forEach(([key, name, dez, minAend, relativ, pol]) => {
+    const a = alt[key], n = heute[key];
+    if (a === undefined || a === null || n === null) return;
+    const diff = n - a;
+    const gross = relativ ? (a !== 0 && Math.abs(diff / a * 100) >= minAend) : (Math.abs(diff) >= minAend);
+    if (!gross) return;
+    let tendenz;
+    if (pol === 'fg') tendenz = fgTendenz(a, n);
+    else tendenz = (diff * pol > 0) ? 'positiv' : 'negativ';
+    if (!tendenz) return;
+    const r = x => Number(x.toFixed(dez));
+    liste.push({ kennzahl: name, gestern: r(a), heute: r(n), tendenz });
+  });
+
+  // Tagesveränderung Dein ETF (Yahoo, Vortag = Vortagesschluss)
+  const etf = zahlOderNull(ctx.data && ctx.data.etf_change);
+  if (etf !== null && Math.abs(etf) >= 0.1) {
+    liste.push({ kennzahl: 'Dein ETF (heute)', veraenderung_prozent: Number(etf.toFixed(2)), tendenz: etf > 0 ? 'positiv' : 'negativ' });
+  }
+  const btc = zahlOderNull(ctx.data && ctx.data.btc_change_24h);
+  if (btc !== null && Math.abs(btc) >= 3) {
+    liste.push({ kennzahl: 'Bitcoin (24h)', veraenderung_prozent: Number(btc.toFixed(1)), tendenz: btc > 0 ? 'positiv' : 'negativ' });
+  }
+  return liste;
+}
+
+function veraenderungKurz(v) {
+  if (v.veraenderung_prozent !== undefined) {
+    return `${v.kennzahl}: ${v.veraenderung_prozent > 0 ? '+' : ''}${String(v.veraenderung_prozent).replace('.', ',')} %`;
+  }
+  return `${v.kennzahl}: ${String(v.gestern).replace('.', ',')} → ${String(v.heute).replace('.', ',')}`;
+}
+
+// Baut das Gesamtfazit-HTML. Gemini liefert nur Inhalte (lage/positiv/negativ/aktion_aenderung),
+// das Format (+ / − / =) und die Zeilen-Logik kommen aus dem Code.
+function baueGesamtfazitHtml(e, welleDesc, liste, gestern) {
+  const phase = welleDesc || "einer unklaren Phase";
+
+  let lage = String(e.lage || '').trim();
+  if (pruefeTextSegment(lage, VERHARMLOSUNGS_MUSTER).beanstandet) {
+    lage = `Strukturell befinden wir uns aktuell in ${phase} - diese Phase gilt als Risikophase mit oft unterschätzter Gefahr.`;
+  } else if (pruefeTextSegment(lage, UEBERTREIBUNGS_MUSTER).beanstandet) {
+    lage = `Strukturell befinden wir uns aktuell in ${phase} - erhöhte Vorsicht ist angebracht, eine Panikreaktion ist aber nicht angezeigt.`;
+  }
+
+  const pos = liste.filter(v => v.tendenz === 'positiv');
+  const neg = liste.filter(v => v.tendenz === 'negativ');
+
+  let posText = String(e.positiv || '').trim();
+  if (pos.length && !posText) posText = pos.map(veraenderungKurz).join(' | ');
+
+  let negText = String(e.negativ || '').trim();
+  if (neg.length && (!negText || pruefeTextSegment(negText, UEBERTREIBUNGS_MUSTER).beanstandet)) {
+    negText = neg.map(veraenderungKurz).join(' | ');
+  }
+
+  const ampelOk = Object.prototype.hasOwnProperty.call(AMPEL_LABEL, e.ampel);
+  let aktionText;
+  if (!ampelOk) {
+    aktionText = 'Änderung in der Action: keine Aussage möglich.';
+  } else if (!gestern || !gestern.ampel) {
+    aktionText = 'Änderung in der Action: noch kein Vergleichswert (erster gespeicherter Tag).';
+  } else if (gestern.ampel === e.ampel) {
+    aktionText = 'Änderung in der Action: keine.';
+  } else {
+    const zusatz = String(e.aktion_aenderung || '').trim();
+    aktionText = `Änderung in der Action: Ampel wechselt von ${AMPEL_LABEL[gestern.ampel]} auf ${AMPEL_LABEL[e.ampel]}${zusatz ? ' - ' + zusatz : '.'}`;
+  }
+
+  const zeile = (sym, farbe, text) =>
+    `<span style="display:block; margin-top:6px;"><span style="color:${farbe}; font-weight:700;">${sym}</span> ${escHtml(text)}</span>`;
+
+  return `<span style="display:block;">${escHtml(lage)}</span>`
+    + (pos.length ? zeile('+', 'var(--green)', posText) : '')
+    + (neg.length ? zeile('−', 'var(--red)', negText) : '')
+    + zeile('=', 'var(--text-dim)', aktionText);
 }
 
 // ===========================================================================
@@ -1272,6 +1416,9 @@ async function generiereGeminiTexte(ctx) {
           goldPreisWert, oelPreisWert, creditSpread, moveWert, moveAenderung, zkWert, zkAenderung } = ctx;
 
   const stilAnweisung = STYLE_LEVELS[getStyleLevel()].anweisung;
+
+  const gestern = vorherigerSnapshot(heuteZuerich());
+  const veraenderungen = baueVeraenderungen(ctx, gestern);
 
   const kontext = {
     gesamtstatus: bfStatus,
@@ -1292,7 +1439,9 @@ async function generiereGeminiTexte(ctx) {
     zinskurve_10j_2j_pp: (zkWert !== null && zkWert !== undefined) ? zkWert : null,
     zinskurve_invertiert: (zkWert !== null && zkWert !== undefined) ? (zkWert < 0) : null,
     put_call_score: options ? options.score : null,
-    gold_usd: goldPreisWert, oel_usd_wti: oelPreisWert
+    gold_usd: goldPreisWert, oel_usd_wti: oelPreisWert,
+    veraenderungen_seit_gestern: veraenderungen,
+    gestrige_ampel: gestern ? (gestern.ampel || null) : null
   };
 
   const prompt = `Du bist ein erfahrener und besonnener Marktstratege, der einen Privatanleger betreut, der sein Vermögen langfristig schützen und aufbauen möchte.
@@ -1301,8 +1450,8 @@ Hier die aktuellen Kennzahlen als JSON:
 ${JSON.stringify(kontext, null, 2)}
 
 WICHTIGE REGELN FÜR DIE ANALYSE:
-1. Trenne harte Fakten (solide Quartalszahlen, intakte Unternehmensgewinne) sauber von reinen Stimmungs- oder Strukturindikatoren (Marktbreite, Sentiment).
-2. Das Feld "marktphase" gibt die aktuelle Position im 8-Wellen-Zyklus an. Das Gesamtfazit MUSS diese Phase explizit berücksichtigen und darf ihr nicht widersprechen. Insbesondere: Wird "marktphase" als Welle A oder Welle B (Marktphasen mit unterschätztem bzw. verdecktem Risiko) angegeben, darf das Gesamtfazit den Rücksetzer NICHT als "gesund" oder unbedenklich einordnen, auch wenn die Unternehmensgewinne solide sind. Fundamentale Stärke und Strukturrisiko sind getrennte Dimensionen - eines widerlegt das andere nicht. Diese Regel gilt auf JEDEM Sprachniveau (auch Einsteiger) unverändert - vereinfachte Sprache darf den Risikogehalt der Aussage nicht abschwächen.
+1. Stütze dich ausschliesslich auf die gelieferten Kennzahlen. Mache keine Aussagen zu Unternehmensgewinnen oder Quartalszahlen, dazu liegen keine Daten vor.
+2. Das Feld "marktphase" gibt die aktuelle Position im 8-Wellen-Zyklus an. Das Gesamtfazit MUSS diese Phase explizit berücksichtigen und darf ihr nicht widersprechen. Insbesondere: Wird "marktphase" als Welle A oder Welle B (Marktphasen mit unterschätztem bzw. verdecktem Risiko) angegeben, darf das Gesamtfazit den Rücksetzer NICHT als "gesund" oder unbedenklich einordnen, auch wenn die Kurse zuletzt gestiegen sind. Fundamentale Stärke und Strukturrisiko sind getrennte Dimensionen - eines widerlegt das andere nicht. Diese Regel gilt auf JEDEM Sprachniveau (auch Einsteiger) unverändert - vereinfachte Sprache darf den Risikogehalt der Aussage nicht abschwächen.
 3. Weise bei hoher Marktkonzentration auf Mega-Caps sachlich auf die erhöhte Vorsicht hin, ohne den übergeordneten Aufwärtstrend unbegründet madig zu machen.
 
 Erzeuge NUR ein valides JSON-Objekt (keine Markdown-Codeblöcke, kein Fliesstext davor/danach) mit exakt diesen Feldern:
@@ -1311,8 +1460,10 @@ Erzeuge NUR ein valides JSON-Objekt (keine Markdown-Codeblöcke, kein Fliesstext
   "fazit2": "1-2 Sätze sachliche Einschätzung zu Trend/Momentum/Marktbreite (Kachel 2)",
   "fazit3": "1-2 Sätze sachliche Einschätzung zu Struktur/Kredit-Hebelung/Credit Spreads/MOVE-Index/Zinskurve (Kachel 3)",
   "fazit4": "1-2 Sätze sachliche Einschätzung zu Gold/Öl/Rohstoffen (Kachel 4)",
-  "fundamentale_lage": "1 knapper, sachlicher Satz NUR zu Unternehmensgewinnen/Fundamentaldaten - keine Bewertung des Gesamtrisikos, keine Beruhigung, nur der fundamentale Fakt.",
-  "strukturelles_risiko": "1 knapper, sachlicher Satz NUR zur aktuellen Wellen-Phase/Marktbreite/Struktur-Risiko gemäss 'marktphase'. Muss die Phase beim Namen nennen (z.B. Welle A/B/C) falls zutreffend. Weder beschönigen noch dramatisieren - nur der strukturelle Fakt.",
+  "lage": "1-2 Sätze allgemeine Marktlage in fliessendem Text. Muss die Phase aus 'marktphase' beim Namen nennen (z.B. Welle A/B/C), falls zutreffend. Weder beschönigen noch dramatisieren. Enthält 'veraenderungen_seit_gestern' Einträge, endet 'lage' mit einem kurzen Übergangssatz wie 'Seit gestern hat sich einiges verschoben.'; ist die Liste leer, endet 'lage' mit 'Keine relevanten Veränderungen seit gestern.'",
+  "positiv": "Nur die Einträge aus 'veraenderungen_seit_gestern' mit tendenz 'positiv', in 1-2 zusammenhängenden, gut lesbaren Sätzen. Zahlen (gestern/heute bzw. veraenderung_prozent) EXAKT aus der Liste übernehmen, nichts dazuerfinden. Wo es passt, kurz einordnen, was die Veränderung bedeutet. Gibt es keine solchen Einträge: leerer String.",
+  "negativ": "Nur die Einträge aus 'veraenderungen_seit_gestern' mit tendenz 'negativ', in 1-2 zusammenhängenden, gut lesbaren Sätzen. Zahlen EXAKT aus der Liste übernehmen, nichts dazuerfinden. Sachlich, nicht dramatisierend. Gibt es keine solchen Einträge: leerer String.",
+  "aktion_aenderung": "Nur wenn 'ampel' von 'gestrige_ampel' abweicht: 1 Satz, was sich dadurch an der Handlungsempfehlung ändert. Sonst leerer String.",
   "ampel": "gruen|gelb|rot (Gesamteinschätzung der Marktlage: gruen=entspannt/unkritisch, gelb=erhöhte Vorsicht, rot=hohes Risiko/Warnsignal)",
   "actions": [
     "Formuliere hier eigenständig eine handlungsorientierte Action zur strategischen Ruhe bei Marktschwankungen.",
@@ -1339,7 +1490,7 @@ Schreibe die Actions eigenständig, sachlich, analytisch und souverän. Nutze au
 
     const gesamtEl = document.getElementById('gesamtfazitText');
     if (gesamtEl) {
-      gesamtEl.textContent = baueGesamtfazit(ergebnis.fundamentale_lage, ergebnis.strukturelles_risiko, welleDesc);
+      gesamtEl.innerHTML = baueGesamtfazitHtml(ergebnis, welleDesc, veraenderungen, gestern);
       gesamtEl.style.color = '';
     }
 
@@ -1357,6 +1508,11 @@ Schreibe die Actions eigenständig, sachlich, analytisch und souverän. Nutze au
     if (actionEl && Array.isArray(ergebnis.actions)) {
       actionEl.innerHTML = ergebnis.actions.map(a => `<li>${a}</li>`).join('');
     }
+
+    speichereSnapshot(heuteZuerich(), {
+      ampel: Object.prototype.hasOwnProperty.call(AMPEL_LABEL, ergebnis.ampel) ? ergebnis.ampel : null,
+      werte: baueSnapshotWerte(ctx)
+    });
   } catch(e) {
     setGeminiFehlerStatus();
   }
