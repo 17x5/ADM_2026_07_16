@@ -14,7 +14,7 @@
     // ===========================================================================
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "BUILD 2026-09-20 | 21:58";
+    const APP_VERSION = "BUILD 2026-10-06 | 20:48";
     // =========================================================================
 
     const GEMINI_PROXY_URL = "https://adm-dashboard-proxy-google-api.siciliano-735.workers.dev";
@@ -799,7 +799,7 @@
 const THRESHOLDS = {
   vix:            { gruen: 15.5, rot: 24.0, barMin: 10, barMax: 40 },
   cnnScore:       { rotUnten: 25, rotOben: 75, gruenUnten: 45, gruenOben: 55 },
-  momentum:       { rot: 35, purple: 75 },
+  momentum:       { rot: 35, gruen: 75 },
   breadth:        { rot: 35, gelb: 50 },
   strength:       { rot: 35, gruen: 75 },
   marginDebt:      { rot: 75, gelb: 50 },
@@ -1085,8 +1085,8 @@ function render(data){
   htmlS2 += buildQuickRowHTML(sfColor, "Sicherheits-Ampel & Markttrend", `Modell 9iof2PC9 &bull; ${welleDesc}`, sfPercent, bfStatus);
   
   let momScore = momentum ? momentum.score : 50;
-  let momColor = momScore < THRESHOLDS.momentum.rot ? "rot" : (momScore > THRESHOLDS.momentum.purple ? "purple" : "gelb");
-  htmlS2 += buildQuickRowHTML(momColor, "Markt-Schwung", "Zeigt an, ob sich der S&P 500 stabil über oder unter seiner 200-Tage-Linie bewegt. Steigt he klar darüber, läuft der Motor rund.", momScore, momScore.toFixed(0) + " / 100");
+  let momColor = momScore < THRESHOLDS.momentum.rot ? "rot" : (momScore > THRESHOLDS.momentum.gruen ? "gruen" : "gelb");
+  htmlS2 += buildQuickRowHTML(momColor, "Markt-Schwung", "Zeigt an, ob sich der S&P 500 stabil über oder unter seiner 200-Tage-Linie bewegt. Steigt der Kurs klar darüber, läuft der Motor rund.", momScore, momScore.toFixed(0) + " / 100");
   
   htmlS2 += buildQuickRowHTML(actBreadth < THRESHOLDS.breadth.rot ? "rot" : (actBreadth < THRESHOLDS.breadth.gelb ? "gelb" : "gruen"), "Advance-Decline-Linie (A/D-Linie)", "Misst die echte Marktbreite, indem sie vergleicht, ob insgesamt mehr Aktien steigen oder fallen. Steigen nur wenige Riesen, droht Gefahr.", actBreadth, actBreadth.toFixed(0) + " / 100");
   document.getElementById('rowsSection2').innerHTML = htmlS2;
