@@ -14,7 +14,7 @@
     // ===========================================================================
     // =========================================================================
     // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "BUILD 2026-10-06 | 20:48";
+    const APP_VERSION = "BUILD 2026-10-20 | 23:48";
     // =========================================================================
 
     const GEMINI_PROXY_URL = "https://adm-dashboard-proxy-google-api.siciliano-735.workers.dev";
@@ -1645,7 +1645,7 @@ async function callGemini(prompt) {
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: { temperature: 0.4 }
       })
-    }, 25000);
+    }, 60000);
     if (!res.ok) {
       setApiDot('apiDotGemini', false); return null;
     }
