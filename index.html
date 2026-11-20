@@ -193,7 +193,7 @@ button, input, select { font-family: inherit; }
 /* ════════════════════════════════════════════════════════════
    1. KONFIGURATION
    ════════════════════════════════════════════════════════════ */
-const APP_VERSION = "2026-11-20 | 20:30";   // manuell setzen, Zürcher Zeit
+const APP_VERSION = "2026-11-20 | 20:40";   // manuell setzen, Zürcher Zeit
 
 const CONFIG = {
   dataUrl: "data/market.json",          // erzeugt von .github/workflows/update-market.yml
@@ -327,6 +327,7 @@ function groupLevel(levels) {
 
 // Gesamt über die fünf Smileys: 0–1 rot = grün, 2–3 = gelb, 4–5 = rot
 function overallLevel(levels) {
+  if (levels.every((l) => l === "none")) return "none";
   const reds = levels.filter((l) => l === "red").length;
   return reds >= 4 ? "red" : reds >= 2 ? "yellow" : "green";
 }
@@ -540,8 +541,9 @@ const dot = (lvl, label = "") => `<span class="dot" data-level="${lvl}"${label ?
 
 function renderHeader(model) {
   const c = model.clock;
-  $("liveBadge").dataset.open = c.open;
-  $("liveBadge").textContent = c.open ? "LIVE" : "SCHLUSS";
+  const hasData = Boolean(model.raw.updated);
+  $("liveBadge").dataset.open = c.open && hasData;
+  $("liveBadge").textContent = !hasData ? "OFFLINE" : c.open ? "LIVE" : "SCHLUSS";
   $("liveInfo").textContent = c.label;
   $("liveInfo").dataset.stale = c.stale;
   $("build").textContent = `Build ${APP_VERSION}`;
@@ -621,7 +623,9 @@ function renderTabs() {
     `<button type="button" class="tab" role="tab" data-tab="${t.id}" aria-selected="${t.id === ui.tab}">${t.label}</button>`).join("");
 }
 
-const analysisNote = () => ui.analysisState === "loading"
+const analysisNote = () => ui.analysisState === "nodata"
+  ? `<p class="error-text">Noch keine Marktdaten. Starte auf GitHub unter Actions den Workflow „Marktdaten aktualisieren“.</p>`
+  : ui.analysisState === "loading"
   ? `<p class="loading">Gemini-Analyse wird geladen…</p>`
   : `<p class="error-text">Gemini nicht erreichbar. Es werden nur die berechneten Werte angezeigt.</p>`;
 
@@ -792,6 +796,7 @@ async function refresh() {
     console.error("[Cockpit] Daten:", err);
     if (!model) model = buildModel({});
   }
+  if (!model.raw.updated) ui.analysisState = "nodata";
   renderAll(model);
   if (model.raw.updated) loadAnalysis();
 }
