@@ -79,10 +79,10 @@ button, input, select { font-family: inherit; }
 .ai-badge[data-state="fail"]::before { background: var(--red); }
 
 /* Smiley-Reihe */
-.signals { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; padding: 6px 4px; }
-.signal { background: none; border: none; color: var(--text); display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 2px 0; min-height: 44px; cursor: pointer; }
-.signal__name { font-size: 12px; font-weight: 600; }
-.signal__src { font-size: 11px; color: var(--muted); }
+.signals { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); column-gap: 4px; padding: 6px 4px; }
+.signal { background: none; border: none; color: var(--text); display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 2px 0; min-height: 44px; min-width: 0; cursor: pointer; }
+.signal__name { font-size: clamp(10px, 2.8vw, 12px); font-weight: 600; white-space: nowrap; }
+.signal__src { font-size: clamp(10px, 2.6vw, 11px); color: var(--muted); white-space: nowrap; }
 .signal__value { font-size: 15px; font-weight: 700; height: 19px; line-height: 19px; }
 .signal__range { font-size: 11px; color: #AEB6C0; height: 14px; line-height: 14px; }
 .lights { display: flex; gap: 4px; align-items: center; height: 19px; }
@@ -202,7 +202,7 @@ button, input, select { font-family: inherit; }
 /* ════════════════════════════════════════════════════════════
    1. KONFIGURATION
    ════════════════════════════════════════════════════════════ */
-const APP_VERSION = "2026-11-20 | 21:20";   // manuell setzen, Zürcher Zeit
+const APP_VERSION = "2026-11-20 | 21:10";   // manuell setzen, Zürcher Zeit
 
 const CONFIG = {
   dataUrl: "data/market.json",          // erzeugt von .github/workflows/update-market.yml
