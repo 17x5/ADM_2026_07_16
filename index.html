@@ -71,6 +71,12 @@ button, input, select { font-family: inherit; }
 .live__badge[data-open="true"] { color: var(--red-text); }
 .live__badge[data-open="true"]::before { content: ""; width: 8px; height: 8px; border-radius: 999px; background: var(--red); }
 .live__info[data-stale="true"] { color: var(--yellow); }
+.live__row { display: flex; align-items: center; gap: 12px; }
+.ai-badge { display: flex; align-items: center; gap: 5px; font-weight: 600; color: var(--muted); }
+.ai-badge::before { content: ""; width: 8px; height: 8px; border-radius: 999px; background: var(--neutral); }
+.ai-badge[data-state="ok"]::before   { background: var(--green); }
+.ai-badge[data-state="busy"]::before { background: var(--yellow); }
+.ai-badge[data-state="fail"]::before { background: var(--red); }
 
 /* Smiley-Reihe */
 .signals { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; padding: 6px 4px; }
@@ -158,7 +164,10 @@ button, input, select { font-family: inherit; }
   <header class="header">
     <h1>Markt-Cockpit</h1>
     <div class="live">
-      <span class="live__badge" id="liveBadge">–</span>
+      <span class="live__row">
+        <span class="ai-badge" id="aiBadge" data-state="idle" title="Gemini-Verbindung">Gemini</span>
+        <span class="live__badge" id="liveBadge">–</span>
+      </span>
       <span class="live__info num" id="liveInfo">lädt…</span>
     </div>
   </header>
@@ -193,7 +202,7 @@ button, input, select { font-family: inherit; }
 /* ════════════════════════════════════════════════════════════
    1. KONFIGURATION
    ════════════════════════════════════════════════════════════ */
-const APP_VERSION = "2026-11-20 | 20:40";   // manuell setzen, Zürcher Zeit
+const APP_VERSION = "2026-11-20 | 21:20";   // manuell setzen, Zürcher Zeit
 
 const CONFIG = {
   dataUrl: "data/market.json",          // erzeugt von .github/workflows/update-market.yml
@@ -202,7 +211,8 @@ const CONFIG = {
   staleMinutes: 90,                     // ältere Daten werden gelb markiert
   bottomFinderUrl: "https://de.tradingview.com/script/9iof2PC9/",
   tradingViewUrl: "https://www.tradingview.com/chart/NQ4ANQk2/?symbol=LSE%3ASWDA",
-  storage: { gemini: "cockpit.gemini.v2", style: "analyseStyleLevel" },
+  analysisMaxAgeMin: 180,              // höchstens alle 3 h neu analysieren, ausser die Lage ändert sich
+  storage: { gemini: "cockpit.gemini.v3", style: "analyseStyleLevel" },
 };
 
 // Ampel-Schwellen. level() liest: ab "yellow" gelb, ab "red" rot; lowerIsWorse kehrt die Richtung um.
@@ -274,7 +284,7 @@ async function fetchJSON(url, options = {}, timeoutMs = 15000) {
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     const res = await fetch(url, { ...options, signal: ctrl.signal });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) throw Object.assign(new Error(`HTTP ${res.status}`), { status: res.status });
     return await res.json();
   } finally {
     clearTimeout(timer);
@@ -442,17 +452,46 @@ function buildModel(m) {
 /* ════════════════════════════════════════════════════════════
    5. GEMINI (über Cloudflare Worker, der Key bleibt im Worker)
    ════════════════════════════════════════════════════════════ */
-async function callGemini(prompt, json = true) {
+// Erzwingt gültiges JSON in genau dieser Form
+const ANALYSIS_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    fazit: { type: "STRING" },
+    actions: { type: "ARRAY", items: { type: "OBJECT", properties: { title: { type: "STRING" }, text: { type: "STRING" } }, required: ["title", "text"] } },
+    kacheln: { type: "OBJECT", properties: { sentiment: { type: "STRING" }, trend: { type: "STRING" }, struktur: { type: "STRING" }, rohstoffe: { type: "STRING" } } },
+  },
+  required: ["fazit", "actions", "kacheln"],
+};
+
+// Schreibweise absichern: nie ß (Schweiz)
+const swissSpelling = (t) => String(t ?? "").replace(/ß/g, "ss");
+
+async function callGemini(prompt, schema = null) {
   const body = {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
-    generationConfig: { temperature: 0.3, ...(json ? { responseMimeType: "application/json" } : {}) },
+    generationConfig: { temperature: 0.3, ...(schema ? { responseMimeType: "application/json", responseSchema: schema } : {}) },
   };
-  const res = await fetchJSON(CONFIG.workerUrl, {
-    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
-  }, 60000);
-  const text = res?.candidates?.[0]?.content?.parts?.map((p) => p.text).join("") || "";
-  if (!text) throw new Error("Leere Antwort");
-  return text;
+  setGeminiStatus("busy");
+  try {
+    const res = await fetchJSON(CONFIG.workerUrl, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    }, 95000);   // Cloudflare bricht nach 100 s ab
+    // Denk-Teile (thought) überspringen, nur die eigentliche Antwort verwenden
+    const text = (res?.candidates?.[0]?.content?.parts || []).filter((p) => !p.thought).map((p) => p.text || "").join("");
+    if (!text) throw new Error("Leere Antwort");
+    setGeminiStatus("ok");
+    return swissSpelling(text);
+  } catch (err) {
+    setGeminiStatus("fail");
+    throw err;
+  }
+}
+
+function parseJsonLoose(text) {
+  const clean = text.replace(/```json|```/g, "").trim();
+  try { return JSON.parse(clean); } catch { /* weiter unten */ }
+  const start = clean.indexOf("{"), end = clean.lastIndexOf("}");
+  return JSON.parse(clean.slice(start, end + 1));
 }
 
 function geminiFacts(model) {
@@ -475,7 +514,8 @@ REGELN:
 1. Nutze ausschliesslich die Daten unten. Erfinde keine Zahlen, keine Unternehmensnachrichten.
 2. Die Welle und die Marktdiagnose sind gesetzt. Widersprich ihnen nicht.
 3. Weder beschönigen noch dramatisieren. Chancen und Risiken gleich gewichten.
-4. Schweizer Schreibweise (ss statt ß), Du-Form.
+4. Rechtschreibung: Verwende IMMER die Umlaute ä, ö, ü, Ä, Ö, Ü – niemals ae, oe, ue als Ersatz.
+   Verwende NIE das Zeichen ß, schreibe immer ss (Schweizer Rechtschreibung). Du-Form.
 
 Antworte NUR mit diesem JSON:
 {"fazit": "3–4 Sätze Fliesstext zur Gesamtlage inkl. wichtigster Veränderung zum Vortag",
@@ -487,22 +527,42 @@ DATEN:
 ${JSON.stringify(geminiFacts(model))}`;
 }
 
+// Gratis-Stufe von Gemini: nur wenige Anfragen pro Tag. Deshalb wird nur neu analysiert,
+// wenn sich die Lage ändert oder die letzte Analyse älter als CONFIG.analysisMaxAgeMin ist.
+const situationKey = (model) => [model.phase.code, model.overall, model.fwLevel, model.diag.title].join("|");
+
 async function getAnalysis(model, styleIdx) {
-  const cached = store.get(CONFIG.storage.gemini);
-  if (cached && cached.stamp === model.raw.updated && cached.style === styleIdx) return cached.texts;
-  const text = await callGemini(buildPrompt(model, styleIdx));
-  const out = JSON.parse(text.replace(/```json|```/g, "").trim());
+  const cache = store.get(CONFIG.storage.gemini) || {};
+  const hit = cache[styleIdx];
+  const fresh = hit && hit.key === situationKey(model) && Date.now() - hit.at < CONFIG.analysisMaxAgeMin * 60000;
+  if (fresh) return hit.texts;
+
+  let out;
+  try {
+    out = parseJsonLoose(await callGemini(buildPrompt(model, styleIdx), ANALYSIS_SCHEMA));
+  } catch (err) {
+    if (!(err instanceof SyntaxError)) throw err;          // nur bei kaputtem JSON nochmals versuchen
+    out = parseJsonLoose(await callGemini(buildPrompt(model, styleIdx), ANALYSIS_SCHEMA));
+  }
   if (typeof out.fazit !== "string" || !Array.isArray(out.actions)) throw new Error("Unerwartetes Format");
-  store.set(CONFIG.storage.gemini, { stamp: model.raw.updated, style: styleIdx, texts: out });
+  cache[styleIdx] = { key: situationKey(model), at: Date.now(), texts: out };
+  store.set(CONFIG.storage.gemini, cache);
   return out;
+}
+
+// Verständliche Fehlermeldung je nach Ursache
+function geminiErrorText(err) {
+  if (err?.status === 429) return "Das Gemini-Kontingent der Gratis-Stufe ist aufgebraucht. Später nochmals versuchen.";
+  if (err?.name === "AbortError" || err?.status === 524) return "Gemini hat zu lange gebraucht. Später nochmals versuchen.";
+  return "Gemini ist gerade nicht erreichbar.";
 }
 
 async function askQuestion(model, question, styleIdx) {
   const prompt = `Du bist ein besonnener Marktstratege. Sprachniveau: ${STYLE_LEVELS[styleIdx].prompt}
 Aktuelle Cockpit-Daten (nur nutzen, falls relevant): ${JSON.stringify({ welle: model.phase.code, diagnose: model.diag.title, angst_gier: model.raw.sentiment?.fearGreed?.value, vix: model.raw.sentiment?.vix?.value })}
 Frage: "${question}"
-Antworte in höchstens 4 Sätzen als Fliesstext, Schweizer Schreibweise.`;
-  return (await callGemini(prompt, false)).trim();
+Antworte in höchstens 4 Sätzen als Fliesstext. Verwende immer die Umlaute ä, ö, ü (nie ae, oe, ue) und nie ß, sondern ss.`;
+  return (await callGemini(prompt)).trim();
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -538,6 +598,18 @@ function arrow(dir) {
 }
 
 const dot = (lvl, label = "") => `<span class="dot" data-level="${lvl}"${label ? ` title="${esc(label)}"` : ""}></span>`;
+
+const GEMINI_STATUS_TEXT = { idle: "Gemini: noch nicht abgefragt", busy: "Gemini: Anfrage läuft", ok: "Gemini: erreichbar", fail: "Gemini: nicht erreichbar" };
+let geminiBusy = 0;
+function setGeminiStatus(state) {
+  if (state === "busy") geminiBusy++;
+  else geminiBusy = Math.max(0, geminiBusy - 1);
+  const shown = geminiBusy > 0 ? "busy" : state;
+  const el = $("aiBadge");
+  el.dataset.state = shown;
+  el.title = GEMINI_STATUS_TEXT[shown];
+  el.setAttribute("aria-label", GEMINI_STATUS_TEXT[shown]);
+}
 
 function renderHeader(model) {
   const c = model.clock;
@@ -612,7 +684,8 @@ const ui = {
   tab: "fazit",
   group: null,               // geöffnete Kachel im Indikatoren-Tab
   analysis: null,            // Gemini-Ergebnis
-  analysisState: "loading",  // loading | ok | error
+  analysisState: "loading",  // loading | ok | error | nodata
+  analysisError: "",
   answer: null,
   asking: false,
   style: Number.isInteger(store.get(CONFIG.storage.style)) ? store.get(CONFIG.storage.style) : 1,
@@ -626,8 +699,8 @@ function renderTabs() {
 const analysisNote = () => ui.analysisState === "nodata"
   ? `<p class="error-text">Noch keine Marktdaten. Starte auf GitHub unter Actions den Workflow „Marktdaten aktualisieren“.</p>`
   : ui.analysisState === "loading"
-  ? `<p class="loading">Gemini-Analyse wird geladen…</p>`
-  : `<p class="error-text">Gemini nicht erreichbar. Es werden nur die berechneten Werte angezeigt.</p>`;
+  ? `<p class="loading">Gemini formuliert die Analyse… (bis 60 Sekunden)</p>`
+  : `<p class="error-text">${esc(ui.analysisError)} Bis dahin siehst du die berechneten Werte.</p>`;
 
 const PANELS = {
   fazit(model) {
@@ -639,7 +712,7 @@ const PANELS = {
           <input type="text" name="q" placeholder="z. B. Was bedeutet ein MOVE über 110?" aria-label="Frage an Gemini" ${ui.asking ? "disabled" : ""}>
           <button type="submit" ${ui.asking ? "disabled" : ""}>Fragen</button>
         </form>
-        ${ui.asking ? `<p class="loading">Antwort wird geladen…</p>` : ui.answer ? `<p>${esc(ui.answer)}</p>` : ""}
+        ${ui.asking ? `<p class="loading">Gemini antwortet… (meist 15–30 Sekunden)</p>` : ui.answer ? `<p>${esc(ui.answer)}</p>` : ""}
       </div>
       <div class="block">
         <h3>Sprachniveau</h3>
@@ -753,8 +826,10 @@ function bindEvents() {
     } else if (el.dataset.action === "back") {
       ui.group = null;
     } else if (el.dataset.style) {
+      if (Number(el.dataset.style) === ui.style) return;
       ui.style = Number(el.dataset.style);
       store.set(CONFIG.storage.style, ui.style);
+      ui.analysis = null;          // alten Text ausblenden, damit der Wechsel sichtbar ist
       loadAnalysis();
     }
     renderPanel(model);
@@ -767,7 +842,7 @@ function bindEvents() {
     if (!question || !model) return;
     ui.asking = true; renderPanel(model);
     try { ui.answer = await askQuestion(model, question, ui.style); }
-    catch { ui.answer = "Gemini ist gerade nicht erreichbar."; }
+    catch (err) { ui.answer = geminiErrorText(err); }
     ui.asking = false; renderPanel(model);
   });
 }
@@ -785,6 +860,7 @@ async function loadAnalysis() {
   } catch (err) {
     console.warn("[Cockpit] Gemini:", err);
     ui.analysisState = "error";
+    ui.analysisError = geminiErrorText(err);
   }
   renderPanel(model);
 }
