@@ -1,1907 +1,804 @@
-<!-- BUILD-ZEITSTEMPEL manuell -->
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/17x5/ADM_2026_07_16/main/favicon.png">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Advanced Market Sentiment Cockpit - OnePage Final</title>
-
-  <script>
-    // ===========================================================================
-    // SECTION: CONFIG (build version, external API proxy endpoint)
-    // ===========================================================================
-    // =========================================================================
-    // ⚙️ VERSION / ZEITSTEMPEL HIER ANPASSEN (Ganz nach oben verschoben):
-    const APP_VERSION = "BUILD 2026-10-20 | 23:48";
-    // =========================================================================
-
-    const GEMINI_PROXY_URL = "https://adm-dashboard-proxy-google-api.siciliano-735.workers.dev";
-  </script>
-
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0B0E13">
+<link rel="icon" type="image/png" href="favicon.png">
+<title>Markt-Cockpit</title>
 <style>
-  :root{
-    --bg:#0d1117;
-    --panel:#151b23;
-    --panel-border:#26303b;
-    --text:#e6edf3;
-    --text-dim:#8b98a5;
-    --mono:'IBM Plex Mono','SF Mono',Consolas,monospace;
-    --sans:'IBM Plex Sans',system-ui,sans-serif;
-    --green:#3fb950;
-    --yellow:#d4a72c;
-    --red:#e5534b;
-    --accent:#58a6ff;
-    --purple:#bc8cff;
-  }
-  *{box-sizing:border-box;}
-  html, body{overflow-x:hidden;max-width:100%;}
-  body{
-    margin:0;
-    background:var(--bg);
-    color:var(--text);
-    font-family:var(--sans);
-    padding:10px 16px 20px;
-    transition: background-color 0.5s ease;
-  }
-  body.sent-rot   { background: color-mix(in srgb, var(--red) 25%, var(--bg) 75%); }
-  body.sent-gelb  { background: var(--bg); }
-  body.sent-gruen { background: color-mix(in srgb, var(--green) 25%, var(--bg) 75%); }
-  body.sent-purple{ background: var(--bg); }
-  .wrap{max-width:1200px;margin:0 auto;}
+/* ════════════════════════════════════════════════════════════
+   1. DESIGN-TOKENS
+   ════════════════════════════════════════════════════════════ */
+:root {
+  --bg: #0B0E13;
+  --card: #161B22;
+  --card-inset: #0F1318;
+  --line: #262D36;
+  --line-soft: #1F252D;
+  --text: #E6E9EE;
+  --text-2: #C9CFD6;
+  --muted: #9AA3AE;
+  --accent: #7DB3FF;
+  --green: #3FA34D;
+  --yellow: #F2C230;
+  --red: #E5533D;
+  --red-text: #F08A7A;
+  --green-text: #7FCB8A;
+  --violet: #D2B4FF;
+  --neutral: #6B7480;
+  --radius: 14px;
+  --gap: 10px;
+  --font: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
 
-  header{
-    display:flex;justify-content:space-between;align-items:center;
-    flex-wrap:wrap;gap:15px;
-    border-bottom:1px solid var(--panel-border);
-    padding-bottom:10px;margin-bottom:15px;
-  }
-  h1{font-size:16px;margin:0;letter-spacing:0.02em;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-  h1 span{font-size:14px;font-weight:normal;color:var(--text);flex-basis:100%;}
-  
-  .header-right {
-    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
-  }
-  .refresh-btn{
-    font-family:var(--mono);font-size:11px;background:var(--panel);
-    border:1px solid var(--panel-border);color:var(--accent);
-    padding:5px 10px;border-radius:4px;cursor:pointer;
-  }
-  .refresh-btn:hover{border-color:var(--accent);}
+/* ════════════════════════════════════════════════════════════
+   2. BASIS
+   ════════════════════════════════════════════════════════════ */
+* { box-sizing: border-box; }
+html, body { overflow-x: hidden; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); -webkit-text-size-adjust: 100%; }
+a { color: var(--accent); }
+button, input, select { font-family: inherit; }
+.app { max-width: 480px; margin: 0 auto; padding: 12px 12px 16px; display: flex; flex-direction: column; gap: var(--gap); }
+.muted { color: var(--muted); }
+.num { font-variant-numeric: tabular-nums; }
 
-  .style-slider-wrap{
-    display:flex;align-items:center;gap:6px;
-    font-family:var(--mono);font-size:10px;color:var(--text-dim);
-  }
-  .style-slider-wrap input[type=range]{
-    -webkit-appearance:none;appearance:none;
-    width:54px;height:3px;background:var(--panel-border);
-    border-radius:2px;outline:none;cursor:pointer;
-  }
-  .style-slider-wrap input[type=range]::-webkit-slider-thumb{
-    -webkit-appearance:none;appearance:none;
-    width:12px;height:12px;border-radius:50%;
-    background:var(--accent);cursor:pointer;
-  }
-  .style-slider-wrap input[type=range]::-moz-range-thumb{
-    width:12px;height:12px;border-radius:50%;
-    background:var(--accent);border:none;cursor:pointer;
-  }
-  #styleLevelLabel{color:var(--accent);min-width:58px;display:inline-block;}
+/* ════════════════════════════════════════════════════════════
+   3. KOMPONENTEN
+   ════════════════════════════════════════════════════════════ */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.card[data-level="green"]  { border: 1.5px solid var(--green); }
+.card[data-level="yellow"] { border: 1.5px solid var(--yellow); }
+.card[data-level="red"]    { border: 1.5px solid var(--red); }
 
-  .status-tag {
-    font-family:var(--mono);font-size:11px;line-height:1.4;
-    padding:4px 10px;border-radius:4px;border:1px solid var(--panel-border);
-  }
-  .status-tag.live{background:#0d2818;border-color:var(--green);color:#7ee2a8;}
-  .status-tag.stale{background:#2a2410;border-color:var(--yellow);color:#e8c766;}
-  .status-tag.error{background:#2d1315;border-color:var(--red);color:#ff7b72;}
+.status-bar { color: var(--bg); background: var(--neutral); padding: 1px 12px; text-align: center; font-size: 12px; font-weight: 600; line-height: 1.3; position: relative; }
+.status-bar[data-level="green"]  { background: var(--green); }
+.status-bar[data-level="yellow"] { background: var(--yellow); }
+.status-bar[data-level="red"]    { background: var(--red); }
+.status-bar a { position: absolute; right: 12px; color: var(--bg); }
 
-  .api-status { display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:10px; color:var(--text-dim); }
-  .api-dot { width:8px; height:8px; border-radius:50%; background:var(--text-dim); flex-shrink:0; transition:background-color 0.2s; }
-  .api-dot.ok { background:var(--green); box-shadow:0 0 4px var(--green); }
-  .api-dot.fail { background:var(--red); box-shadow:0 0 4px var(--red); }
-  .api-dot.warn { background:var(--yellow); box-shadow:0 0 4px var(--yellow); }
-  .situation-ampel { display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--text-dim); margin-right:6px; vertical-align:middle; transition:background-color 0.2s, box-shadow 0.2s; }
-  .situation-ampel.gruen { background:var(--green); box-shadow:0 0 5px var(--green); }
-  .situation-ampel.gelb  { background:var(--yellow); box-shadow:0 0 5px var(--yellow); }
-  .situation-ampel.rot   { background:var(--red); box-shadow:0 0 5px var(--red); }
-  .situation-ampel.purple{ background:var(--purple); box-shadow:0 0 5px var(--purple); }
+.dot { width: 10px; height: 10px; border-radius: 999px; display: inline-block; flex-shrink: 0; background: var(--neutral); }
+.dot[data-level="green"]  { background: var(--green); }
+.dot[data-level="yellow"] { background: var(--yellow); }
+.dot[data-level="red"]    { background: var(--red); }
 
-  .fazit{
-    background:var(--panel);border:1px solid var(--panel-border);
-    border-radius:8px;margin-bottom:15px;overflow:hidden;
-  }
-  .fazit h2{
-    font-size:13px;text-transform:uppercase;letter-spacing:0.06em;
-    color:var(--accent);margin:0;
-    font-weight:bold;
-  }
-  .fazit-header-row {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    background:#1f4e79;
-    padding: 6px 16px;
-    border-bottom: 1px solid var(--accent);
-    flex-wrap: wrap;
-    gap: 20px;
-  }
-  #fazitInhalt {
-    padding:12px 16px;
-  }
-  .fazit-section { margin-bottom: 6px; }
-  .fazit-section:last-child { margin-bottom: 0; }
-  .fazit-label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); margin-bottom: 2px; }
-  .fazit-p { margin: 0; font-size: 14px; line-height: 1.4; }
-  
-  .fazit-change { font-family: var(--mono); font-size: 12px; margin-top: 6px; padding-top: 4px; border-top: 1px dashed var(--panel-border); }
+/* Kopfzeile */
+.header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.header h1 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.2px; }
+.live { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 12px; color: var(--muted); }
+.live__badge { display: flex; align-items: center; gap: 5px; font-weight: 600; }
+.live__badge[data-open="true"] { color: var(--red-text); }
+.live__badge[data-open="true"]::before { content: ""; width: 8px; height: 8px; border-radius: 999px; background: var(--red); }
+.live__info[data-stale="true"] { color: var(--yellow); }
 
-  .action-box {
-    margin-top: 10px;
-    background: #0d1117;
-    border-left: 4px solid var(--accent);
-    border-radius: 0 6px 6px 0;
-    overflow: hidden;
-  }
-  .action-header {
-    padding: 8px 12px;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    user-select: none;
-  }
-  .action-header h3 {
-    margin: 0;
-    font-size: 12px;
-    text-transform: uppercase;
-    font-family: var(--mono);
-    letter-spacing: 0.05em;
-  }
-  .action-toggle-icon {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text-dim);
-  }
-  .action-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.22s ease-out, padding 0.22s ease-out;
-    padding: 0 12px;
-  }
-  .action-box.open .action-content {
-    max-height: 250px;
-    padding-bottom: 10px;
-  }
-  .action-list { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.4; }
-  .action-list li { margin-bottom: 4px; }
-  .action-list li:last-child { margin-bottom: 0; }
+/* Smiley-Reihe */
+.signals { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; padding: 6px 4px; }
+.signal { background: none; border: none; color: var(--text); display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 2px 0; min-height: 44px; cursor: pointer; }
+.signal__name { font-size: 12px; font-weight: 600; }
+.signal__src { font-size: 11px; color: var(--muted); }
+.signal__value { font-size: 15px; font-weight: 700; height: 19px; line-height: 19px; }
+.signal__range { font-size: 11px; color: #AEB6C0; height: 14px; line-height: 14px; }
+.lights { display: flex; gap: 4px; align-items: center; height: 19px; }
 
-  /* DASHBOARD GRID */
-  .cockpit-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-    gap: 15px;
-    margin-bottom: 15px;
-  }
-  @media (max-width: 600px) {
-    .cockpit-grid {
-      grid-template-columns: 1fr;
-    }
-  }
+/* Wellen-Zyklus */
+.wave { padding: 4px 12px; }
+.wave svg { display: block; width: 100%; height: auto; }
 
-  .kachel-fazit-box {
-    margin-top: 8px;
-    background: #0d1117;
-    border: 1px solid var(--panel-border);
-    border-radius: 6px;
-    overflow: hidden;
-  }
-  .kachel-fazit-header {
-    padding: 6px 10px;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    user-select: none;
-    background: #161b22;
-  }
-  .kachel-fazit-header h4 {
-    margin: 0;
-    font-size: 11px;
-    text-transform: uppercase;
-    font-family: var(--mono);
-    color: var(--text-dim);
-    letter-spacing: 0.05em;
-  }
-  .kachel-fazit-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.22s ease-out, padding 0.22s ease-out;
-    padding: 0 10px;
-    font-size: 13px;
-    line-height: 1.45;
-  }
-  .kachel-fazit-box.open .kachel-fazit-content {
-    max-height: 450px;
-    padding: 10px 12px;
-  }
+/* ETFs */
+.etfs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.etf { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+.etf__name { display: flex; align-items: center; gap: 3px; font-size: 11px; color: var(--muted); white-space: nowrap; max-width: 100%; overflow: hidden; }
+.etf__price { font-size: 15px; font-weight: 700; }
+.etf__cur { font-size: 11px; font-weight: 500; color: var(--muted); }
+.etf__chg { display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.etf__chg[data-dir="down"] { color: var(--red-text); }
+.etf__chg[data-dir="up"]   { color: var(--green-text); }
 
-  .group-box {
-    background: var(--panel);
-    border: 1px solid var(--panel-border);
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-bottom: 0px;
-    min-width: 0;
-    overflow: hidden;
-  }
-  .group-title {
-    font-family: var(--sans);
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--accent);
-    margin: 0 0 6px 0;
-    border-bottom: 1px solid var(--panel-border);
-    padding-bottom: 4px;
-    font-weight: 600;
-  }
+/* Tabs */
+.tablist { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-bottom: 1px solid var(--line); }
+.tab { background: none; border: none; min-height: 44px; padding: 0 2px; font-size: 12px; color: var(--muted); font-weight: 500; cursor: pointer; }
+.tab[aria-selected="true"] { color: var(--text); font-weight: 700; box-shadow: inset 0 -2px 0 var(--accent); }
+.panel { padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 10px; }
+.panel p { margin: 0; font-size: 14px; line-height: 1.45; }
+.panel h3 { margin: 0; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+.block { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--line); padding-top: 8px; }
+.loading { color: var(--muted); font-size: 13px; }
+.error-text { color: var(--red-text); font-size: 13px; }
 
-  /* AUSKLAPPBARE ZEILEN STILE */
-  .quick-row-wrapper {
-    border-bottom: 1px solid #161b22;
-  }
-  .quick-row-wrapper:last-child {
-    border-bottom: none;
-  }
-  .quick-row {
-    display: flex;
-    flex-wrap: nowrap;
-    align-items: center;
-    font-family: var(--sans);
-    font-size: 13px;
-    line-height: 1.4;
-    padding: 6px 0;
-    cursor: pointer;
-    border-bottom: none !important;
-  }
-  
-  .q-ampel { width: 24px; flex-shrink: 0; font-size: 13px; }
-  
-  .q-bar-container { width: 70px; background: #21262d; height: 6px; border-radius: 3px; margin-right: 10px; flex-shrink: 0; overflow: hidden; position: relative; }
-  .q-bar-fill { height: 100%; width: 0%; transition: width 0.4s, background-color 0.4s; }
-  .q-bar-container { position: relative; overflow: visible; background: #000; }
-  .q-bar-marker { position: absolute; top: -3px; bottom: -3px; width: 2px; background: #fff; z-index: 2; }
-  .q-bar-pointer { position: absolute; top: -6px; width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 7px solid #fff; transform: translateX(-50%); z-index: 2; }
-  
-  .q-val { width: 110px; text-align: left; flex-shrink: 0; font-weight: 600; font-family: var(--mono); font-size: 12px; }
-  
-  .q-arrow { width: 20px; text-align: center; font-size: 10px; margin-right: 6px; flex-shrink: 0; }
+.kv { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.kv > :nth-child(2) { flex-grow: 1; }
+.kv > :last-child { color: var(--muted); }
 
-  .q-text { flex-grow: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .q-text b { font-size: 13px; color: var(--text); }
-  
-  .row-toggle-hint {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--text-dim);
-    margin-left: auto;
-    padding-left: 8px;
-    flex-shrink: 0;
-  }
-  .q-stale-note { flex-basis: 100%; margin-top: 4px; margin-left: 34px; font-size: 11px; }
+.action { display: flex; gap: 10px; }
+.action__nr { width: 22px; height: 22px; border-radius: 999px; background: var(--line); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.action__title { font-size: 14px; font-weight: 600; }
+.action__text { font-size: 13px; color: #AEB6C0; line-height: 1.4; }
 
-  .quick-row-details {
-    max-height: 0 !important;
-    overflow: hidden;
-    transition: max-height 0.22s ease-out, padding 0.22s ease-out;
-    padding: 0 12px;
-    font-size: 11px;
-    color: var(--text-dim);
-    background: #0d1117;
-    line-height: 1.4;
-  }
-  
-  .quick-row-wrapper.open .quick-row-details {
-    max-height: 500px !important;
-    padding: 4px 12px 8px 34px;
-  }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; background: var(--card-inset); border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px; }
+.verdict { font-size: 15px; font-weight: 700; }
+.verdict[data-level="green"]  { color: var(--green-text); }
+.verdict[data-level="yellow"] { color: var(--yellow); }
+.verdict[data-level="red"]    { color: var(--red-text); }
 
-  @media (max-width: 600px) {
-    html, body {
-      overflow-x: hidden;
-    }
-    .group-box {
-      width: 100%;
-    }
-    .quick-row {
-      flex-wrap: wrap;
-      gap: 4px 8px;
-      padding: 8px 0;
-    }
-    .q-ampel {
-      width: 20px;
-    }
-    .q-bar-container {
-      width: 50px;
-    }
-    .q-val {
-      width: 95px;
-      font-size: 11px;
-    }
-    .q-arrow {
-      width: 15px;
-      margin-right: 0;
-    }
-    .q-text {
-      flex-grow: 1;
-      white-space: normal;
-      overflow: visible;
-      text-overflow: clip;
-      min-width: 0;
-    }
-    .row-toggle-hint {
-      margin-left: auto;
-    }
-    .quick-row-wrapper.open .quick-row-details {
-      padding: 4px 8px 8px 8px;
-      font-size: 12px;
-    }
-  }
+.phase { background: var(--card-inset); border-left: 3px solid var(--neutral); border-radius: 0 8px 8px 0; padding: 8px 10px; }
+.phase[data-level="green"]  { border-left-color: var(--green); }
+.phase[data-level="yellow"] { border-left-color: var(--yellow); }
+.phase[data-level="red"]    { border-left-color: var(--red); }
+.phase__name { font-size: 12px; font-weight: 700; letter-spacing: 0.3px; }
+.phase__desc { font-size: 13px; color: var(--text-2); line-height: 1.4; margin-top: 2px; }
 
-  .welle-container {
-    background: var(--panel);
-    border: 1px solid var(--panel-border);
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-top: 15px;
-  }
-  .welle-title {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-dim);
-    margin: 0 0 10px 0;
-    font-weight: 600;
-  }
-  .welle-graphic-box {
-    display: flex;
-    justify-content: center;
-    padding: 16px 0;
-    background: #0d1117;
-    border-radius: 6px;
-    overflow-x: auto;
-  }
-  .welle-svg {
-    width: 100%;
-    max-width: 600px;
-    height: auto;
-  }
+.row-btn { background: none; border: none; border-bottom: 1px solid var(--line-soft); color: var(--text); display: flex; align-items: center; gap: 10px; padding: 0; min-height: 44px; font-size: 13px; text-align: left; cursor: pointer; width: 100%; }
+.row-btn > :nth-child(2) { flex-grow: 1; }
+.back-btn { background: none; border: none; color: var(--accent); display: flex; align-items: center; gap: 4px; padding: 0; min-height: 44px; font-size: 13px; cursor: pointer; align-self: flex-start; }
+.ind-row { display: grid; grid-template-columns: 10px 1fr auto 12px; gap: 4px 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line-soft); }
+.ind-row__name { font-size: 13px; font-weight: 600; }
+.ind-row__val { font-size: 13px; font-weight: 600; }
+.ind-row__desc { grid-column: 2 / 5; font-size: 12px; color: var(--muted); line-height: 1.4; }
+.kachel-fazit { background: var(--card-inset); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 13px; line-height: 1.45; color: var(--text-2); }
 
-  @keyframes pulse-red {
-    0% { r: 5px; opacity: 1; stroke-width: 0; }
-    50% { r: 9px; opacity: 0.6; stroke-width: 3px; }
-    100% { r: 5px; opacity: 1; stroke-width: 0; }
-  }
-  .pulse-node {
-    animation: pulse-red 2s infinite ease-in-out;
-    stroke: var(--red);
-  }
+.button-link { font-size: 14px; font-weight: 600; text-align: center; border: 1px solid #2E3640; border-radius: 10px; padding: 12px; text-decoration: none; display: block; }
+.seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.seg button { background: none; border: none; color: var(--muted); font-size: 12px; min-height: 36px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--line); color: var(--text); font-weight: 600; }
+.ask { display: flex; gap: 8px; }
+.ask input { flex: 1; min-width: 0; background: var(--card-inset); border: 1px solid var(--line); border-radius: 10px; color: var(--text); font-size: 14px; padding: 10px 12px; min-height: 44px; }
+.ask input:focus { outline: none; border-color: var(--accent); }
+.ask button { background: var(--line); border: none; border-radius: 10px; color: var(--text); font-size: 13px; font-weight: 600; padding: 0 14px; min-height: 44px; cursor: pointer; }
+.ask button:disabled, .ask input:disabled { opacity: 0.5; }
 
-  .legende-kachel {
-    background: var(--panel);
-    border: 1px solid var(--panel-border);
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-top: 15px;
-  }
-  .legende-title {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-dim);
-    margin: 0 0 10px 0;
-    font-weight: 600;
-  }
-  .legende-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 10px;
-  }
-  .legende-item {
-    background: #0d1117;
-    border-left: 3px solid var(--panel-border);
-    padding: 8px 12px;
-    border-radius: 0 4px 4px 0;
-    opacity: 0.45;
-    transition: opacity 0.3s;
-  }
-  .legende-item.active {
-    opacity: 1;
-    border-left-width: 4px;
-    background: #1c1618;
-  }
-  .legende-name {
-    font-family: var(--mono);
-    font-size: 11px;
-    font-weight: bold;
-    margin-bottom: 2px;
-  }
-  .legende-desc {
-    font-size: 11px;
-    color: var(--text-dim);
-    line-height: 1.4;
-  }
-  .legende-item.active .legende-desc {
-    color: var(--text);
-  }
-
-  .link-kachel {
-    background: var(--panel);
-    border: 1px solid var(--panel-border);
-    border-radius: 8px;
-    padding: 14px;
-    margin-top: 15px;
-    display: block;
-    text-decoration: none;
-    transition: border-color 0.2s, background-color 0.2s;
-  }
-  .link-kachel:hover {
-    border-color: var(--accent);
-    background: #171f29;
-  }
-  .link-kachel-header {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 10px;
-    border-bottom: 1px solid var(--panel-border);
-    padding-bottom: 6px;
-    margin-bottom: 10px;
-  }
-  .link-kachel-title {
-    font-size: 13px;
-    font-weight: bold;
-    color: var(--text);
-  }
-  .link-kachel-arrow {
-    color: var(--accent);
-    font-size: 11px;
-    font-weight: bold;
-    background: #1c2635;
-    padding: 2px 6px;
-    border-radius: 4px;
-    border: 1px solid #263850;
-    white-space: nowrap;
-  }
-  .link-kachel:hover .link-kachel-arrow {
-    background: var(--accent);
-    color: var(--bg);
-  }
-
-  .eingebettete-analyse {
-    background: #0d1117;
-    border: 1px solid var(--panel-border);
-    border-radius: 6px;
-    padding: 10px 12px;
-    margin-bottom: 12px;
-    font-size: 12px;
-    line-height: 1.4;
-    color: var(--text);
-  }
-  .eingebettete-analyse-title {
-    font-family: var(--mono);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-dim);
-    margin-bottom: 4px;
-  }
-  .eingebettete-analyse-p {
-    margin: 0;
-  }
-
-  .link-kachel-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 12px;
-  }
-  .kachel-section h4 {
-    margin: 0 0 4px 0;
-    font-size: 11px;
-    text-transform: uppercase;
-    font-family: var(--mono);
-    color: var(--text);
-    letter-spacing: 0.02em;
-  }
-  .kachel-section ul {
-    margin: 0;
-    padding-left: 14px;
-    font-size: 11px;
-    color: var(--text-dim);
-    line-height: 1.4;
-  }
-  .kachel-section li {
-    margin-bottom: 3px;
-  }
-  .kachel-section li:last-child {
-    margin-bottom: 0;
-  }
-  .kachel-section li strong {
-    color: var(--text);
-  }
-
-  .frage-row { display:flex; gap:8px; }
-  .frage-input {
-    flex:1; background:var(--bg); border:1px solid var(--panel-border); border-radius:6px;
-    color:var(--text); font-family:var(--mono); font-size:12px; padding:8px 10px;
-  }
-  .frage-input:focus { outline:none; border-color:var(--accent); }
-  .frage-input:disabled { opacity:0.5; }
-
-  footer{margin-top:16px;font-size:11px;color:var(--text-dim);text-align:center;line-height:1.6;}
+/* Fusszeile */
+.footer { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); padding: 0 4px; }
 </style>
 </head>
 <body>
-<div class="wrap">
+<main class="app">
 
-  <header>
-    <h1>Advanced Market Sentiment Cockpit<span id="versionStamp" style="font-family:var(--mono);font-size:10px;color:var(--yellow);border:1px solid var(--yellow);border-radius:4px;padding:1px 6px;vertical-align:middle;"></span></h1>
-    <div class="header-right">
-      <div class="api-status" title="Zeigt, ob die externen API-Keys aktuell funktionieren">
-        <span class="api-dot" id="apiDotGemini"></span>Gemini
-        <span class="api-dot fail" id="apiDotEtf"></span>ETF
-        <span class="api-dot fail" id="apiDotMove"></span>MOVE
-        <span class="api-dot fail" id="apiDotZinskurve"></span>Zinskurve
-        <span class="api-dot ok" id="apiDotCrypto"></span>BTC
-        <span class="api-dot fail" id="apiDotRohstoffe"></span>Rohst.
-      </div>
-      <button class="refresh-btn" id="refreshBtn" onclick="ladeDaten()">↻ Live-Daten abrufen</button>
-      <div class="status-tag live" id="statusIndicator">Lade Zeitstempel...</div>
+  <header class="header">
+    <h1>Markt-Cockpit</h1>
+    <div class="live">
+      <span class="live__badge" id="liveBadge">–</span>
+      <span class="live__info num" id="liveInfo">lädt…</span>
     </div>
   </header>
 
-  <div class="fazit">
-    <div class="fazit-header-row">
-      <h2>Gesamtfazit &amp; Strategie-Check</h2>
-      <div class="style-slider-wrap" title="Sprachniveau der KI-Analyse einstellen">
-        <input type="range" id="styleLevelSlider" min="0" max="2" step="1" value="1" oninput="onStyleLevelChange(this.value)">
-        <span id="styleLevelLabel">Erfahrener Anleger</span>
-      </div>
-    </div>
-    <div id="fazitInhalt">
-      <div class="fazit-section">
-        <div class="fazit-label"><span class="situation-ampel" id="situationAmpelDot"></span>Aktuelles Sentiment:</div>
-        <p class="fazit-p" id="gesamtfazitText">⏳ Verbindung zu Gemini wird aufgebaut…</p>
-        <div class="fazit-change" id="fazitChangeEl">Veränderung zum letzten Handelstag: VIX: 16.07 ▲ | Fear & Greed: 45 / 100 ▲</div>
-      </div>
-      <div id="actionBox" class="action-box">
-        <div class="action-header" onclick="toggleActionBox()">
-          <h3 style="color:var(--accent);">Deine Actions:</h3>
-          <span id="actionToggleIcon" class="action-toggle-icon">▶ Anzeigen</span>
-        </div>
-        <div class="action-content">
-          <ul class="action-list" id="actionListEl"><li>⏳ Empfehlungen werden geladen…</li></ul>
-        </div>
-      </div>
-    </div>
-  </div>
+  <section class="card" id="signalsCard" aria-label="Signale nach Zeithorizont">
+    <div class="status-bar" id="overallBar" role="status">Gesamt: –</div>
+    <div class="signals" id="signals"></div>
+  </section>
 
-  <div class="group-box" style="margin-bottom: 15px;">
-    <div class="group-title">💬 Frage an Gemini</div>
-    <div class="frage-row">
-      <input type="text" id="geminiFrageInput" class="frage-input"
-             placeholder="z.B. Was bedeutet ein MOVE-Index über 140?"
-             onkeydown="if(event.key==='Enter'){ event.preventDefault(); fragGemini(); }">
-      <button class="refresh-btn" id="geminiFrageBtn" onclick="fragGemini()">Fragen</button>
-    </div>
-    <div class="kachel-fazit-box" id="geminiAntwortBox" style="margin-top:8px;">
-      <div class="kachel-fazit-header" onclick="toggleKachelFazit('geminiAntwortBox')">
-        <h4>Antwort</h4>
-        <span class="action-toggle-icon">▶ Anzeigen</span>
-      </div>
-      <div class="kachel-fazit-content" id="geminiAntwortContent"><span style="color:var(--text-dim);">Noch keine Frage gestellt.</span></div>
-    </div>
-  </div>
+  <section class="card" id="waveCard" aria-label="Wellen-Zyklus">
+    <div class="status-bar" id="waveBar" role="status">Welle –</div>
+    <div class="wave" id="waveChart"></div>
+  </section>
 
-  <div class="group-box" style="margin-bottom: 15px;">
-    <div class="group-title">Mein ETF</div>
-    <div id="rowsSectionETF"></div>
-  </div>
+  <section class="etfs" id="etfs" aria-label="ETFs"></section>
 
-  <div class="cockpit-grid">
-    <div id="sentimentGroup" class="group-box">
-      <div class="group-title">Sentiment &amp; Markt-Nervosität</div>
-      <div id="rowsSection1"></div>
-      <div class="kachel-fazit-box" id="fazitBox1">
-        <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox1')">
-          <h4>📋 Kachel-Fazit: Sentiment &amp; Liquidität</h4>
-          <span class="action-toggle-icon">▶ Anzeigen</span>
-        </div>
-        <div class="kachel-fazit-content" id="fazitContent1"><span style="color:var(--text-dim);">⏳ Verbindung zu Gemini wird aufgebaut…</span></div>
-      </div>
-    </div>
+  <section class="card" id="tabsCard" aria-label="Details">
+    <div class="tablist" role="tablist" id="tablist"></div>
+    <div class="panel" id="tabPanel" role="tabpanel"></div>
+  </section>
 
-    <div id="trendGroup" class="group-box">
-      <div class="group-title">Trend- &amp; Sicherheits-Schutz</div>
-      <div id="rowsSection2"></div>
-      <div class="kachel-fazit-box" id="fazitBox2">
-        <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox2')">
-          <h4>📋 Kachel-Fazit: Trend &amp; Marktbreite</h4>
-          <span class="action-toggle-icon">▶ Anzeigen</span>
-        </div>
-        <div class="kachel-fazit-content" id="fazitContent2"><span style="color:var(--text-dim);">⏳ Verbindung zu Gemini wird aufgebaut…</span></div>
-      </div>
-    </div>
-
-    <div id="structureGroup" class="group-box">
-      <div class="group-title">Markt-Struktur &amp; Liquidität</div>
-      <div id="rowsSection3"></div>
-      <div class="kachel-fazit-box" id="fazitBox3">
-        <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox3')">
-          <h4>📋 Kachel-Fazit: Struktur &amp; Fremdkapital-Hebel</h4>
-          <span class="action-toggle-icon">▶ Anzeigen</span>
-        </div>
-        <div class="kachel-fazit-content" id="fazitContent3"><span style="color:var(--text-dim);">⏳ Verbindung zu Gemini wird aufgebaut…</span></div>
-      </div>
-    </div>
-
-    <div id="commodityGroup" class="group-box">
-      <div class="group-title">Rohstoffe: Öl &amp; Gold</div>
-      <div id="rowsSection4"></div>
-      <div class="kachel-fazit-box" id="fazitBox4">
-        <div class="kachel-fazit-header" onclick="toggleKachelFazit('fazitBox4')">
-          <h4>📋 Kachel-Fazit: Gold-Öl-Ratio</h4>
-          <span class="action-toggle-icon">▶ Anzeigen</span>
-        </div>
-        <div class="kachel-fazit-content" id="fazitContent4"><span style="color:var(--text-dim);">⏳ Verbindung zu Gemini wird aufgebaut…</span></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="welle-container">
-    <div class="welle-title">Modell-Visualisierung: Der vollständige 8-Wellen-Zyklus</div>
-    <div class="welle-graphic-box">
-      <svg class="welle-svg" viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg">
-        <line x1="0" y1="180" x2="600" y2="180" stroke="#1f242c" stroke-dasharray="3"></line>
-        <line x1="0" y1="40" x2="600" y2="40" stroke="#1f242c" stroke-dasharray="3"></line>
-        
-        <rect x="470" y="25" width="80" height="110" fill="#2d1315" opacity="0.4" rx="4"></rect>
-        <text x="510" y="20" fill="#ff7b72" font-family="sans-serif" font-size="8" font-weight="bold" text-anchor="middle">GEFAHRENZONE</text>
-
-        <path d="M 30,180 L 110,110 L 160,140 L 320,50 L 380,115" fill="none" stroke="#2c3540" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-        
-        <path d="M 380,115 L 450,35 L 495,125 L 535,65 L 580,210" fill="none" stroke="var(--red)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
-              
-        <circle cx="110" cy="110" r="3" fill="#2c3540"></circle>
-        <circle cx="160" cy="140" r="3" fill="#2c3540"></circle>
-        <circle cx="320" cy="50" r="3" fill="#2c3540"></circle>
-        <circle cx="380" cy="115" r="3" fill="#2c3540"></circle>
-
-        <circle cx="450" cy="35" r="4.5" fill="var(--purple)"></circle>
-        <circle cx="495" cy="125" r="4" fill="var(--yellow)"></circle>
-        <circle cx="580" cy="210" r="5" fill="var(--red)"></circle>
-        
-        <circle id="wellePunkt" cx="535" cy="65" r="5" fill="var(--red)" class="pulse-node" style="fill: var(--red); stroke: var(--red);"></circle> 
-
-        <text x="25" y="195" fill="#485565" font-family="monospace" font-size="10">W1 Start</text>
-        <text x="105" y="95" fill="#485565" font-family="monospace" font-size="10">W1</text>
-        <text x="155" y="155" fill="#485565" font-family="monospace" font-size="10">W2</text>
-        <text x="315" y="35" fill="#8b98a5" font-family="monospace" font-size="10">W3</text>
-        <text x="385" y="130" fill="#485565" font-family="monospace" font-size="10">W4</text>
-        
-        <text x="450" y="22" fill="var(--purple)" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">W5 Top</text>
-        <text x="495" y="142" fill="var(--yellow)" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">Welle A</text>
-        <text id="welleIstLabel" x="535" y="50" fill="var(--red)" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" style="fill: var(--red);">Welle B (IST)</text>
-        <text x="580" y="228" fill="var(--red)" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">Welle C 💥</text>
-      </svg>
-    </div>
-  </div>
-
-  <div class="legende-kachel">
-    <div class="legende-title">Erläuterung der Marktphasen</div>
-    <div class="legende-grid" id="legendeGrid">
-      <div class="legende-item" id="leg_W1" style="border-left-color: var(--green); background-color: rgb(13, 17, 23);">
-        <div class="legende-name" style="color: var(--green);">WELLE 1: DER AUFBRUCH</div>
-        <div class="legende-desc">Erste zaghafte Erholung nach einem harten Bärenmarkt. Meist nur von institutionellen Investoren getragen.</div>
-      </div>
-      <div class="legende-item" id="leg_W2" style="border-left-color: var(--green); background-color: rgb(13, 17, 23);">
-        <div class="legende-name" style="color: var(--green);">WELLE 2: DER RÜCKSTAU</div>
-        <div class="legende-desc">Scharfer Rücksetzer, da Anleger noch mit der alten Angst kämpfen. Wichtig: Welle 2 macht niemals neue Tiefs.</div>
-      </div>
-      <div class="legende-item" id="leg_W3" style="border-left-color: var(--green); background-color: rgb(13, 17, 23);">
-        <div class="legende-name" style="color: var(--green);">WELLE 3: DIE BREITE MASSE</div>
-        <div class="legende-desc">Die längste, stärkste und profitabelste Aufwärtsbewegung. Fundamentaldaten drehen, exzellente Marktbreite stützt den Aufstieg.</div>
-      </div>
-      <div class="legende-item" id="leg_W4" style="border-left-color: var(--green); background-color: rgb(13, 17, 23);">
-        <div class="legende-name" style="color: var(--green);">WELLE 4: DIE KONSOLIDIERUNG</div>
-        <div class="legende-desc">Gewinnmitnahmen führen zu einer unruhigen Seitwärts- oder Abwärtsphase. Bietet die letzte gesunde Kaufgelegenheit.</div>
-      </div>
-      <div class="legende-item" id="leg_W5" style="border-left-color: var(--purple); background-color: rgb(13, 17, 23);">
-        <div class="legende-name" style="color: var(--purple);">WELLE 5: DIE EUPHORIE</div>
-        <div class="legende-desc">Finale Übertreibung angetrieben durch FOMO und Kleinanleger. Indizes erreichen Allzeithochs, während Grossanleger bereits unbemerkt verkaufen.</div>
-      </div>
-      <div class="legende-item" id="leg_WelleA" style="border-left-color: var(--yellow); background-color: rgb(13, 17, 23);">
-        <div class="legende-name" style="color: var(--yellow);">WELLE A: DER WARNSCHUSS</div>
-        <div class="legende-desc">Der erste abrupte Kurseinbruch. Wird von der Masse unterschätzt und fälschlicherweise als günstige Nachkaufchance bewertet.</div>
-      </div>
-      <div class="legende-item active" id="leg_WelleB" style="border-left-color: var(--red); background-color: rgb(28, 22, 24);">
-        <div class="legende-name" style="color: var(--red);">WELLE B: MARKT-ILLUSION</div>
-        <div class="legende-desc">Die gefährlichste Bullenfalle im Zyklus. Die Kurse steigen noch mal an, täuschen Stabilität vor, aber die Marktbreite (&lt; 35) ist kollabiert. Notausstieg vor Welle C!</div>
-      </div>
-      <div class="legende-item" id="leg_WelleC" style="border-left-color: var(--red); background-color: rgb(13, 17, 23);">
-        <div class="legende-name" style="color: var(--red);">WELLE C: DIE KAPITULATION</div>
-        <div class="legende-desc">Die zerstörerische Panikphase. Ein scharfer, rücksichtsloser Abverkauf weit unter das Niveau der Welle A. Erst danach startet der neue Zyklus.</div>
-      </div>
-    </div>
-  </div>
-
-  <a class="link-kachel" href="https://de.tradingview.com/script/9iof2PC9/" target="_blank">
-    <div class="link-kachel-header">
-      <div class="link-kachel-title">🌐 S&amp;P 500 Bottom Finder, von Eric Ludwig</div>
-      <div class="link-kachel-arrow">↗ Script öffnen</div>
-    </div>
-    
-    <div class="eingebettete-analyse">
-      <div class="eingebettete-analyse-title">🔎 Modell-Kurzanalyse (Bottom Finder Status)</div>
-      <div class="eingebettete-analyse-p" id="bottomFinderAnalyseText">
-        Dynamische Status-Analyse wird geladen...
-      </div>
-    </div>
-
-    <div class="link-kachel-grid">
-      <div class="kachel-section">
-        <h4>1. Pre-Bottom-Signal (Blau)</h4>
-        <ul>
-          <li><strong>Bedingung:</strong> S5FI &lt; 20 (Weniger als 20% der S&amp;P 500 Aktien über ihrem 50-Tage-Schnitt)</li>
-          <li><strong>Interpretation:</strong> Extrem schwache Marktbreite – Gegenbewegung könnte bevorstehen.</li>
-        </ul>
-      </div>
-      <div class="kachel-section">
-        <h4>2. Bottom-Signal (Grün)</h4>
-        <ul>
-          <li><strong>Basis:</strong> Advance Decline Differenz der NYSE (Ticker: NSHF)</li>
-          <li><strong>Bedingung:</strong> 50-Tage-SMA heute &gt; vor 10 Tagen + blaues Signal innerhalb der letzten 10 Bars.</li>
-          <li><strong>Interpretation:</strong> Mittelfristige Marktbreite dreht nachhaltig nach oben.</li>
-        </ul>
-      </div>
-      <div class="kachel-section">
-        <h4>Darstellung &amp; Handhabung</h4>
-        <ul>
-          <li><strong>Overlays:</strong> Blau signalisiert Pre-Bottom, Grün signalisiert das bestätigte Bottom.</li>
-          <li><strong>Fehlausbrüche:</strong> Kein Signal ist perfekt; falsche Ausbrüche kommen vor.</li>
-        </ul>
-      </div>
-      <div class="kachel-section">
-        <h4>Tipps &amp; Hinweise</h4>
-        <ul>
-          <li><strong>Bestätigung:</strong> Nutze zusätzlich Momentum (RSI/MACD) oder Volumen.</li>
-          <li><strong>Risiko:</strong> Immer striktes Stop-Loss- &amp; Positionsmanagement anwenden.</li>
-          <li><strong>Praxis:</strong> Vor dem Live-Einsatz im präferierten Zeitrahmen backtesten.</li>
-        </ul>
-      </div>
-    </div>
-  </a>
-
-  <footer>
-    Impressum: Leonardo Curcuruto © 2026, Switzerland
+  <footer class="footer">
+    <span class="num" id="build"></span>
+    <span>© 2026 Leonardo Curcuruto</span>
   </footer>
-</div>
+
+</main>
 
 <script>
-// ===========================================================================
-// SECTION: THRESHOLDS & GLOBAL STATE
-// Scoring boundaries per indicator + live-data flags used across render()
-// ===========================================================================
-const THRESHOLDS = {
-  vix:            { gruen: 15.5, rot: 24.0, barMin: 10, barMax: 40 },
-  cnnScore:       { rotUnten: 25, rotOben: 75, gruenUnten: 45, gruenOben: 55 },
-  momentum:       { rot: 35, gruen: 75 },
-  breadth:        { rot: 35, gelb: 50 },
-  strength:       { rot: 35, gruen: 75 },
-  marginDebt:      { rot: 75, gelb: 50 },
-  creditSpread:   { rot: 35, gelb: 55, gruen: 70 },
-  moveIndex:      { gruen: 70, rot: 110, barMin: 40, barMax: 160, displayMax: 250 },
-  zinskurve:      { rot: 0, gelb: 0.5, barMin: -1.5, barMax: 2.0 },
-  bfStatus: {
-    ueberhitztScore: 76, ueberhitztDebt: 80,
-    illusionBreadth: 35, illusionScoreMin: 35,
-    messerScore: 30, messerVix: 24.0,
-    korrekturScore: 45, korrekturBreadth: 45
-  },
-  goldOelRatio:   { rot: 22, gruen: 16, barMin: 5, barSpan: 25 },
-  goldPreis:      { min: 1800, max: 4500 },
-  oelPreis:       { rot: 90, gruen: 60, barMin: 40, barMax: 120 },
-  bitcoin:        { gruen: 2, rot: -2, barFaktor: 5 },
-  putCall:        { rot: 35, gelb: 55, gruen: 70 }
+"use strict";
+
+/* ════════════════════════════════════════════════════════════
+   1. KONFIGURATION
+   ════════════════════════════════════════════════════════════ */
+const APP_VERSION = "2026-11-20 | 20:30";   // manuell setzen, Zürcher Zeit
+
+const CONFIG = {
+  dataUrl: "data/market.json",          // erzeugt von .github/workflows/update-market.yml
+  workerUrl: "https://adm-dashboard-proxy-google-api.siciliano-735.workers.dev",
+  refreshMinutes: 5,
+  staleMinutes: 90,                     // ältere Daten werden gelb markiert
+  bottomFinderUrl: "https://de.tradingview.com/script/9iof2PC9/",
+  tradingViewUrl: "https://www.tradingview.com/chart/NQ4ANQk2/?symbol=LSE%3ASWDA",
+  storage: { gemini: "cockpit.gemini.v2", style: "analyseStyleLevel" },
 };
 
-let isLive = false;
-let metalIstLive = false; // true, sobald mind. einer von Gold/Öl live ist (für Ratio-Zeile)
-let goldIstLive = false;
-let oelIstLive = false;
-let cryptoIstLive = false;
-let etfIstLive = false;
-let moveIstLive = false;
-let zinskurveIstLive = false;
+// Ampel-Schwellen. level() liest: ab "yellow" gelb, ab "red" rot; lowerIsWorse kehrt die Richtung um.
+const T = {
+  vix:          { yellow: 20,  red: 25 },
+  putCall:      { yellow: 0.6, red: 0.8 },
+  fearGreed:    { greenLow: 45, greenHigh: 55, redLow: 25, redHigh: 75 },   // beidseitig: Angst UND Gier
+  momentum:     { yellow: 75, red: 35, lowerIsWorse: true },
+  breadth:      { yellow: 50, red: 35, lowerIsWorse: true },
+  strength:     { yellow: 75, red: 35, lowerIsWorse: true },
+  hySpread:     { yellow: 3.5, red: 5 },                  // High-Yield-Aufschlag in Prozentpunkten
+  move:         { yellow: 70,  red: 110 },
+  yieldCurve:   { yellow: 0.5, red: 0, lowerIsWorse: true },
+  goldOilRatio: { yellow: 16,  red: 22 },
+  oil:          { yellow: 60,  red: 90 },
+  bitcoinPct:   { yellow: 2,   red: -2, lowerIsWorse: true },
+  // Wellen-Modell (aus dem bisherigen Cockpit übernommen)
+  phase: { overheatScore: 76, illusionBreadth: 35, illusionScoreMin: 35,
+           knifeScore: 30, knifeVix: 24, correctionScore: 45, correctionBreadth: 45 },
+};
 
-// ===========================================================================
-// SECTION: UI HELPERS (collapsible boxes, color/emoji mapping)
-// ===========================================================================
-function toggleActionBox() {
-  const box = document.getElementById('actionBox');
-  const icon = document.getElementById('actionToggleIcon');
-  if (!box) return;
-  if (box.classList.contains('open')) {
-    box.classList.remove('open');
-    if(icon) icon.textContent = '▶ Anzeigen';
-  } else {
-    box.classList.add('open');
-    if(icon) icon.textContent = '▼ Verbergen';
-  }
-}
+// 8-Wellen-Zyklus: Ampel, Position in der Grafik, Erklärung
+const PHASES = {
+  W1: { level: "green",  x: 48,  y: 50, name: "Welle 1: Der Aufbruch", desc: "Erste zaghafte Erholung nach einem Bärenmarkt, meist von institutionellen Anlegern getragen." },
+  W2: { level: "yellow", x: 82,  y: 62, name: "Welle 2: Der Rückstau", desc: "Scharfer Rücksetzer, weil die alte Angst nachwirkt. Welle 2 macht keine neuen Tiefs." },
+  W3: { level: "green",  x: 150, y: 28, name: "Welle 3: Die breite Masse", desc: "Längste und stärkste Aufwärtsbewegung, getragen von guter Marktbreite." },
+  W4: { level: "yellow", x: 186, y: 46, name: "Welle 4: Die Konsolidierung", desc: "Gewinnmitnahmen, unruhige Seitwärtsphase. Letzte gesunde Kaufgelegenheit." },
+  W5: { level: "yellow", x: 236, y: 18, name: "Welle 5: Die Euphorie", desc: "Finale Übertreibung durch FOMO. Allzeithochs, während Grossanleger verkaufen." },
+  A:  { level: "red",    x: 272, y: 56, name: "Welle A: Der Warnschuss", desc: "Erster abrupter Einbruch, von der Masse oft als Nachkaufchance unterschätzt." },
+  B:  { level: "yellow", x: 304, y: 38, name: "Welle B: Markt-Illusion", desc: "Bullenfalle: Die Kurse steigen nochmals, die Marktbreite ist aber eingebrochen." },
+  C:  { level: "red",    x: 366, y: 80, name: "Welle C: Die Kapitulation", desc: "Panikphase mit scharfem Abverkauf unter das Niveau von Welle A. Danach startet ein neuer Zyklus." },
+};
+const PHASE_ORDER = ["W1", "W2", "W3", "W4", "W5", "A", "B", "C"];
 
-function toggleKachelFazit(boxId) {
-  const box = document.getElementById(boxId);
-  if (!box) return;
-  const icon = box.querySelector('.action-toggle-icon');
-  if (box.classList.contains('open')) {
-    box.classList.remove('open');
-    if(icon) icon.textContent = '▶ Anzeigen';
-  } else {
-    box.classList.add('open');
-    if(icon) icon.textContent = '▼ Verbergen';
-  }
-}
+const TABS = [
+  { id: "fazit",  label: "Fazit" },
+  { id: "action", label: "Action" },
+  { id: "ind",    label: "Indikatoren" },
+  { id: "diag",   label: "Diagnose" },
+  { id: "boll",   label: "Bollinger" },
+];
 
-function toggleQuickRow(element) {
-  element.classList.toggle('open');
-  const hint = element.querySelector('.row-toggle-hint');
-  if (hint) {
-    hint.textContent = element.classList.contains('open') ? 'Info ▲' : 'Info ▼';
-  }
-}
-
-function getEmojiColor(color) {
-  if (color === 'gruen') return '🟢';
-  if (color === 'gelb') return '🟡';
-  if (color === 'rot') return '🔴';
-  if (color === 'purple') return '🟣';
-  return '⚪';
-}
-
-function getHexColor(color) {
-  if (color === 'gruen') return 'var(--green)';
-  if (color === 'gelb') return 'var(--yellow)';
-  if (color === 'rot') return 'var(--red)';
-  if (color === 'purple') return 'var(--purple)';
-  return '#8b98a5';
-}
-
-// ===========================================================================
-// SECTION: RENDERING HELPERS (indicator rows, fazit change line)
-// ===========================================================================
-function buildQuickRowHTML(color, title, sub, valPercent, valString, isStale, arrowChar, markerPercent, gradientCss, pointerPercent, streakHtml) {
-  const dim = isStale ? 'opacity:0.45;' : '';
-  const arrow = arrowChar || '▲';
-  let barInner;
-  if (gradientCss) {
-    const pp = Math.max(0, Math.min(100, pointerPercent));
-    barInner = `<div class="q-bar-pointer" style="left: ${pp}%;"></div>`;
-  } else {
-    const marker = (markerPercent !== undefined && markerPercent !== null)
-      ? `<div class="q-bar-marker" style="left: ${Math.max(0, Math.min(100, markerPercent))}%;"></div>`
-      : '';
-    barInner = `<div class="q-bar-fill" style="width: ${valPercent}%; background-color: ${getHexColor(color)};"></div>${marker}`;
-  }
-  const barStyle = gradientCss ? `background: ${gradientCss};` : '';
-  return `
-    <div class="quick-row-wrapper" onclick="toggleQuickRow(this)">
-      <div class="quick-row">
-        <div class="q-ampel" style="${dim}">${getEmojiColor(color)}</div>
-        <div class="q-bar-container" style="${dim} ${barStyle}">
-          ${barInner}
-        </div>
-        <div class="q-val" style="${dim}">${valString}</div>
-        <div class="q-arrow" style="color: ${getHexColor(color)}; ${dim}">${arrow}</div>
-        ${streakHtml || ''}
-        <div class="q-text" style="${dim}"><b>${title}</b></div>
-        <div class="row-toggle-hint">Info ▼</div>
-        ${isStale ? `<div class="q-stale-note" style="color:var(--yellow); font-weight:600;">⚠ Keine Live-Daten</div>` : ''}
-      </div>
-      <div class="quick-row-details">
-        ${sub}
-      </div>
-    </div>
-  `;
-}
-
-function updateFazitChange(currentScore, previousClose, rawVixVal, rawVixVortag) {
-  let diff = currentScore - previousClose;
-  let diffText = "";
-  let diffColor = "var(--text-dim)";
-  
-  if (diff > 0) {
-    diffText = `▲ +${diff.toFixed(1)} Punkte im Fear & Greed Index zum Vortag (Vortag: ${previousClose.toFixed(0)})`;
-    diffColor = "var(--green)";
-  } else if (diff < 0) {
-    diffText = `▼ ${Math.abs(diff).toFixed(1)} Punkte im Fear & Greed Index zum Vortag (Vortag: ${previousClose.toFixed(0)})`;
-    diffColor = "var(--red)";
-  } else {
-    diffText = `■ Fear & Greed Index unverändert zum Vortag (${previousClose.toFixed(0)})`;
-    diffColor = "var(--yellow)";
-  }
-
-  const changeEl = document.getElementById('fazitChangeEl');
-  if (changeEl) {
-    let fgArrow = diff > 0 ? "▲" : (diff < 0 ? "▼" : "■");
-    let vixValFormatted = (rawVixVal !== undefined && rawVixVal !== null) ? rawVixVal.toFixed(2) : "16.07";
-
-    let vixArrow = "■";
-    let vixColorCss = "var(--text-dim)";
-    if (rawVixVortag !== undefined && rawVixVortag !== null && rawVixVal !== undefined && rawVixVal !== null) {
-      let vixDiff = rawVixVal - rawVixVortag;
-      if (vixDiff > 0) { vixArrow = "▲"; vixColorCss = "var(--red)"; }
-      else if (vixDiff < 0) { vixArrow = "▼"; vixColorCss = "var(--green)"; }
-      else { vixArrow = "■"; vixColorCss = "var(--yellow)"; }
-    }
-
-    changeEl.innerHTML = `Veränderung zum letzten Handelstag: VIX: <span style="color:${vixColorCss};">${vixValFormatted} ${vixArrow}</span> | <span style="color:${diffColor};">Fear & Greed: ${currentScore.toFixed(0)} / 100 ${fgArrow}</span>`;
-  }
-}
-
-// ===========================================================================
-// SECTION: MAIN RENDER FUNCTION
-// Builds all indicator tiles from fetched data, computes Ampel status/scores
-// ===========================================================================
-function render(data){
-  const vix = data?.subs?.find(s => s.key === "market_volatility_vix");
-  const breadth = data?.subs?.find(s => s.key === "stock_price_breadth");
-  const momentum = data?.subs?.find(s => s.key === "market_momentum_sp500");
-  const strength = data?.subs?.find(s => s.key === "stock_price_strength");
-  const options = data?.subs?.find(s => s.key === "put_call_options");
-  const marginDebt = data?.subs?.find(s => s.key === "finra_margin_debt");
-  const creditSpread = data?.subs?.find(s => s.key === "junk_bond_demand");
-  const moveWert = data?.move_wert;
-  const moveAenderung = data?.move_change;
-  const zkWert = data?.zinskurve_wert;
-  const zkAenderung = data?.zinskurve_change;
-
-  let rawVix = vix ? (vix.raw_vix ?? 16.07) : 16.07;
-  let rawVixVortag = vix ? (vix.raw_vix_vortag ?? null) : null;
-  let vixColor = "gelb";
-  if (rawVix < THRESHOLDS.vix.gruen) vixColor = "gruen";
-  else if (rawVix > THRESHOLDS.vix.rot) vixColor = "rot";
-
-  let cnnColor = "gelb";
-  if(data.score < THRESHOLDS.cnnScore.rotUnten || data.score > THRESHOLDS.cnnScore.rotOben) cnnColor = "rot";
-  else if(data.score >= THRESHOLDS.cnnScore.gruenUnten && data.score <= THRESHOLDS.cnnScore.gruenOben) cnnColor = "gruen";
-
-  let bfStatus = "GESUND";
-  let sfColor = "gruen"; 
-  let welleDesc = "Trend läuft stabil";
-  let activeLegId = "leg_W3";
-
-  let actBreadth = breadth ? breadth.score : 50;
-
-  const bf = THRESHOLDS.bfStatus;
-  if (data.score >= bf.ueberhitztScore || (marginDebt && marginDebt.score > bf.ueberhitztDebt)) {
-    bfStatus = "ÜBERHITZT"; 
-    sfColor = "rot"; 
-    welleDesc = "Welle 5 erreicht (Top-Gefahr durch Überhebelung)";
-    activeLegId = "leg_W5";
-    updateSvgNode(450, 35, "var(--purple)", "Welle 5 (IST)");
-  } 
-  else if (actBreadth < bf.illusionBreadth && data.score >= bf.illusionScoreMin) {
-    bfStatus = "MARKT-ILLUSION"; 
-    sfColor = "rot"; 
-    welleDesc = "Verdeckte Schwäche in Welle B (Index täuscht Stabilität vor, Fundament bricht ein)";
-    activeLegId = "leg_WelleB";
-    updateSvgNode(535, 65, "var(--red)", "Welle B (IST)");
-  }
-  else if (data.score < bf.messerScore && rawVix > bf.messerVix) {
-    bfStatus = "FALLENDES MESSER"; 
-    sfColor = "gelb"; 
-    welleDesc = "Welle C läuft (Panik-Abverkauf ohne Boden)";
-    activeLegId = "leg_WelleC";
-    updateSvgNode(580, 210, "var(--red)", "Welle C (IST)");
-  } 
-  else if (data.score < bf.korrekturScore || actBreadth < bf.korrekturBreadth) {
-    bfStatus = "KORREKTUR"; 
-    sfColor = "gelb"; 
-    welleDesc = "Welle A: Warnschuss - wird von der Masse oft fälschlich als Kaufgelegenheit unterschätzt";
-    activeLegId = "leg_WelleA";
-    updateSvgNode(495, 125, "var(--yellow)", "Welle A (IST)");
-  } else {
-    updateSvgNode(320, 50, "var(--green)", "Trend (IST)");
-  }
-
-  document.querySelectorAll('.legende-item').forEach(item => {
-    item.classList.remove('active');
-    item.style.backgroundColor = '#0d1117';
-  });
-  const activeItem = document.getElementById(activeLegId);
-  if(activeItem) {
-    activeItem.classList.add('active');
-    activeItem.style.backgroundColor = '#1c1618';
-  }
-
-  const bfTextEl = document.getElementById('bottomFinderAnalyseText');
-  if(bfTextEl) {
-    bfTextEl.innerHTML = `
-      ${getEmojiColor(sfColor)} <strong>Status: ${bfStatus}</strong><br>
-      Aktueller Sentiment Score: <strong>${data.score.toFixed(0)}/100</strong> | Marktbreite: <strong>${actBreadth.toFixed(0)}/100</strong>.<br>
-      Phase: ${welleDesc}.
-    `;
-  }
-
-  let etfChangeVal = data.etf_change || 0;
-  let etfAmpelColor = (etfChangeVal >= 0) ? "gruen" : "rot";
-  let etfArrow = (etfChangeVal >= 0) ? "▲" : "▼";
-  
-  let momScoreETFTrend = momentum ? momentum.score : 50;
-  const formattedEtfPreis = (data.etf_price !== undefined && data.etf_price !== null && !isNaN(data.etf_price)) 
-    ? new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(data.etf_price) 
-    : '–';
-  
-  const etfPercent = Math.min(100, Math.max(10, momScoreETFTrend));
-  const etfWertText = formattedEtfPreis + " (" + (etfChangeVal >= 0 ? "+" : "") + etfChangeVal.toFixed(2) + "%)";
-  let etfStreakHtml = "";
-  if (data.etf_streak_count !== undefined && data.etf_streak_count !== null && data.etf_streak_direction) {
-    const streakFarbe = (data.etf_streak_direction === 'up') ? getHexColor("gruen") : getHexColor("rot");
-    const streakZeichen = (data.etf_streak_direction === 'up') ? "▲" : "▼";
-    etfStreakHtml = `<div class="q-streak" style="display:flex; align-items:center; gap:6px; margin-right:8px;">
-        <span style="width:1px; height:14px; background:var(--border-dim, rgba(255,255,255,0.15));"></span>
-        <span style="color:${streakFarbe}; font-size:10px;">${streakZeichen}</span><span style="color:${streakFarbe}; font-size:13px; font-weight:600;">${data.etf_streak_count}</span>
-      </div>`;
-  }
-  const etfRowHtml = buildQuickRowHTML(etfAmpelColor, 'Vanguard FTSE All-World (<a href="https://live.euronext.com/en/product/etfs/IE00B3RBWM25-XAMS" target="_blank" rel="noopener noreferrer" style="color:inherit;" onclick="event.stopPropagation()">IE00B3RBWM25</a>)', "Dein persönlicher Anlage-ETF, der die Entwicklung der weltweiten Aktienmärkte abbildet.", etfPercent, etfWertText, !etfIstLive, etfArrow, undefined, undefined, undefined, etfStreakHtml);
-  document.getElementById('rowsSectionETF').innerHTML = etfRowHtml;
-
-  let htmlS1 = "";
-  let vixBarPercent = Math.min(100, Math.max(0, ((rawVix - THRESHOLDS.vix.barMin) / THRESHOLDS.vix.barMax) * 100));
-  htmlS1 += buildQuickRowHTML(vixColor, "Markt-Nervosität (VIX)", "Das ist der Angst-Index der Börse. Er misst, wie panisch oder schwankungsanfällig die Anleger gerade sind.", vixBarPercent, rawVix.toFixed(2) + " USD");
-  htmlS1 += buildQuickRowHTML(cnnColor, "Angst & Gier Index (CNN)", "Ein Stimmungsbarometer, das sieben Marktfaktoren zusammenfasst. Es zeigt, ob gerade Gier oder Angst dominiert.", data.score, data.score.toFixed(0) + " / 100");
-  
-  let btcChange = data.btc_change_24h || 0;
-  let btcColor = btcChange > THRESHOLDS.bitcoin.gruen ? "gruen" : (btcChange < THRESHOLDS.bitcoin.rot ? "rot" : "gelb");
-  let btcBarPercent = Math.min(100, Math.max(0, 50 + btcChange * THRESHOLDS.bitcoin.barFaktor));
-  let formattedBtcPrice = (data.btc_usd !== undefined && data.btc_usd !== null && !isNaN(data.btc_usd))
-    ? new Intl.NumberFormat('de-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(data.btc_usd)
-    : '–';
-  htmlS1 += buildQuickRowHTML(btcColor, "Bitcoin (BTC/USD)", "Dient als Fiebermesser für Spekulationslaune und Risiko-Bereitschaft im Markt.", btcBarPercent, formattedBtcPrice, !cryptoIstLive);
-
-  let optScore = options ? options.score : 35;
-  let optColor = optScore < THRESHOLDS.putCall.rot ? "rot" : (optScore < THRESHOLDS.putCall.gelb ? "gelb" : "gruen");
-  htmlS1 += buildQuickRowHTML(optColor, "Absicherungs-Verhältnis", "Zeigt das Verhältnis von Verlustabsicherungen zu Wetten auf steigende Kurse. Sichert sich niemand mehr ab, herrscht blinde Sorglosigkeit.", optScore, optScore.toFixed(0) + " / 100");
-  
-  document.getElementById('rowsSection1').innerHTML = htmlS1;
-
-  let htmlS2 = "";
-  let sfPercent = sfColor === 'gruen' ? 100 : (sfColor === 'purple' ? 85 : (sfColor === 'gelb' ? 45 : 15));
-  htmlS2 += buildQuickRowHTML(sfColor, "Sicherheits-Ampel & Markttrend", `Modell 9iof2PC9 &bull; ${welleDesc}`, sfPercent, bfStatus);
-  
-  let momScore = momentum ? momentum.score : 50;
-  let momColor = momScore < THRESHOLDS.momentum.rot ? "rot" : (momScore > THRESHOLDS.momentum.gruen ? "gruen" : "gelb");
-  htmlS2 += buildQuickRowHTML(momColor, "Markt-Schwung", "Zeigt an, ob sich der S&P 500 stabil über oder unter seiner 200-Tage-Linie bewegt. Steigt der Kurs klar darüber, läuft der Motor rund.", momScore, momScore.toFixed(0) + " / 100");
-  
-  htmlS2 += buildQuickRowHTML(actBreadth < THRESHOLDS.breadth.rot ? "rot" : (actBreadth < THRESHOLDS.breadth.gelb ? "gelb" : "gruen"), "Advance-Decline-Linie (A/D-Linie)", "Misst die echte Marktbreite, indem sie vergleicht, ob insgesamt mehr Aktien steigen oder fallen. Steigen nur wenige Riesen, droht Gefahr.", actBreadth, actBreadth.toFixed(0) + " / 100");
-  document.getElementById('rowsSection2').innerHTML = htmlS2;
-
-  let htmlS3 = "";
-  let strScore = strength ? strength.score : 50;
-  let strColor = strScore < THRESHOLDS.strength.rot ? "rot" : (strScore > THRESHOLDS.strength.gruen ? "gruen" : "gelb");
-  htmlS3 += buildQuickRowHTML(strColor, "Aktien-Stärke", "Misst die Anzahl der Aktien auf 52-Wochen-Hochs im Vergleich zu Tiefs. Das zeigt, wie stark der innere Kern des Marktes ist.", strScore, strScore.toFixed(0) + " / 100");
-  
-  let debtScore = marginDebt ? marginDebt.score : 50;
-  let debtColor = "gruen";
-  let debtDisplayPercent = 100 - debtScore;
-
-  if (debtScore > THRESHOLDS.marginDebt.rot) {
-    debtColor = "rot";
-  } else if (debtScore > THRESHOLDS.marginDebt.gelb) {
-    debtColor = "gelb";
-  }
-  htmlS3 += buildQuickRowHTML(debtColor, "Kredit-Hebelung am Markt", "Misst, wie stark Anleger mit geliehenem Geld spekulieren. Zu viel Fremdkapital verstärkt die Wucht von Crashs massiv.", debtDisplayPercent, debtScore.toFixed(0) + " / 100");
-
-  let csScore = creditSpread ? creditSpread.score : 50;
-  let csColor = csScore < THRESHOLDS.creditSpread.rot ? "rot" : (csScore < THRESHOLDS.creditSpread.gelb ? "gelb" : (csScore >= THRESHOLDS.creditSpread.gruen ? "gruen" : "gelb"));
-  let csArrow = csColor === "rot" ? "▼" : (csColor === "gruen" ? "▲" : "▲");
-  let csValString = (creditSpread && creditSpread.raw_spread !== undefined && creditSpread.raw_spread !== null && !isNaN(creditSpread.raw_spread))
-    ? creditSpread.raw_spread.toFixed(2) + " / 24"
-    : csScore.toFixed(0) + " / 100";
-  htmlS3 += buildQuickRowHTML(csColor, "Credit Spreads (High-Yield-Aufschlag)", "Misst den Renditeaufschlag von Ramsch-Anleihen (Junk Bonds) gegenüber sicheren Staatsanleihen. Ein enger Aufschlag zeigt Sorglosigkeit im Kreditmarkt, ein breiter Aufschlag Stress und Risikoscheu.", csScore, csValString, false, csArrow);
-
-  if (moveIstLive && moveWert !== null && moveWert !== undefined && !isNaN(moveWert)) {
-    let mvColor = moveWert >= THRESHOLDS.moveIndex.rot ? "rot" : (moveWert <= THRESHOLDS.moveIndex.gruen ? "gruen" : "gelb");
-    let mvPercent = Math.max(0, Math.min(100, ((moveWert - THRESHOLDS.moveIndex.barMin) / (THRESHOLDS.moveIndex.barMax - THRESHOLDS.moveIndex.barMin)) * 100));
-    let mvArrow = moveAenderung > 0 ? "▲" : (moveAenderung < 0 ? "▼" : "■");
-    let mvValString = moveWert.toFixed(2) + " / " + THRESHOLDS.moveIndex.displayMax;
-    htmlS3 += buildQuickRowHTML(mvColor, "MOVE-Index (Anleihen-Volatilität)", "Misst die erwartete Schwankungsbreite am US-Staatsanleihenmarkt - das Pendant zum VIX für Anleihen. Steigt er stark, herrscht Stress im Zinsmarkt.", mvPercent, mvValString, false, mvArrow);
-  } else {
-    htmlS3 += buildQuickRowHTML("grau", "MOVE-Index (Anleihen-Volatilität)", "Misst die erwartete Schwankungsbreite am US-Staatsanleihenmarkt - das Pendant zum VIX für Anleihen. Steigt er stark, herrscht Stress im Zinsmarkt.<br><br>⚠ Live-Daten aktuell nicht verfügbar (move.json fehlt oder Workflow noch nicht gelaufen).", 0, "⚠ Keine Daten", true, "–");
-  }
-
-const zkRotEnd = ((THRESHOLDS.zinskurve.rot - THRESHOLDS.zinskurve.barMin) / (THRESHOLDS.zinskurve.barMax - THRESHOLDS.zinskurve.barMin)) * 100;
-const zkGelbEnd = ((THRESHOLDS.zinskurve.gelb - THRESHOLDS.zinskurve.barMin) / (THRESHOLDS.zinskurve.barMax - THRESHOLDS.zinskurve.barMin)) * 100;
-const zkGradient = `linear-gradient(to right, var(--red) 0%, var(--red) ${zkRotEnd}%, var(--yellow) ${zkRotEnd}%, var(--yellow) ${zkGelbEnd}%, var(--green) ${zkGelbEnd}%, var(--green) 100%)`;
-
-if (zinskurveIstLive && zkWert !== null && zkWert !== undefined && !isNaN(zkWert)) {
-    let zkColor = zkWert < THRESHOLDS.zinskurve.rot ? "rot" : (zkWert < THRESHOLDS.zinskurve.gelb ? "gelb" : "gruen");
-    let zkPercent = Math.max(0, Math.min(100, ((zkWert - THRESHOLDS.zinskurve.barMin) / (THRESHOLDS.zinskurve.barMax - THRESHOLDS.zinskurve.barMin)) * 100));
-    let zkArrow = zkAenderung > 0 ? "▲" : (zkAenderung < 0 ? "▼" : "■");
-    let zkValString = (zkWert >= 0 ? "+" : "") + zkWert.toFixed(2) + " %";
-    
-    let zkSub = "Misst den Renditeunterschied zwischen 10- und 2-jährigen US-Staatsanleihen. Eine negative Differenz deutet auf einen restriktiven Zinsmarkt und ökonomischen Stress hin<br><br>" +
-                  "<strong>Rot (unter 0 %):</strong> Invertierte Zinskurve – historisch ein hochzuverlässiger Vorbote für eine Rezession.<br><br>" +
-                  "<strong>Gelb (0 % bis 0,5 %):</strong> Übergangsbereich.<br><br>" +
-                  "<strong>Grün (ab 0,5 %):</strong> Normalisierte Zinsstruktur.<br><br>";
-
-    if (zkWert < THRESHOLDS.zinskurve.rot) zkSub += "<br><br>⚠ Aktuell invertiert - erhöhte Vorsicht angebracht.";
-    htmlS3 += buildQuickRowHTML(zkColor, "Zinskurve (10J-2J Spread)", zkSub, zkPercent, zkValString, false, zkArrow, null, zkGradient, zkPercent);
-  } else {
-    htmlS3 += buildQuickRowHTML("grau", "Zinskurve (10J-2J Spread)", "Misst den Renditeunterschied zwischen 10- und 2-jährigen US-Staatsanleihen. Eine negative Differenz deutet auf einen restriktiven Zinsmarkt und ökonomischen Stress hin.<br><br>⚠ Live-Daten aktuell nicht verfügbar (zinskurve.json fehlt oder Workflow noch nicht gelaufen).", 0, "⚠ Keine Daten", true, "–", null, zkGradient, zkRotEnd);
-  }
-
-
-  document.getElementById('rowsSection3').innerHTML = htmlS3;
-
-  let htmlS4 = "";
-  let goldPreisWert = data.gold_usd;
-  let oelPreisWert = data.oil_usd;
-  let goldOelRatio = (oelPreisWert && oelPreisWert > 0) ? (goldPreisWert / oelPreisWert) : 0;
-
-  let ratioColor = "gelb";
-  if (goldOelRatio > THRESHOLDS.goldOelRatio.rot) ratioColor = "rot";
-  else if (goldOelRatio < THRESHOLDS.goldOelRatio.gruen) ratioColor = "gruen";
-  let ratioPercent = Math.min(100, Math.max(0, ((goldOelRatio - THRESHOLDS.goldOelRatio.barMin) / THRESHOLDS.goldOelRatio.barSpan) * 100));
-  htmlS4 += buildQuickRowHTML(ratioColor, "Gold-Öl-Ratio", "Vergleicht den Goldpreis mit dem Ölpreis. Ein hoher Wert zeigt Krisenstimmung, ein tiefer starkes Wirtschaftswachstum.", ratioPercent, goldOelRatio > 0 ? goldOelRatio.toFixed(1) + " : 1" : "–", !metalIstLive);
-
-  let goldPercent = (goldPreisWert !== undefined && goldPreisWert !== null) ? Math.min(100, Math.max(0, ((goldPreisWert - THRESHOLDS.goldPreis.min) / (THRESHOLDS.goldPreis.max - THRESHOLDS.goldPreis.min)) * 100)) : 0;
-  let formattedGoldPreis = (goldPreisWert !== undefined && goldPreisWert !== null && !isNaN(goldPreisWert))
-    ? new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(goldPreisWert)
-    : '–';
-  htmlS4 += buildQuickRowHTML("gelb", "Goldpreis (Unze)", "Der klassische sichere Hafen in Krisenzeiten. Steigt er stark, suchen Anleger Schutz vor unruhigen Zeiten.", goldPercent, formattedGoldPreis, !goldIstLive);
-
-  let oelColor = (oelPreisWert && oelPreisWert > THRESHOLDS.oelPreis.rot) ? "rot" : ((oelPreisWert && oelPreisWert < THRESHOLDS.oelPreis.gruen) ? "gruen" : "gelb");
-  let oelPercent = (oelPreisWert !== undefined && oelPreisWert !== null) ? Math.min(100, Math.max(0, ((oelPreisWert - THRESHOLDS.oelPreis.barMin) / (THRESHOLDS.oelPreis.barMax - THRESHOLDS.oelPreis.barMin)) * 100)) : 0;
-  let formattedOelPreis = (oelPreisWert !== undefined && oelPreisWert !== null && !isNaN(oelPreisWert))
-    ? new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(oelPreisWert)
-    : '–';
-  htmlS4 += buildQuickRowHTML(oelColor, "Ölpreis (WTI)", "Spiegelt die globale Energienachfrage und den wirtschaftlichen Puls der Weltwirtschaft wider.", oelPercent, formattedOelPreis, !oelIstLive);
-
-  document.getElementById('rowsSection4').innerHTML = htmlS4;
-
-  updateFazitChange(data.score, data.previous_close, rawVix, rawVixVortag);
-  
-  const statusIndicator = document.getElementById('statusIndicator');
-  statusIndicator.className = isLive ? 'status-tag live' : 'status-tag stale';
-  statusIndicator.textContent = fmtDate(data.timestamp);
-
-  generiereGeminiTexte({
-    data, bfStatus, sfColor, welleDesc,
-    vixColor, rawVix, cnnColor,
-    momentum, strength, marginDebt, options, actBreadth,
-    goldPreisWert, oelPreisWert, creditSpread, moveWert, moveAenderung, zkWert, zkAenderung
-  });
-}
+const ETF_ICONS = { core: "globe", equal: "bars", emerging: "sprout" };
 
 const STYLE_LEVELS = [
-  { key: 'einsteiger',    label: 'Börsen-Einsteiger', anweisung: 'Erkläre sehr einfach und ohne Fachbegriffe, wie für jemanden ohne Börsenvorwissen. Nutze bei Bedarf einen kurzen Alltagsvergleich, aber dieser darf ein bestehendes Risiko niemals verharmlosen oder beschönigen - einfache Sprache heisst nicht beruhigende Sprache. Kurze, klare Sätze.' },
-  { key: 'erfahren',      label: 'Erfahrener Anleger', anweisung: 'Erkläre für einen Anleger mit Grundkenntnissen an der Börse. Übliche Fachbegriffe (z.B. Volatilität, Momentum) sind ok, kurz erklärt wenn nötig.' },
-  { key: 'profi',         label: 'Börsenprofi',       anweisung: 'Erkläre knapp und fachlich präzise für einen erfahrenen Börsenprofi. Fachbegriffe ohne Erklärung verwenden, keine Grundlagen erläutern.' }
+  { label: "Einsteiger", prompt: "Erkläre sehr einfach, ohne Fachbegriffe. Ein Alltagsvergleich ist erlaubt, darf aber kein Risiko verharmlosen." },
+  { label: "Erfahren",   prompt: "Erkläre für Anleger mit Grundkenntnissen. Übliche Fachbegriffe sind ok." },
+  { label: "Profi",      prompt: "Knapp und fachlich präzise, Fachbegriffe ohne Erklärung." },
 ];
 
-let lastGeminiCtx = null;
+/* ════════════════════════════════════════════════════════════
+   2. HILFSFUNKTIONEN
+   ════════════════════════════════════════════════════════════ */
+const $ = (id) => document.getElementById(id);
 
-// ===========================================================================
-// SECTION: ANALYSIS STYLE LEVEL & TEXT FILTERING
-// Beginner/Advanced/Pro slider + bias filtering for Gemini output
-// ===========================================================================
-function getStyleLevel() {
-  const gespeichert = parseInt(localStorage.getItem('analyseStyleLevel'), 10);
-  return Number.isInteger(gespeichert) && gespeichert >= 0 && gespeichert <= 2 ? gespeichert : 1;
-}
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-function onStyleLevelChange(value) {
-  const level = parseInt(value, 10);
-  localStorage.setItem('analyseStyleLevel', level);
-  document.getElementById('styleLevelLabel').textContent = STYLE_LEVELS[level].label;
-  if (lastGeminiCtx) generiereGeminiTexte(lastGeminiCtx);
-}
+const isNum = (n) => typeof n === "number" && Number.isFinite(n);
 
-(function initStyleLevel() {
-  const level = getStyleLevel();
-  document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('styleLevelSlider').value = level;
-    document.getElementById('styleLevelLabel').textContent = STYLE_LEVELS[level].label;
-  });
-})();
+const fmt = (n, digits = 2) => isNum(n)
+  ? n.toLocaleString("de-CH", { minimumFractionDigits: digits, maximumFractionDigits: digits }).replace(".", ",")
+  : "–";
 
-function pruefeTextSegment(text, verbotenesMusterSet) {
-  if (!text) return { text, beanstandet: false };
-  const treffer = verbotenesMusterSet.some(regex => regex.test(text));
-  return { text, beanstandet: treffer };
-}
+const fmtPct = (n, digits = 1) => isNum(n) ? (n > 0 ? "+" : n < 0 ? "−" : "") + fmt(Math.abs(n), digits) + " %" : "–";
 
-const VERHARMLOSUNGS_MUSTER = [
-  /gesund/i, /kein(e)?\s*grund\s*zur\s*sorge/i, /unbedenklich/i,
-  /keine\s*sorge/i, /entspannt/i, /alles\s*im\s*lot/i, /alles\s*normal/i,
-  /nichts\s*zu\s*befürchten/i, /kurze\s*verschnaufpause/i, /keinerlei\s*anlass/i
-];
-
-const UEBERTREIBUNGS_MUSTER = [
-  /crash\s*(ist\s*)?unausweichlich/i, /weltuntergang/i, /sofort\s*alles\s*verkaufen/i,
-  /totalverlust/i, /kollaps\s*steht\s*bevor/i, /panik(artig)?\s*verkaufen/i,
-  /katastrophe/i, /es\s*ist\s*vorbei/i
-];
-
-// ---------------------------------------------------------------------------
-// Tages-Snapshots & Veränderungen seit gestern (Verlauf pro Gerät in localStorage)
-// ---------------------------------------------------------------------------
-const FAZIT_SNAPSHOT_KEY = 'fazitSnapshotsV1';
-const AMPEL_LABEL = { gruen: 'Grün', gelb: 'Gelb', rot: 'Rot', purple: 'Violett' };
-
-function escHtml(s) {
-  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-function heuteZuerich() {
-  return new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Zurich' }); // YYYY-MM-DD
-}
-
-function ladeSnapshots() {
+async function fetchJSON(url, options = {}, timeoutMs = 15000) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    const o = JSON.parse(localStorage.getItem(FAZIT_SNAPSHOT_KEY) || '{}');
-    return (o && typeof o === 'object') ? o : {};
-  } catch (e) { return {}; }
-}
-
-function speichereSnapshot(datum, snap) {
-  try {
-    const alle = ladeSnapshots();
-    alle[datum] = snap;
-    const keys = Object.keys(alle).sort();
-    while (keys.length > 14) delete alle[keys.shift()];
-    localStorage.setItem(FAZIT_SNAPSHOT_KEY, JSON.stringify(alle));
-  } catch (e) { /* localStorage nicht verfügbar - Fazit funktioniert trotzdem */ }
-}
-
-function vorherigerSnapshot(heute) {
-  const alle = ladeSnapshots();
-  const keys = Object.keys(alle).filter(k => k < heute).sort();
-  if (!keys.length) return null;
-  const k = keys[keys.length - 1];
-  return Object.assign({ datum: k }, alle[k]);
-}
-
-function zahlOderNull(v) {
-  const n = parseFloat(v);
-  return isFinite(n) ? n : null;
-}
-
-function baueSnapshotWerte(ctx) {
-  return {
-    fg:     zahlOderNull(ctx.data && ctx.data.score),
-    vix:    zahlOderNull(ctx.rawVix),
-    breite: zahlOderNull(ctx.actBreadth),
-    spread: zahlOderNull(ctx.creditSpread && ctx.creditSpread.raw_spread),
-    move:   zahlOderNull(ctx.moveWert),
-    zk:     zahlOderNull(ctx.zkWert)
-  };
-}
-
-// Tendenz Angst-&-Gier: Anstieg ist positiv, ausser er treibt in die Gier-Überhitzung;
-// Rückgang ist negativ, ausser er löst eine Überhitzung auf oder ist Erholung aus Extremangst.
-function fgTendenz(alt, neu) {
-  const t = THRESHOLDS.cnnScore;
-  const d = neu - alt;
-  if (d > 0) return (neu > t.rotOben) ? 'negativ' : 'positiv';
-  if (d < 0) return (alt > t.rotOben) ? 'positiv' : 'negativ';
-  return null;
-}
-
-function baueVeraenderungen(ctx, gestern) {
-  const heute = baueSnapshotWerte(ctx);
-  const alt = (gestern && gestern.werte) ? gestern.werte : {};
-  const liste = [];
-
-  // Kennzahlen mit Vergleich zum gespeicherten Vortag
-  // [key, Name, Dezimalstellen, Mindest-Änderung, relativ?, Polarität (+1 = Anstieg positiv)]
-  const regeln = [
-    ['fg',     'Angst-&-Gier-Index',        0, 3,    false, 'fg'],
-    ['vix',    'VIX',                       1, 5,    true,  -1],
-    ['breite', 'Marktbreite (A/D-Linie)',   0, 3,    false, +1],
-    ['spread', 'Credit Spread (pp)',        2, 0.05, false, -1],
-    ['move',   'MOVE-Index',                0, 5,    true,  -1],
-    ['zk',     'Zinskurve 10J-2J (pp)',     2, 0.05, false, +1]
-  ];
-
-  // Fallback für den Angst-&-Gier-Index: Vortageswert von CNN, falls kein eigener Snapshot existiert
-  if (alt.fg === undefined || alt.fg === null) {
-    const v = zahlOderNull(ctx.data && ctx.data.previous_close);
-    if (v !== null) alt.fg = v;
-  }
-
-  regeln.forEach(([key, name, dez, minAend, relativ, pol]) => {
-    const a = alt[key], n = heute[key];
-    if (a === undefined || a === null || n === null) return;
-    const diff = n - a;
-    const gross = relativ ? (a !== 0 && Math.abs(diff / a * 100) >= minAend) : (Math.abs(diff) >= minAend);
-    if (!gross) return;
-    let tendenz;
-    if (pol === 'fg') tendenz = fgTendenz(a, n);
-    else tendenz = (diff * pol > 0) ? 'positiv' : 'negativ';
-    if (!tendenz) return;
-    const r = x => Number(x.toFixed(dez));
-    liste.push({ kennzahl: name, gestern: r(a), heute: r(n), tendenz });
-  });
-
-  // Tagesveränderung Dein ETF (Yahoo, Vortag = Vortagesschluss)
-  const etf = zahlOderNull(ctx.data && ctx.data.etf_change);
-  if (etf !== null && Math.abs(etf) >= 0.1) {
-    liste.push({ kennzahl: 'Dein ETF (heute)', veraenderung_prozent: Number(etf.toFixed(2)), tendenz: etf > 0 ? 'positiv' : 'negativ' });
-  }
-  const btc = zahlOderNull(ctx.data && ctx.data.btc_change_24h);
-  if (btc !== null && Math.abs(btc) >= 3) {
-    liste.push({ kennzahl: 'Bitcoin (24h)', veraenderung_prozent: Number(btc.toFixed(1)), tendenz: btc > 0 ? 'positiv' : 'negativ' });
-  }
-  return liste;
-}
-
-function veraenderungKurz(v) {
-  if (v.veraenderung_prozent !== undefined) {
-    return `${v.kennzahl}: ${v.veraenderung_prozent > 0 ? '+' : ''}${String(v.veraenderung_prozent).replace('.', ',')} %`;
-  }
-  return `${v.kennzahl}: ${String(v.gestern).replace('.', ',')} → ${String(v.heute).replace('.', ',')}`;
-}
-
-// Baut das Gesamtfazit-HTML. Gemini liefert nur Inhalte (lage/positiv/negativ/aktion_aenderung),
-// das Format (+ / − / =) und die Zeilen-Logik kommen aus dem Code.
-function baueGesamtfazitHtml(e, welleDesc, liste, gestern) {
-  const phase = welleDesc || "einer unklaren Phase";
-
-  let lage = String(e.lage || '').trim();
-  if (pruefeTextSegment(lage, VERHARMLOSUNGS_MUSTER).beanstandet) {
-    lage = `Strukturell befinden wir uns aktuell in ${phase} - diese Phase gilt als Risikophase mit oft unterschätzter Gefahr.`;
-  } else if (pruefeTextSegment(lage, UEBERTREIBUNGS_MUSTER).beanstandet) {
-    lage = `Strukturell befinden wir uns aktuell in ${phase} - erhöhte Vorsicht ist angebracht, eine Panikreaktion ist aber nicht angezeigt.`;
-  }
-
-  const pos = liste.filter(v => v.tendenz === 'positiv');
-  const neg = liste.filter(v => v.tendenz === 'negativ');
-
-  let posText = String(e.positiv || '').trim();
-  if (pos.length && !posText) posText = pos.map(veraenderungKurz).join(' | ');
-
-  let negText = String(e.negativ || '').trim();
-  if (neg.length && (!negText || pruefeTextSegment(negText, UEBERTREIBUNGS_MUSTER).beanstandet)) {
-    negText = neg.map(veraenderungKurz).join(' | ');
-  }
-
-  const ampelOk = Object.prototype.hasOwnProperty.call(AMPEL_LABEL, e.ampel);
-  let aktionText;
-  if (!ampelOk) {
-    aktionText = 'Änderung in der Action: keine Aussage möglich.';
-  } else if (!gestern || !gestern.ampel) {
-    aktionText = 'Änderung in der Action: noch kein Vergleichswert (erster gespeicherter Tag).';
-  } else if (gestern.ampel === e.ampel) {
-    aktionText = 'Änderung in der Action: keine.';
-  } else {
-    const zusatz = String(e.aktion_aenderung || '').trim();
-    aktionText = `Änderung in der Action: Ampel wechselt von ${AMPEL_LABEL[gestern.ampel]} auf ${AMPEL_LABEL[e.ampel]}${zusatz ? ' - ' + zusatz : '.'}`;
-  }
-
-  const zeile = (sym, farbe, text) =>
-    `<span style="display:block; margin-top:6px;"><span style="color:${farbe}; font-weight:700;">${sym}</span> ${escHtml(text)}</span>`;
-
-  return `<span style="display:block;">${escHtml(lage)}</span>`
-    + (pos.length ? zeile('+', 'var(--green)', posText) : '')
-    + (neg.length ? zeile('−', 'var(--red)', negText) : '')
-    + zeile('=', 'var(--text-dim)', aktionText);
-}
-
-// ===========================================================================
-// SECTION: GEMINI INTEGRATION (prompt building, error state, Q&A tile)
-// ===========================================================================
-async function generiereGeminiTexte(ctx) {
-
-  lastGeminiCtx = ctx;
-
-  const { data, bfStatus, sfColor, welleDesc, vixColor, rawVix, cnnColor,
-          momentum, strength, marginDebt, options, actBreadth,
-          goldPreisWert, oelPreisWert, creditSpread, moveWert, moveAenderung, zkWert, zkAenderung } = ctx;
-
-  const stilAnweisung = STYLE_LEVELS[getStyleLevel()].anweisung;
-
-  const gestern = vorherigerSnapshot(heuteZuerich());
-  const veraenderungen = baueVeraenderungen(ctx, gestern);
-
-  const kontext = {
-    gesamtstatus: bfStatus,
-    sicherheitsampel: sfColor,
-    marktphase: welleDesc,
-    cnn_fear_greed_score: data.score,
-    cnn_vortag: data.previous_close,
-    vix: rawVix, vix_ampel: vixColor,
-    bitcoin_usd: data.btc_usd, bitcoin_24h_prozent: data.btc_change_24h,
-    momentum_score: momentum ? momentum.score : null,
-    aktienstaerke_score: strength ? strength.score : null,
-    marktbreite_score: actBreadth,
-    margin_debt_score: marginDebt ? marginDebt.score : null,
-    credit_spread_score: creditSpread ? creditSpread.score : null,
-    credit_spread_pp: creditSpread && creditSpread.raw_spread !== undefined ? creditSpread.raw_spread : null,
-    move_index: (moveWert !== null && moveWert !== undefined) ? moveWert : null,
-    move_index_change_prozent: (moveAenderung !== null && moveAenderung !== undefined) ? moveAenderung : null,
-    zinskurve_10j_2j_pp: (zkWert !== null && zkWert !== undefined) ? zkWert : null,
-    zinskurve_invertiert: (zkWert !== null && zkWert !== undefined) ? (zkWert < 0) : null,
-    put_call_score: options ? options.score : null,
-    gold_usd: goldPreisWert, oel_usd_wti: oelPreisWert,
-    veraenderungen_seit_gestern: veraenderungen,
-    gestrige_ampel: gestern ? (gestern.ampel || null) : null
-  };
-
-  const prompt = `Du bist ein erfahrener und besonnener Marktstratege, der einen Privatanleger betreut, der sein Vermögen langfristig schützen und aufbauen möchte.
-Sprachniveau der Antwort: ${stilAnweisung}
-Hier die aktuellen Kennzahlen als JSON:
-${JSON.stringify(kontext, null, 2)}
-
-WICHTIGE REGELN FÜR DIE ANALYSE:
-1. Stütze dich ausschliesslich auf die gelieferten Kennzahlen. Mache keine Aussagen zu Unternehmensgewinnen oder Quartalszahlen, dazu liegen keine Daten vor.
-2. Das Feld "marktphase" gibt die aktuelle Position im 8-Wellen-Zyklus an. Das Gesamtfazit MUSS diese Phase explizit berücksichtigen und darf ihr nicht widersprechen. Insbesondere: Wird "marktphase" als Welle A oder Welle B (Marktphasen mit unterschätztem bzw. verdecktem Risiko) angegeben, darf das Gesamtfazit den Rücksetzer NICHT als "gesund" oder unbedenklich einordnen, auch wenn die Kurse zuletzt gestiegen sind. Fundamentale Stärke und Strukturrisiko sind getrennte Dimensionen - eines widerlegt das andere nicht. Diese Regel gilt auf JEDEM Sprachniveau (auch Einsteiger) unverändert - vereinfachte Sprache darf den Risikogehalt der Aussage nicht abschwächen.
-3. Weise bei hoher Marktkonzentration auf Mega-Caps sachlich auf die erhöhte Vorsicht hin, ohne den übergeordneten Aufwärtstrend unbegründet madig zu machen.
-
-Erzeuge NUR ein valides JSON-Objekt (keine Markdown-Codeblöcke, kein Fliesstext davor/danach) mit exakt diesen Feldern:
-{
-  "fazit1": "1-2 Sätze sachliche Einschätzung zu Sentiment/Nervosität/Bitcoin (Kachel 1)",
-  "fazit2": "1-2 Sätze sachliche Einschätzung zu Trend/Momentum/Marktbreite (Kachel 2)",
-  "fazit3": "1-2 Sätze sachliche Einschätzung zu Struktur/Kredit-Hebelung/Credit Spreads/MOVE-Index/Zinskurve (Kachel 3)",
-  "fazit4": "1-2 Sätze sachliche Einschätzung zu Gold/Öl/Rohstoffen (Kachel 4)",
-  "lage": "1-2 Sätze allgemeine Marktlage in fliessendem Text. Muss die Phase aus 'marktphase' beim Namen nennen (z.B. Welle A/B/C), falls zutreffend. Weder beschönigen noch dramatisieren. Enthält 'veraenderungen_seit_gestern' Einträge, endet 'lage' mit einem kurzen Übergangssatz wie 'Seit gestern hat sich einiges verschoben.'; ist die Liste leer, endet 'lage' mit 'Keine relevanten Veränderungen seit gestern.'",
-  "positiv": "Nur die Einträge aus 'veraenderungen_seit_gestern' mit tendenz 'positiv', in 1-2 zusammenhängenden, gut lesbaren Sätzen. Zahlen (gestern/heute bzw. veraenderung_prozent) EXAKT aus der Liste übernehmen, nichts dazuerfinden. Wo es passt, kurz einordnen, was die Veränderung bedeutet. Gibt es keine solchen Einträge: leerer String.",
-  "negativ": "Nur die Einträge aus 'veraenderungen_seit_gestern' mit tendenz 'negativ', in 1-2 zusammenhängenden, gut lesbaren Sätzen. Zahlen EXAKT aus der Liste übernehmen, nichts dazuerfinden. Sachlich, nicht dramatisierend. Gibt es keine solchen Einträge: leerer String.",
-  "aktion_aenderung": "Nur wenn 'ampel' von 'gestrige_ampel' abweicht: 1 Satz, was sich dadurch an der Handlungsempfehlung ändert. Sonst leerer String.",
-  "ampel": "gruen|gelb|rot (Gesamteinschätzung der Marktlage: gruen=entspannt/unkritisch, gelb=erhöhte Vorsicht, rot=hohes Risiko/Warnsignal)",
-  "actions": [
-    "Formuliere hier eigenständig eine handlungsorientierte Action zur strategischen Ruhe bei Marktschwankungen.",
-    "Formuliere hier eigenständig eine Action zur Risikokontrolle und dem Vermeiden spekulativer Einzelwetten.",
-    "Formuliere hier eigenständig eine beruhigende, konkrete Handlungsempfehlung speziell für das bestehende 100% All-In-Investment im World-ETF."
-  ]
-}
-Schreibe die Actions eigenständig, sachlich, analytisch und souverän. Nutze ausschliesslich die direkte Du-Form, keine Übertreibungen, präzise und kurze Sätze.`;
-
-  const antwortText = await callGemini(prompt);
-  if (!antwortText) {
-    setGeminiFehlerStatus();
-    return;
-  }
-
-  try {
-    const bereinigt = antwortText.replace(/```json|```/g, '').trim();
-    const ergebnis = JSON.parse(bereinigt);
-
-    document.getElementById('fazitContent1').innerHTML = ergebnis.fazit1 || '';
-    document.getElementById('fazitContent2').innerHTML = ergebnis.fazit2 || '';
-    document.getElementById('fazitContent3').innerHTML = ergebnis.fazit3 || '';
-    document.getElementById('fazitContent4').innerHTML = ergebnis.fazit4 || '';
-
-    const gesamtEl = document.getElementById('gesamtfazitText');
-    if (gesamtEl) {
-      gesamtEl.innerHTML = baueGesamtfazitHtml(ergebnis, welleDesc, veraenderungen, gestern);
-      gesamtEl.style.color = '';
-    }
-
-    const ampelDot = document.getElementById('situationAmpelDot');
-    if (ampelDot) {
-      const erlaubteFarben = ['gruen', 'gelb', 'rot', 'purple'];
-      const farbeOk = erlaubteFarben.includes(ergebnis.ampel);
-      ampelDot.className = 'situation-ampel' + (farbeOk ? ' ' + ergebnis.ampel : '');
-
-      document.body.classList.remove('sent-gruen', 'sent-gelb', 'sent-rot', 'sent-purple');
-      if (farbeOk) document.body.classList.add('sent-' + ergebnis.ampel);
-    }
-
-    const actionEl = document.getElementById('actionListEl');
-    if (actionEl && Array.isArray(ergebnis.actions)) {
-      actionEl.innerHTML = ergebnis.actions.map(a => `<li>${a}</li>`).join('');
-    }
-
-    speichereSnapshot(heuteZuerich(), {
-      ampel: Object.prototype.hasOwnProperty.call(AMPEL_LABEL, ergebnis.ampel) ? ergebnis.ampel : null,
-      werte: baueSnapshotWerte(ctx)
-    });
-  } catch(e) {
-    setGeminiFehlerStatus();
-  }
-}
-
-function setGeminiFehlerStatus() {
-  const fehlerHtml = `<span style="color:var(--red);">Gemini nicht erreichbar [Fehler 503: Service Unavailable / API Limit]</span>`;
-  ['fazitContent1', 'fazitContent2', 'fazitContent3', 'fazitContent4'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = fehlerHtml;
-  });
-
-  const gesamtEl = document.getElementById('gesamtfazitText');
-  if (gesamtEl) {
-    gesamtEl.textContent = 'Gemini nicht erreichbar [Fehler 503: Service Unavailable / API Limit]…';
-    gesamtEl.style.color = 'var(--red)';
-  }
-
-  const ampelDot = document.getElementById('situationAmpelDot');
-  if (ampelDot) {
-    ampelDot.className = 'situation-ampel';
-  }
-  document.body.classList.remove('sent-gruen', 'sent-gelb', 'sent-rot', 'sent-purple');
-}
-
-async function fragGemini() {
-  const input = document.getElementById('geminiFrageInput');
-  const btn = document.getElementById('geminiFrageBtn');
-  const box = document.getElementById('geminiAntwortBox');
-  const content = document.getElementById('geminiAntwortContent');
-  const icon = box ? box.querySelector('.action-toggle-icon') : null;
-  if (!input || !content) return;
-
-  const frage = input.value.trim();
-  if (!frage) return;
-
-  input.disabled = true;
-  if (btn) btn.disabled = true;
-  content.innerHTML = `<span style="color:var(--text-dim);">⏳ Frage wird beantwortet…</span>`;
-  if (box && !box.classList.contains('open')) {
-    box.classList.add('open');
-    if (icon) icon.textContent = '▼ Verbergen';
-  }
-
-  const stilAnweisung = STYLE_LEVELS[getStyleLevel()].anweisung;
-  const kontextZeile = lastGeminiCtx
-    ? `Aktuelle Kennzahlen des Cockpits (als Kontext, nur falls relevant für die Frage): ${JSON.stringify({
-        gesamtstatus: lastGeminiCtx.bfStatus,
-        sicherheitsampel: lastGeminiCtx.sfColor,
-        marktphase: lastGeminiCtx.welleDesc,
-        vix: lastGeminiCtx.rawVix,
-        cnn_fear_greed_score: lastGeminiCtx.data ? lastGeminiCtx.data.score : null
-      })}`
-    : '';
-
-  const prompt = `Du bist ein erfahrener und besonnener Marktstratege, der einem Privatanleger eine konkrete Frage beantwortet.
-Sprachniveau der Antwort: ${stilAnweisung}
-${kontextZeile}
-
-Frage des Nutzers: "${frage}"
-
-Antworte direkt, sachlich und in maximal 3-4 Sätzen als Fliesstext (kein JSON, kein Markdown).`;
-
-  const antwortText = await callGemini(prompt);
-
-  input.disabled = false;
-  if (btn) btn.disabled = false;
-
-  if (!antwortText) {
-    content.innerHTML = `<span style="color:var(--red);">Gemini nicht erreichbar [Fehler 503: Service Unavailable / API Limit]</span>`;
-    return;
-  }
-
-  content.textContent = antwortText.trim();
-}
-
-// ===========================================================================
-// SECTION: MISC HELPERS (SVG marker, date formatting, API status dot)
-// ===========================================================================
-function updateSvgNode(cx, cy, color, text) {
-  const node = document.getElementById('wellePunkt');
-  const label = document.getElementById('welleIstLabel');
-  if(node && label) {
-    node.setAttribute('cx', cx);
-    node.setAttribute('cy', cy);
-    node.style.fill = color;
-    node.style.stroke = color;
-    
-    label.setAttribute('x', cx);
-    label.setAttribute('y', cy - 15);
-    label.style.fill = color;
-    label.textContent = text;
-  }
-}
-
-function fmtDate(iso){
-  const d = new Date(iso);
-  return d.toLocaleString('de-CH', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) + " Uhr";
-}
-
-function setApiDot(id, state) {
-  const dot = document.getElementById(id);
-  if (!dot) return;
-  dot.classList.remove('ok', 'fail', 'warn');
-  if (state === true) dot.classList.add('ok');
-  else if (state === 'warn') dot.classList.add('warn');
-  else if (state === false) dot.classList.add('fail');
-}
-
-// ===========================================================================
-// SECTION: NETWORK UTILITIES & GEMINI CALL
-// ===========================================================================
-async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { ...options, signal: controller.signal });
+    const res = await fetch(url, { ...options, signal: ctrl.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
   } finally {
     clearTimeout(timer);
   }
 }
 
-async function callGemini(prompt) {
-  try {
-    const url = GEMINI_PROXY_URL;
-    const res = await fetchWithTimeout(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.4 }
-      })
-    }, 60000);
-    if (!res.ok) {
-      setApiDot('apiDotGemini', false); return null;
-    }
-    const json = await res.json();
-    const text = json?.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || null;
-    setApiDot('apiDotGemini', !!text);
-    return text || null;
-  } catch(e) {
-    setApiDot('apiDotGemini', false);
-    return null;
+const store = {
+  get(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } },
+  set(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch { /* voll oder gesperrt */ } },
+};
+
+/* ════════════════════════════════════════════════════════════
+   3. DATEN
+   ════════════════════════════════════════════════════════════ */
+const loadMarket = () => fetchJSON(`${CONFIG.dataUrl}?t=${Date.now()}`);
+
+/* ════════════════════════════════════════════════════════════
+   4. LOGIK
+   ════════════════════════════════════════════════════════════ */
+function level(value, t) {
+  if (!isNum(value)) return "none";
+  if (t.lowerIsWorse) return value <= t.red ? "red" : value <= t.yellow ? "yellow" : "green";
+  return value >= t.red ? "red" : value >= t.yellow ? "yellow" : "green";
+}
+
+// Angst & Gier: beide Extreme sind ein Warnsignal
+function fearGreedLevel(v) {
+  const t = T.fearGreed;
+  if (!isNum(v)) return "none";
+  if (v < t.redLow || v > t.redHigh) return "red";
+  return v >= t.greenLow && v <= t.greenHigh ? "green" : "yellow";
+}
+
+// Richtung ggü. Vortag aus Sicht des Marktes: worse | better | same
+function trend(value, prev, lowerIsWorse = false, tolerancePct = 1) {
+  if (!isNum(value) || !isNum(prev) || prev === 0) return "same";
+  const chg = ((value - prev) / Math.abs(prev)) * 100;
+  if (Math.abs(chg) < tolerancePct) return "same";
+  return (lowerIsWorse ? chg < 0 : chg > 0) ? "worse" : "better";
+}
+
+// Ampel einer Gruppe: 2+ rot = rot, 1 rot oder 2+ gelb = gelb, sonst grün
+function groupLevel(levels) {
+  const valid = levels.filter((l) => l !== "none");
+  if (!valid.length) return "none";
+  const reds = valid.filter((l) => l === "red").length;
+  const yellows = valid.filter((l) => l === "yellow").length;
+  return reds >= 2 ? "red" : reds === 1 || yellows >= 2 ? "yellow" : "green";
+}
+
+// Gesamt über die fünf Smileys: 0–1 rot = grün, 2–3 = gelb, 4–5 = rot
+function overallLevel(levels) {
+  const reds = levels.filter((l) => l === "red").length;
+  return reds >= 4 ? "red" : reds >= 2 ? "yellow" : "green";
+}
+
+function fruehwarnerLevel(fw) {
+  if (!fw) return "none";
+  const reds = ["smallCaps", "breadth", "credit"].filter((k) => fw[k]?.red).length;
+  return reds >= 3 ? "red" : reds === 2 ? "yellow" : "green";
+}
+
+// Wellen-Modell: Phase aus Angst & Gier, Marktbreite und VIX
+function detectPhase(fg, breadth, vix) {
+  const p = T.phase;
+  if (!isNum(fg)) return { code: null, status: "Keine Daten" };
+  if (fg >= p.overheatScore) return { code: "W5", status: "Überhitzt" };
+  if (isNum(breadth) && breadth < p.illusionBreadth && fg >= p.illusionScoreMin) return { code: "B", status: "Markt-Illusion" };
+  if (fg < p.knifeScore && isNum(vix) && vix > p.knifeVix) return { code: "C", status: "Fallendes Messer" };
+  if (fg < p.correctionScore || (isNum(breadth) && breadth < p.correctionBreadth)) return { code: "A", status: "Korrektur" };
+  return { code: "W3", status: "Gesund" };
+}
+
+// Marktdiagnose = Welle × Frühwarner
+function diagnose(phase, fwLevel) {
+  const down = phase === "A" || phase === "C";
+  const up = phase === "W1" || phase === "W3" || phase === "W5";
+  const fwRed = fwLevel === "red";
+  if (!phase) return { level: "none", title: "Keine Diagnose", text: "Es fehlen Daten." };
+  if (down && !fwRed) return { level: "green", title: "Korrektur im gesunden Markt",
+    text: "Der Rückgang dürfte begrenzt bleiben. Kippt der Frühwarner, wird daraus ein breiter Abwärtstrend." };
+  if (down && fwRed) return { level: "red", title: "Breiter Abwärtstrend",
+    text: "Welle C kann tief laufen. Nur gestaffelt investieren." };
+  if (phase === "B" && fwRed) return { level: "red", title: "Bullenfalle", text: "Die Erholung hat keine breite Basis." };
+  if (up && fwRed) return { level: "yellow", title: "Divergenz – mögliches Top", text: "Der Index steigt, der breite Markt bröckelt." };
+  return { level: "green", title: "Gesunder Trend", text: "Kein Handlungsbedarf." };
+}
+
+function marketClock(updatedIso, now = new Date()) {
+  const ny = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
+  const day = ny.getDay();
+  const mins = ny.getHours() * 60 + ny.getMinutes();
+  const open = day >= 1 && day <= 5 && mins >= 570 && mins < 960;          // 9:30–16:00 New York
+  const zh = (d) => d.toLocaleTimeString("de-CH", { timeZone: "Europe/Zurich", hour: "2-digit", minute: "2-digit" });
+  const updated = updatedIso ? new Date(updatedIso) : null;
+  const ageMin = updated ? (now - updated) / 60000 : Infinity;
+  return {
+    open,
+    stale: open && ageMin > CONFIG.staleMinutes,
+    label: updated ? `${open ? "US-Börse offen" : "Schlusswerte"} · Daten ${zh(updated)}` : "Keine Daten",
+  };
+}
+
+// Alle Anzeigewerte an einem Ort aus den Rohdaten berechnen
+function buildModel(m) {
+  const s = m.sentiment || {};
+  const parts = s.parts || {};
+  const q = m.quotes || {};
+  const r = m.rates || {};
+  const score = (k) => parts[k]?.score;
+
+  const fg = s.fearGreed?.value;
+  const vix = s.vix?.value;
+  const breadth = score("stock_price_breadth");
+  const phase = detectPhase(fg, breadth, vix);
+  const phaseLevel = phase.code ? PHASES[phase.code].level : "none";
+  const fwLevel = fruehwarnerLevel(m.fruehwarner);
+  const ratio = isNum(q.gold?.value) && isNum(q.oil?.value) && q.oil.value > 0 ? q.gold.value / q.oil.value : null;
+
+  // Einzelindikatoren je Kachel
+  const row = (name, value, lvl, desc, tr = "same") => ({ name, value, level: lvl, desc, trend: tr });
+  const groups = [
+    { id: "sentiment", name: "Sentiment & Nervosität", rows: [
+      row("VIX", fmt(vix, 1), level(vix, T.vix), "Angst-Index: erwartete Schwankung des S&P 500. Unter 20 ruhig, über 25 Stress.", trend(vix, s.vix?.prev)),
+      row("Angst & Gier", isNum(fg) ? `${Math.round(fg)} / 100` : "–", fearGreedLevel(fg), "CNN-Stimmungsbarometer aus sieben Faktoren. Beide Extreme sind Warnsignale.", trend(fg, s.fearGreed?.prev, true)),
+      row("Put/Call", fmt(s.putCall?.value, 2), level(s.putCall?.value, T.putCall), "Absicherungen im Verhältnis zu Wetten auf steigende Kurse (5-Tage-Schnitt).", trend(s.putCall?.value, s.putCall?.prev)),
+      row("Bitcoin 24 h", fmtPct(q.bitcoin?.changePct), level(q.bitcoin?.changePct, T.bitcoinPct), `Fiebermesser für Risikolust. Kurs: ${fmt(q.bitcoin?.value, 0)} USD.`),
+    ]},
+    { id: "trend", name: "Trend- & Sicherheits-Schutz", rows: [
+      row("Sicherheits-Ampel", phase.status, phaseLevel, phase.code ? PHASES[phase.code].name : "–"),
+      row("Markt-Schwung", isNum(score("market_momentum_sp500")) ? `${Math.round(score("market_momentum_sp500"))} / 100` : "–", level(score("market_momentum_sp500"), T.momentum), "S&P 500 im Vergleich zu seinem 125-Tage-Schnitt (CNN)."),
+      row("Marktbreite", isNum(breadth) ? `${Math.round(breadth)} / 100` : "–", level(breadth, T.breadth), "Steigen viele oder nur wenige Aktien? Unter 35 trägt nur noch eine Minderheit den Markt."),
+    ]},
+    { id: "struktur", name: "Markt-Struktur & Liquidität", rows: [
+      row("Aktien-Stärke", isNum(score("stock_price_strength")) ? `${Math.round(score("stock_price_strength"))} / 100` : "–", level(score("stock_price_strength"), T.strength), "Aktien auf 52-Wochen-Hochs im Vergleich zu Tiefs."),
+      row("Credit Spreads", isNum(r.hySpread?.value) ? fmt(r.hySpread.value, 2) + " %" : "–", level(r.hySpread?.value, T.hySpread), "Aufschlag von Hochzinsanleihen gegenüber Staatsanleihen. Steigt er, wächst der Stress im Kreditmarkt.", trend(r.hySpread?.value, r.hySpread?.prev)),
+      row("MOVE-Index", fmt(q.move?.value, 1), level(q.move?.value, T.move), "Erwartete Schwankung von US-Staatsanleihen, das Gegenstück zum VIX.", trend(q.move?.value, q.move?.prev)),
+      row("Zinskurve 10J–2J", isNum(r.yieldCurve?.value) ? fmtPct(r.yieldCurve.value, 2).replace(" %", " pp") : "–", level(r.yieldCurve?.value, T.yieldCurve), "Unter 0 ist die Kurve invertiert, historisch ein Rezessionsvorbote.", trend(r.yieldCurve?.value, r.yieldCurve?.prev, true)),
+    ]},
+    { id: "rohstoffe", name: "Rohstoffe: Öl & Gold", rows: [
+      row("Gold-Öl-Ratio", isNum(ratio) ? `${fmt(ratio, 1)} : 1` : "–", level(ratio, T.goldOilRatio), "Hoch = Krisenstimmung, tief = starkes Wachstum."),
+      row("Gold", isNum(q.gold?.value) ? fmt(q.gold.value, 0) + " USD" : "–", "none", "Sicherer Hafen in unruhigen Zeiten (Future, Unze).", trend(q.gold?.value, q.gold?.prev, true)),
+      row("Öl (WTI)", isNum(q.oil?.value) ? fmt(q.oil.value, 2) + " USD" : "–", level(q.oil?.value, T.oil), "Spiegel der globalen Energienachfrage.", trend(q.oil?.value, q.oil?.prev)),
+    ]},
+  ];
+  groups.forEach((g) => { g.level = groupLevel(g.rows.map((x) => x.level)); });
+
+  const signals = [
+    { name: "Puls", src: "VIX", tab: "ind", value: fmt(vix, 1), range: "20 | 25", level: level(vix, T.vix), trend: trend(vix, s.vix?.prev) },
+    { name: "Schutz", src: "Put/Call", tab: "ind", value: fmt(s.putCall?.value, 2), range: "0,6 | 0,8", level: level(s.putCall?.value, T.putCall), trend: trend(s.putCall?.value, s.putCall?.prev) },
+    { name: "Stimmung", src: "Angst&Gier", tab: "ind", value: isNum(fg) ? Math.round(fg) : "–", range: "0–100", level: fearGreedLevel(fg), trend: trend(fg, s.fearGreed?.prev, true) },
+    { name: "Frühwarner", src: "3 Signale", tab: "diag", lights: m.fruehwarner || {}, level: fwLevel, trend: "same" },
+    { name: "Welle", src: "Elliott", tab: "diag", value: phase.code || "–", level: phaseLevel, trend: "same" },
+  ];
+
+  return {
+    raw: m, groups, signals, phase, phaseLevel, fwLevel,
+    overall: overallLevel(signals.map((x) => x.level)),
+    diag: diagnose(phase.code, fwLevel),
+    clock: marketClock(m.updated),
+  };
+}
+
+/* ════════════════════════════════════════════════════════════
+   5. GEMINI (über Cloudflare Worker, der Key bleibt im Worker)
+   ════════════════════════════════════════════════════════════ */
+async function callGemini(prompt, json = true) {
+  const body = {
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0.3, ...(json ? { responseMimeType: "application/json" } : {}) },
+  };
+  const res = await fetchJSON(CONFIG.workerUrl, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+  }, 60000);
+  const text = res?.candidates?.[0]?.content?.parts?.map((p) => p.text).join("") || "";
+  if (!text) throw new Error("Leere Antwort");
+  return text;
+}
+
+function geminiFacts(model) {
+  const m = model.raw;
+  return {
+    welle: model.phase.code, welle_status: model.phase.status, marktdiagnose: model.diag.title,
+    gesamtampel: model.overall, fruehwarner: m.fruehwarner,
+    angst_gier: m.sentiment?.fearGreed, vix: m.sentiment?.vix, put_call: m.sentiment?.putCall,
+    cnn_teilindikatoren: m.sentiment?.parts, kurse: m.quotes, zinsen: m.rates,
+    etfs: m.etfs, bollinger_swda: m.bollinger,
+  };
+}
+
+function buildPrompt(model, styleIdx) {
+  return `Du bist ein besonnener Marktstratege. Dein Leser ist ein langfristiger Privatanleger in der Schweiz
+(Anlagehorizont 10–15 Jahre, drei Welt-ETFs: MSCI Core, MSCI Equal Weight, MSCI Emerging; gestaffelter Einstieg).
+Sprachniveau: ${STYLE_LEVELS[styleIdx].prompt}
+
+REGELN:
+1. Nutze ausschliesslich die Daten unten. Erfinde keine Zahlen, keine Unternehmensnachrichten.
+2. Die Welle und die Marktdiagnose sind gesetzt. Widersprich ihnen nicht.
+3. Weder beschönigen noch dramatisieren. Chancen und Risiken gleich gewichten.
+4. Schweizer Schreibweise (ss statt ß), Du-Form.
+
+Antworte NUR mit diesem JSON:
+{"fazit": "3–4 Sätze Fliesstext zur Gesamtlage inkl. wichtigster Veränderung zum Vortag",
+ "actions": [{"title": "max. 5 Wörter", "text": "1 Satz"}],
+ "kacheln": {"sentiment": "1–2 Sätze", "trend": "1–2 Sätze", "struktur": "1–2 Sätze", "rohstoffe": "1–2 Sätze"}}
+Genau 4 Actions, handlungsorientiert.
+
+DATEN:
+${JSON.stringify(geminiFacts(model))}`;
+}
+
+async function getAnalysis(model, styleIdx) {
+  const cached = store.get(CONFIG.storage.gemini);
+  if (cached && cached.stamp === model.raw.updated && cached.style === styleIdx) return cached.texts;
+  const text = await callGemini(buildPrompt(model, styleIdx));
+  const out = JSON.parse(text.replace(/```json|```/g, "").trim());
+  if (typeof out.fazit !== "string" || !Array.isArray(out.actions)) throw new Error("Unerwartetes Format");
+  store.set(CONFIG.storage.gemini, { stamp: model.raw.updated, style: styleIdx, texts: out });
+  return out;
+}
+
+async function askQuestion(model, question, styleIdx) {
+  const prompt = `Du bist ein besonnener Marktstratege. Sprachniveau: ${STYLE_LEVELS[styleIdx].prompt}
+Aktuelle Cockpit-Daten (nur nutzen, falls relevant): ${JSON.stringify({ welle: model.phase.code, diagnose: model.diag.title, angst_gier: model.raw.sentiment?.fearGreed?.value, vix: model.raw.sentiment?.vix?.value })}
+Frage: "${question}"
+Antworte in höchstens 4 Sätzen als Fliesstext, Schweizer Schreibweise.`;
+  return (await callGemini(prompt, false)).trim();
+}
+
+/* ════════════════════════════════════════════════════════════
+   6. DARSTELLUNG
+   ════════════════════════════════════════════════════════════ */
+const COLOR = { green: "var(--green)", yellow: "var(--yellow)", red: "var(--red)", none: "var(--neutral)" };
+const LEVEL_TEXT = { green: "Grün", yellow: "Gelb", red: "Rot", none: "–" };
+
+const ICONS = {
+  globe:  '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c-3.5 3.5-3.5 14.5 0 18 3.5-3.5 3.5-14.5 0-18z"/>',
+  bars:   '<path d="M3 21h18"/><rect x="4.5" y="8" width="3.5" height="13" rx="1"/><rect x="10.25" y="8" width="3.5" height="13" rx="1"/><rect x="16" y="8" width="3.5" height="13" rx="1"/>',
+  sprout: '<path d="M12 21V11"/><path d="M12 13c0-5-3.5-7.5-8-7.5 0 4.5 3.5 7.5 8 7.5z"/><path d="M12 11c0-4.5 3-7 8-7 0 4.5-3.5 7-8 7z"/>',
+  right:  '<path d="M9 6l6 6-6 6"/>',
+  left:   '<path d="M15 6l-6 6 6 6"/>',
+};
+const icon = (name, size = 13, color = "var(--accent)") =>
+  `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true" style="flex-shrink:0" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</svg>`;
+
+function smiley(lvl, size = 36) {
+  const mouth = { green: "M13 27 Q22 35 31 27", red: "M13 32 Q22 24 31 32" }[lvl] || "M13 29 L31 29";
+  return `<svg width="${size}" height="${size}" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="21" fill="${COLOR[lvl]}"/>`
+    + `<circle cx="15" cy="17" r="2.6" fill="#0B0E13"/><circle cx="29" cy="17" r="2.6" fill="#0B0E13"/>`
+    + `<path d="${mouth}" stroke="#0B0E13" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
+}
+
+function arrow(dir) {
+  const a = {
+    worse:  ["M1 2 L11 2 L6 11 Z", "var(--red)",    "schlechter als gestern"],
+    better: ["M1 10 L11 10 L6 1 Z", "var(--green)",  "besser als gestern"],
+    same:   ["M2 1 L2 11 L11 6 Z",  "var(--yellow)", "unverändert"],
+  }[dir] || ["", "", ""];
+  return `<svg width="12" height="12" viewBox="0 0 12 12" role="img" aria-label="${a[2]}"><path d="${a[0]}" fill="${a[1]}"/></svg>`;
+}
+
+const dot = (lvl, label = "") => `<span class="dot" data-level="${lvl}"${label ? ` title="${esc(label)}"` : ""}></span>`;
+
+function renderHeader(model) {
+  const c = model.clock;
+  $("liveBadge").dataset.open = c.open;
+  $("liveBadge").textContent = c.open ? "LIVE" : "SCHLUSS";
+  $("liveInfo").textContent = c.label;
+  $("liveInfo").dataset.stale = c.stale;
+  $("build").textContent = `Build ${APP_VERSION}`;
+}
+
+function renderSignals(model) {
+  $("overallBar").dataset.level = model.overall;
+  $("overallBar").textContent = `Gesamt: ${LEVEL_TEXT[model.overall]}`;
+  $("signalsCard").dataset.level = model.overall;
+  const sig = (x) => (x ? (x.red ? "red" : "green") : "none");
+  $("signals").innerHTML = model.signals.map((s) => {
+    const value = s.lights
+      ? `<span class="lights">${dot(sig(s.lights.smallCaps), "Small Caps")}${dot(sig(s.lights.breadth), "Breite")}${dot(sig(s.lights.credit), "Kredit")}</span>`
+      : `<span class="signal__value num">${esc(s.value)}</span>`;
+    return `<button type="button" class="signal" data-tab="${s.tab}" aria-label="${s.name}: ${LEVEL_TEXT[s.level]}">
+      ${smiley(s.level)}<span class="signal__name">${s.name}</span><span class="signal__src">${s.src}</span>
+      ${value}<span class="signal__range num">${s.range || ""}</span>${arrow(s.trend)}</button>`;
+  }).join("");
+}
+
+function renderWave(model) {
+  const code = model.phase.code;
+  const lvl = model.phaseLevel;
+  const curIdx = code ? PHASE_ORDER.indexOf(code) : -1;
+  const pts = [[10, 76], ...PHASE_ORDER.map((k) => [PHASES[k].x, PHASES[k].y])];
+  const poly = (from, to) => pts.slice(from, to + 1).map((p) => p.join(",")).join(" ");
+  const labels = PHASE_ORDER.map((k, i) => {
+    const p = PHASES[k];
+    const cur = i === curIdx;
+    const above = ["W1", "W3", "W5", "B"].includes(k);
+    const col = cur ? COLOR[lvl] : k === "W5" ? "var(--violet)" : "#AEB6C0";
+    const anchor = k === "C" ? "end" : "middle";
+    return `<circle cx="${p.x}" cy="${p.y}" r="${cur ? 6 : 3}" fill="${col}"/>`
+      + `<text x="${k === "C" ? p.x - 10 : p.x}" y="${above ? p.y - 9 : p.y + 17}" text-anchor="${anchor}" font-size="12" font-weight="${cur ? 700 : 500}" fill="${col}">${k}${cur ? " · IST" : ""}</text>`;
+  }).join("");
+
+  $("waveCard").dataset.level = lvl;
+  $("waveBar").dataset.level = lvl;
+  $("waveBar").innerHTML = `Welle ${esc(code || "–")} · ${esc(model.phase.status)} <a href="#tabsCard" data-tab="diag">Details</a>`;
+  $("waveChart").innerHTML = `<svg viewBox="0 0 388 100" role="img" aria-label="Wellen-Zyklus, aktuell Welle ${esc(code || "unbekannt")}">
+    <rect x="236" y="14" width="68" height="50" fill="var(--red)" opacity="0.08"/>
+    <line x1="0" y1="18" x2="388" y2="18" stroke="var(--line)" stroke-dasharray="3 3"/>
+    <line x1="0" y1="76" x2="388" y2="76" stroke="var(--line)" stroke-dasharray="3 3"/>
+    <polyline points="${poly(0, pts.length - 1)}" fill="none" stroke="#3A424D" stroke-width="2" stroke-linejoin="round"/>
+    ${curIdx >= 0 ? `<polyline points="${poly(0, curIdx + 1)}" fill="none" stroke="#6B7480" stroke-width="2.5" stroke-linejoin="round"/>
+    <polyline points="${poly(curIdx, curIdx + 1)}" fill="none" stroke="${COLOR[lvl]}" stroke-width="3" stroke-linejoin="round"/>` : ""}
+    ${labels}</svg>`;
+}
+
+function renderEtfs(model) {
+  const etfs = model.raw.etfs || {};
+  $("etfs").innerHTML = Object.entries(ETF_ICONS).map(([key, ic]) => {
+    const e = etfs[key];
+    if (!e) return `<div class="etf"><span class="etf__name">${icon(ic)}–</span></div>`;
+    const dir = e.changePct > 0 ? "up" : e.changePct < 0 ? "down" : "flat";
+    return `<div class="etf">
+      <span class="etf__name">${icon(ic)}${esc(e.name)}</span>
+      <span class="etf__price num">${fmt(e.price, 2)}<span class="etf__cur"> ${esc(e.currency)}</span></span>
+      <span class="etf__chg num" data-dir="${dir}">${arrow(dir === "up" ? "better" : dir === "down" ? "worse" : "same")}${fmtPct(e.changePct)}</span>
+    </div>`;
+  }).join("");
+}
+
+/* ── Tabs ───────────────────────────────────────────────────── */
+const ui = {
+  tab: "fazit",
+  group: null,               // geöffnete Kachel im Indikatoren-Tab
+  analysis: null,            // Gemini-Ergebnis
+  analysisState: "loading",  // loading | ok | error
+  answer: null,
+  asking: false,
+  style: Number.isInteger(store.get(CONFIG.storage.style)) ? store.get(CONFIG.storage.style) : 1,
+};
+
+function renderTabs() {
+  $("tablist").innerHTML = TABS.map((t) =>
+    `<button type="button" class="tab" role="tab" data-tab="${t.id}" aria-selected="${t.id === ui.tab}">${t.label}</button>`).join("");
+}
+
+const analysisNote = () => ui.analysisState === "loading"
+  ? `<p class="loading">Gemini-Analyse wird geladen…</p>`
+  : `<p class="error-text">Gemini nicht erreichbar. Es werden nur die berechneten Werte angezeigt.</p>`;
+
+const PANELS = {
+  fazit(model) {
+    const text = ui.analysis ? `<p>${esc(ui.analysis.fazit)}</p>` : `${analysisNote()}<p>${esc(model.diag.title)}. ${esc(model.diag.text)}</p>`;
+    return `${text}
+      <div class="block">
+        <h3>Frage an Gemini</h3>
+        <form class="ask" data-action="ask">
+          <input type="text" name="q" placeholder="z. B. Was bedeutet ein MOVE über 110?" aria-label="Frage an Gemini" ${ui.asking ? "disabled" : ""}>
+          <button type="submit" ${ui.asking ? "disabled" : ""}>Fragen</button>
+        </form>
+        ${ui.asking ? `<p class="loading">Antwort wird geladen…</p>` : ui.answer ? `<p>${esc(ui.answer)}</p>` : ""}
+      </div>
+      <div class="block">
+        <h3>Sprachniveau</h3>
+        <div class="seg" role="group" aria-label="Sprachniveau">${STYLE_LEVELS.map((s, i) =>
+          `<button type="button" data-style="${i}" aria-pressed="${i === ui.style}">${s.label}</button>`).join("")}</div>
+      </div>`;
+  },
+
+  action() {
+    if (!ui.analysis) return analysisNote();
+    return ui.analysis.actions.slice(0, 4).map((a, i) => `
+      <div class="action"><span class="action__nr">${i + 1}</span>
+        <div><div class="action__title">${esc(a.title)}</div><div class="action__text">${esc(a.text)}</div></div>
+      </div>`).join("");
+  },
+
+  ind(model) {
+    if (ui.group != null) return renderGroupDetail(model, ui.group);
+    const errors = model.raw.errors?.length ? `<p class="muted" style="font-size:12px">Nicht verfügbar: ${esc(model.raw.errors.map((e) => e.split(":")[0]).join(", "))}</p>` : "";
+    return `<div>${[...model.groups, { id: "bottom", name: "S&P 500 Bottom Finder", level: model.phaseLevel }].map((g) =>
+      `<button type="button" class="row-btn" data-group="${g.id}">${dot(g.level)}<span>${esc(g.name)}</span>${icon("right", 14, "#6B7480")}</button>`).join("")}</div>${errors}`;
+  },
+
+  diag(model) {
+    const fw = model.raw.fruehwarner || {};
+    const sig = (x) => (x ? (x.red ? "red" : "green") : "none");
+    const kv = (lvl, a, b) => `<div class="kv">${dot(lvl)}<span>${a}</span><span class="num">${b}</span></div>`;
+    const ph = model.phase.code ? PHASES[model.phase.code] : null;
+    return `
+      <div class="chips">
+        <span class="chip">${dot(model.phaseLevel)}Welle ${esc(model.phase.code || "–")}</span>
+        <span class="chip">${dot(model.fwLevel)}Frühwarner</span>
+      </div>
+      <div class="verdict" data-level="${model.diag.level}">${esc(model.diag.title)}</div>
+      <p class="muted">${esc(model.diag.text)}</p>
+      <div class="block"><h3>Frühwarner · vs. 50-Tage-Schnitt</h3>
+        ${kv(sig(fw.smallCaps), "Small Caps", fw.smallCaps ? fmtPct(fw.smallCaps.diffPct) : "–")}
+        ${kv(sig(fw.breadth), "Marktbreite", fw.breadth ? fmtPct(fw.breadth.diffPct) : "–")}
+        ${kv(sig(fw.credit), "Kredit-Spreads", fw.credit ? fmt(fw.credit.value, 2) + " %" : "–")}
+      </div>
+      ${ph ? `<div class="block"><h3>Aktuelle Phase</h3>
+        <div class="phase" data-level="${ph.level}"><div class="phase__name">${esc(ph.name)}</div><div class="phase__desc">${esc(ph.desc)}</div></div></div>` : ""}`;
+  },
+
+  boll(model) {
+    const b = model.raw.bollinger;
+    if (!b) return `<p class="muted">Keine Bollinger-Daten.</p>`;
+    const pb = b.percentB;
+    const pos = pb < 0 ? "unter dem unteren Band" : pb > 1 ? "über dem oberen Band"
+      : pb < 0.2 ? "am unteren Band" : pb > 0.8 ? "am oberen Band" : "in der Mitte";
+    const lvl = pb < 0.2 ? "red" : pb > 0.8 ? "yellow" : "green";
+    return `
+      <div class="kv"><span></span><span><b>iShares Core MSCI World · SWDA</b></span><span>20 T · 2σ</span></div>
+      <div class="kv">${dot(lvl)}<span>Position</span><span>${pos}</span></div>
+      <div class="kv">${dot("none")}<span>Bänder o · m · u</span><span class="num">${fmt(b.upper, 0)} · ${fmt(b.middle, 0)} · ${fmt(b.lower, 0)}</span></div>
+      <div class="kv">${dot("none")}<span>Kurs (GBX)</span><span class="num">${fmt(b.price, 0)}</span></div>
+      <div class="kv">${dot("none")}<span>Bandbreite</span><span class="num">${fmt(b.bandwidthPct, 1)} %</span></div>
+      <a class="button-link" href="${CONFIG.tradingViewUrl}" target="_blank" rel="noopener">In TradingView öffnen ↗</a>`;
+  },
+};
+
+function renderGroupDetail(model, id) {
+  const back = `<button type="button" class="back-btn" data-action="back">${icon("left", 14)}Alle Indikatoren</button>`;
+  if (id === "bottom") {
+    return `${back}
+      <div class="kv">${dot(model.phaseLevel)}<span><b>Status: ${esc(model.phase.status)}</b></span><span>Welle ${esc(model.phase.code || "–")}</span></div>
+      <p class="muted" style="font-size:13px">Angst & Gier ${fmt(model.raw.sentiment?.fearGreed?.value, 0)} / 100 · Marktbreite ${fmt(model.raw.sentiment?.parts?.stock_price_breadth?.score, 0)} / 100</p>
+      <div class="block"><h3>Pre-Bottom-Signal (blau)</h3><p class="muted" style="font-size:13px">Weniger als 20 % der S&P-500-Aktien über ihrem 50-Tage-Schnitt (S5FI &lt; 20). Extrem schwache Breite, Gegenbewegung möglich.</p></div>
+      <div class="block"><h3>Bottom-Signal (grün)</h3><p class="muted" style="font-size:13px">50-Tage-Schnitt der NYSE-Advance-Decline-Differenz steigt ggü. vor 10 Tagen, plus blaues Signal in den letzten 10 Bars.</p></div>
+      <a class="button-link" href="${CONFIG.bottomFinderUrl}" target="_blank" rel="noopener">Script in TradingView öffnen ↗</a>`;
   }
+  const g = model.groups.find((x) => x.id === id);
+  const fazit = ui.analysis?.kacheln?.[id];
+  return `${back}
+    <div class="kv">${dot(g.level)}<span><b>${esc(g.name)}</b></span><span></span></div>
+    <div>${g.rows.map((r) => `
+      <div class="ind-row">${dot(r.level)}<span class="ind-row__name">${esc(r.name)}</span>
+        <span class="ind-row__val num">${esc(r.value)}</span>${arrow(r.trend)}
+        <span class="ind-row__desc">${esc(r.desc)}</span></div>`).join("")}</div>
+    ${fazit ? `<div class="kachel-fazit">${esc(fazit)}</div>` : ""}`;
 }
 
-// ===========================================================================
-// SECTION: DATA FETCHING (external APIs: crypto, gold, oil, ETF, MOVE, FRED,
-// CNN Fear & Greed) — most read from static JSON generated by GitHub Actions
-// ===========================================================================
-async function holeCrypto() {
-  let btcPreis = null, btcAenderung = 0, live = false;
-  try {
-    const res = await fetchWithTimeout('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true', {}, 6000);
-    if (res.ok) {
-      const json = await res.json();
-      if (json.bitcoin) {
-        btcPreis = json.bitcoin.usd;
-        btcAenderung = json.bitcoin.usd_24h_change;
-        live = true;
-      }
+function renderPanel(model) {
+  $("tabPanel").innerHTML = PANELS[ui.tab](model);
+}
+
+function renderAll(model) {
+  renderHeader(model);
+  renderSignals(model);
+  renderWave(model);
+  renderEtfs(model);
+  renderTabs();
+  renderPanel(model);
+}
+
+/* ════════════════════════════════════════════════════════════
+   7. EREIGNISSE
+   ════════════════════════════════════════════════════════════ */
+function bindEvents() {
+  document.addEventListener("click", (ev) => {
+    const el = ev.target.closest("[data-tab], [data-group], [data-action='back'], [data-style]");
+    if (!el || !model) return;
+    if (el.dataset.tab) {
+      ev.preventDefault();
+      ui.tab = el.dataset.tab;
+      ui.group = null;
+      renderTabs();
+      if (!el.classList.contains("tab")) $("tabsCard").scrollIntoView({ behavior: "smooth", block: "start" });
+    } else if (el.dataset.group) {
+      ui.group = el.dataset.group;
+    } else if (el.dataset.action === "back") {
+      ui.group = null;
+    } else if (el.dataset.style) {
+      ui.style = Number(el.dataset.style);
+      store.set(CONFIG.storage.style, ui.style);
+      loadAnalysis();
     }
-  } catch (e) { }
-  setApiDot('apiDotCrypto', live);
-  return { btcPreis, btcAenderung, live };
+    renderPanel(model);
+  });
+
+  document.addEventListener("submit", async (ev) => {
+    if (ev.target.dataset.action !== "ask") return;
+    ev.preventDefault();
+    const question = new FormData(ev.target).get("q")?.toString().trim();
+    if (!question || !model) return;
+    ui.asking = true; renderPanel(model);
+    try { ui.answer = await askQuestion(model, question, ui.style); }
+    catch { ui.answer = "Gemini ist gerade nicht erreichbar."; }
+    ui.asking = false; renderPanel(model);
+  });
 }
 
-async function holeGold() {
+/* ════════════════════════════════════════════════════════════
+   8. START
+   ════════════════════════════════════════════════════════════ */
+let model = null;
+
+async function loadAnalysis() {
+  ui.analysisState = "loading";
   try {
-    const res = await fetchWithTimeout('gold.json?t=' + Date.now(), {}, 6000);
-    if (!res.ok) return { preis: null, ok: false };
-    const json = await res.json();
-    const preis = parseFloat(json.price);
-    const ok = !!json.ok && !isNaN(preis);
-    return { preis: ok ? preis : null, ok };
-  } catch (e) {
-    return { preis: null, ok: false };
+    ui.analysis = await getAnalysis(model, ui.style);
+    ui.analysisState = "ok";
+  } catch (err) {
+    console.warn("[Cockpit] Gemini:", err);
+    ui.analysisState = "error";
   }
+  renderPanel(model);
 }
 
-async function holeOel() {
+async function refresh() {
   try {
-    const res = await fetchWithTimeout('oil.json?t=' + Date.now(), {}, 6000);
-    if (!res.ok) return { preis: null, ok: false };
-    const json = await res.json();
-    const preis = parseFloat(json.price);
-    const ok = !!json.ok && !isNaN(preis);
-    return { preis: ok ? preis : null, ok };
-  } catch (e) {
-    return { preis: null, ok: false };
+    model = buildModel(await loadMarket());
+  } catch (err) {
+    console.error("[Cockpit] Daten:", err);
+    if (!model) model = buildModel({});
   }
+  renderAll(model);
+  if (model.raw.updated) loadAnalysis();
 }
 
-async function holeMetalle() {
-  const [goldErg, oelErg] = await Promise.allSettled([holeGold(), holeOel()]);
-
-  const goldOk = goldErg.status === 'fulfilled' && goldErg.value.ok;
-  const oelOk = oelErg.status === 'fulfilled' && oelErg.value.ok;
-  const goldPreis = goldOk ? goldErg.value.preis : null;
-  const oelPreis = oelOk ? oelErg.value.preis : null;
-
-  const anzahlOk = (goldOk ? 1 : 0) + (oelOk ? 1 : 0);
-  setApiDot('apiDotRohstoffe', anzahlOk === 2 ? true : anzahlOk === 1 ? 'warn' : false);
-
-  return { goldPreis, oelPreis, live: anzahlOk > 0, goldOk, oelOk };
-}
-
-async function holeEtf() {
-  let etfPreis = null, etfAenderung = 0, etfVortag = null, etfStreakCount = null, etfStreakDirection = null, live = false;
-  try {
-    const res = await fetchWithTimeout('etf.json?t=' + Date.now(), {}, 6000);
-    if (res && res.ok) {
-      const json = await res.json();
-      const close = parseFloat(json.price);
-      const percentChange = parseFloat(json.change_percent);
-      const vortag = parseFloat(json.previous_close);
-      const streakCount = parseInt(json.streak_count, 10);
-      if (!isNaN(close) && !isNaN(percentChange)) {
-        etfPreis = close;
-        etfAenderung = percentChange;
-        if (!isNaN(vortag)) etfVortag = vortag;
-        if (!isNaN(streakCount) && (json.streak_direction === 'up' || json.streak_direction === 'down')) {
-          etfStreakCount = streakCount;
-          etfStreakDirection = json.streak_direction;
-        }
-        live = true;
-      }
-    }
-  } catch (e) { }
-  setApiDot('apiDotEtf', live);
-  return { etfPreis, etfAenderung, etfVortag, etfStreakCount, etfStreakDirection, live };
-}
-
-async function holeMove() {
-  let moveWert = null, moveAenderung = 0, live = false;
-  try {
-    const res = await fetchWithTimeout('move.json?t=' + Date.now(), {}, 6000);
-    if (res && res.ok) {
-      const json = await res.json();
-      const close = parseFloat(json.price);
-      const percentChange = parseFloat(json.change_percent);
-      if (!isNaN(close) && !isNaN(percentChange)) {
-        moveWert = close;
-        moveAenderung = percentChange;
-        live = true;
-      }
-    }
-  } catch (e) { }
-  setApiDot('apiDotMove', live);
-  return { moveWert, moveAenderung, live };
-}
-
-async function holeZinskurve() {
-  let zkWert = null, zkAenderung = 0, live = false;
-  try {
-    const res = await fetchWithTimeout('zinskurve.json?t=' + Date.now(), {}, 6000);
-    if (res && res.ok) {
-      const json = await res.json();
-      const wert = parseFloat(json.value);
-      const aenderung = parseFloat(json.change);
-      if (!isNaN(wert)) {
-        zkWert = wert;
-        zkAenderung = !isNaN(aenderung) ? aenderung : 0;
-        live = true;
-      }
-    }
-  } catch (e) { }
-  setApiDot('apiDotZinskurve', live);
-  return { zkWert, zkAenderung, live };
-}
-
-async function holeFearGreed() {
-  const res = await fetchWithTimeout('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', { headers: {'Accept':'application/json'} }, 8000);
-  if (!res.ok) throw new Error('Fear&Greed HTTP-Fehler');
-  return await res.json();
-}
-
-// ===========================================================================
-// SECTION: APP INIT / MAIN LOOP (orchestrates all fetches, triggers render)
-// ===========================================================================
-async function ladeDaten(){
-  const btn = document.getElementById('refreshBtn');
-  btn.disabled = true;
-
-  const [cryptoErg, metalErg, etfErg, moveErg, zinskurveErg, fgErg] = await Promise.allSettled([
-    holeCrypto(),
-    holeMetalle(),
-    holeEtf(),
-    holeMove(),
-    holeZinskurve(),
-    holeFearGreed()
-  ]);
-
-  const { btcPreis, btcAenderung } = cryptoErg.status === 'fulfilled' ? cryptoErg.value : { btcPreis: null, btcAenderung: 0 };
-  cryptoIstLive = cryptoErg.status === 'fulfilled' && cryptoErg.value.live;
-
-  const { goldPreis, oelPreis } = metalErg.status === 'fulfilled' ? metalErg.value : { goldPreis: null, oelPreis: null };
-  metalIstLive = metalErg.status === 'fulfilled' && metalErg.value.live;
-  goldIstLive = metalErg.status === 'fulfilled' && metalErg.value.goldOk;
-  oelIstLive = metalErg.status === 'fulfilled' && metalErg.value.oelOk;
-
-  const { etfPreis, etfAenderung, etfVortag, etfStreakCount, etfStreakDirection } = etfErg.status === 'fulfilled' ? etfErg.value : { etfPreis: null, etfAenderung: 0, etfVortag: null, etfStreakCount: null, etfStreakDirection: null };
-  etfIstLive = etfErg.status === 'fulfilled' && etfErg.value.live;
-
-  const { moveWert, moveAenderung } = moveErg.status === 'fulfilled' ? moveErg.value : { moveWert: null, moveAenderung: 0 };
-  moveIstLive = moveErg.status === 'fulfilled' && moveErg.value.live;
-
-  const { zkWert, zkAenderung } = zinskurveErg.status === 'fulfilled' ? zinskurveErg.value : { zkWert: null, zkAenderung: 0 };
-  zinskurveIstLive = zinskurveErg.status === 'fulfilled' && zinskurveErg.value.live;
-
-  try{
-    if (fgErg.status !== 'fulfilled') throw fgErg.reason || new Error('Fear&Greed fehlgeschlagen');
-    const json = fgErg.value;
-
-    let extrahierterVixUSD = null;
-    let extrahierterVixVortag = null;
-    if(json.market_volatility_vix && json.market_volatility_vix.data && json.market_volatility_vix.data.length > 0){
-      const vixData = json.market_volatility_vix.data;
-      const ndp = vixData[vixData.length - 1];
-      if(ndp && ndp.y) extrahierterVixUSD = ndp.y;
-      if(vixData.length > 1){
-        const vorletzter = vixData[vixData.length - 2];
-        if(vorletzter && vorletzter.y) extrahierterVixVortag = vorletzter.y;
-      }
-    }
-
-    let extrahierterCreditSpread = null;
-    if(json.junk_bond_demand && json.junk_bond_demand.data && json.junk_bond_demand.data.length > 0){
-      const ndp = json.junk_bond_demand.data[json.junk_bond_demand.data.length - 1];
-      if(ndp && ndp.y !== undefined && ndp.y !== null) extrahierterCreditSpread = ndp.y;
-    }
-
-    const data = {
-      timestamp: new Date().toISOString(), 
-      score: json.fear_and_greed.score,
-      rating: json.fear_and_greed.rating,
-      previous_close: json.fear_and_greed.previous_close,
-      btc_usd: btcPreis,
-      btc_change_24h: btcAenderung,
-      gold_usd: goldPreis,
-      oil_usd: oelPreis,
-      etf_price: etfPreis,
-      etf_change: etfAenderung,
-      etf_previous_close: etfVortag,
-      etf_streak_count: etfStreakCount,
-      etf_streak_direction: etfStreakDirection,
-      move_wert: moveWert,
-      move_change: moveAenderung,
-      zinskurve_wert: zkWert,
-      zinskurve_change: zkAenderung,
-      subs: [
-        {key:"market_momentum_sp500", name:"Markt-Schwung", sub:"Zeigt an, ob sich der S&P 500 stabil über oder unter seiner 200-Tage-Linie bewegt. Steigt der Kurs klar darüber, läuft der Motor rund.", score:json.market_momentum_sp500.score},
-        {key:"stock_price_strength", name:"Aktien-Stärke", sub:"Misst die Anzahl der Aktien auf 52-Wochen-Hochs im Vergleich zu Tiefs. Das zeigt, wie stark der innere Kern des Marktes ist.", score:json.stock_price_strength.score},
-        {key:"stock_price_breadth", name:"Marktbreite (A/D Basis)", sub:"Misst die echte Marktbreite, indem sie vergleicht, ob insgesamt mehr Aktien steigen oder fallen. Steigen nur wenige Riesen, droht Gefahr.", score:json.stock_price_breadth.score},
-        {key:"put_call_options", name:"Absicherungs-Verhältnis", sub:"Zeigt das Verhältnis von Verlustabsicherungen zu Wetten auf steigende Kurse. Sichert sich niemand mehr ab, herrscht blinde Sorglosigkeit.", score:json.put_call_options.score},
-        {key:"market_volatility_vix", name:"Markt-Nervosität (VIX)", sub:"Das ist der Angst-Index der Börse. Er misst, wie panisch oder schwankungsanfällig die Anleger gerade sind.", score:json.market_volatility_vix.score, raw_vix: extrahierterVixUSD, raw_vix_vortag: extrahierterVixVortag},
-        {key:"finra_margin_debt", name:"Kredit-Hebelung am Markt", sub:"Misst, wie stark Anleger mit geliehenem Geld spekulieren. Zu viel Fremdkapital verstärkt die Wucht von Crashs massiv.", score: json.fear_and_greed.score > 78 ? 85 : 35},
-        {key:"junk_bond_demand", name:"Credit Spreads (High-Yield-Aufschlag)", sub:"Misst den Renditeaufschlag von Ramsch-Anleihen (Junk Bonds) gegenüber sicheren Staatsanleihen. Ein enger Aufschlag zeigt Sorglosigkeit, ein breiter Aufschlag Stress im Kreditmarkt.", score: json.junk_bond_demand ? json.junk_bond_demand.score : 50, raw_spread: extrahierterCreditSpread}
-      ]
-    };
-    isLive = true; render(data);
-  }catch(err){
-    isLive = false;
-    
-    const statusIndicator = document.getElementById('statusIndicator');
-    if (statusIndicator) {
-      statusIndicator.className = 'status-tag error'; 
-      statusIndicator.textContent = 'Fehler beim Laden';
-    }
-
-    const gesamtEl = document.getElementById('gesamtfazitText');
-    if (gesamtEl) {
-      gesamtEl.textContent = '⚠️ Live-Daten konnten nicht abgerufen werden. Es sind keine aktuellen Werte verfügbar.';
-      gesamtEl.style.color = 'var(--red)';
-    }
-
-    document.getElementById('rowsSectionETF').innerHTML = '<div style="padding: 10px; color: var(--red);">Keine Live-Daten verfügbar</div>';
-    document.getElementById('rowsSection1').innerHTML = '';
-    document.getElementById('rowsSection2').innerHTML = '';
-    document.getElementById('rowsSection3').innerHTML = '';
-    document.getElementById('rowsSection4').innerHTML = '';
-  }finally{
-    btn.disabled = false;
-  }
-}
-
-document.getElementById('versionStamp').textContent = APP_VERSION;
-
-ladeDaten();
+bindEvents();
+refresh();
+setInterval(refresh, CONFIG.refreshMinutes * 60000);
 </script>
-
-</body></html>
+</body>
+</html>
