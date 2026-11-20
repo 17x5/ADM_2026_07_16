@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <!-- ⚙️ VERSION: hier anpassen (Zürcher Zeit) -->
-<script>const APP_VERSION = "2026-11-20 | 22:20";</script>
+<script>const APP_VERSION = "2026-11-20 | 22:25";</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0B0E13">
@@ -236,7 +236,7 @@ const CONFIG = {
   bottomFinderUrl: "https://de.tradingview.com/script/9iof2PC9/",
   tradingViewUrl: "https://www.tradingview.com/chart/NQ4ANQk2/?symbol=LSE%3ASWDA",
   analysisMaxAgeMin: 180,              // höchstens alle 3 h neu analysieren, ausser die Lage ändert sich
-  storage: { gemini: "cockpit.gemini.v3", style: "analyseStyleLevel" },
+  storage: { gemini: "cockpit.gemini.v4", style: "analyseStyleLevel" },
 };
 
 // Ampel-Schwellen. level() liest: ab "yellow" gelb, ab "red" rot; lowerIsWorse kehrt die Richtung um.
@@ -500,8 +500,21 @@ const ANALYSIS_SCHEMA = {
   required: ["fazit", "actions", "kacheln"],
 };
 
-// Schreibweise absichern: nie ß (Schweiz)
-const swissSpelling = (t) => String(t ?? "").replace(/ß/g, "ss");
+// Gemini liefert Umlaute teils als HTML-Codes (&#228; = ä). Zurückwandeln, ohne HTML auszuführen.
+function decodeEntities(t) {
+  const ta = document.createElement("textarea");
+  ta.innerHTML = t;
+  return ta.value;
+}
+
+// Schreibweise absichern: echte Umlaute, nie ß (Schweiz)
+const swissSpelling = (t) => decodeEntities(String(t ?? "")).replace(/ß/g, "ss");
+
+// Alle Texte in einem Gemini-Ergebnis bereinigen (auch verschachtelt)
+const cleanTexts = (v) => typeof v === "string" ? swissSpelling(v)
+  : Array.isArray(v) ? v.map(cleanTexts)
+  : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, cleanTexts(x)]))
+  : v;
 
 async function callGemini(prompt, schema = null) {
   const body = {
@@ -517,7 +530,7 @@ async function callGemini(prompt, schema = null) {
     const text = (res?.candidates?.[0]?.content?.parts || []).filter((p) => !p.thought).map((p) => p.text || "").join("");
     if (!text) throw new Error("Leere Antwort");
     setGeminiStatus("ok");
-    return swissSpelling(text);
+    return schema ? text : swissSpelling(text);   // JSON wird nach dem Einlesen bereinigt
   } catch (err) {
     setGeminiStatus("fail");
     throw err;
@@ -555,6 +568,7 @@ REGELN:
 3. Weder beschönigen noch dramatisieren. Chancen und Risiken gleich gewichten.
 4. Rechtschreibung: Verwende IMMER die Umlaute ä, ö, ü, Ä, Ö, Ü – niemals ae, oe, ue als Ersatz.
    Verwende NIE das Zeichen ß, schreibe immer ss (Schweizer Rechtschreibung). Du-Form.
+   Schreibe reinen Text: keine HTML-Codes wie &#228; oder &auml;, kein Markdown.
 
 Antworte NUR mit diesem JSON:
 {"fazit": "3–4 Sätze Fliesstext zur Gesamtlage inkl. wichtigster Veränderung zum Vortag",
@@ -584,6 +598,7 @@ async function getAnalysis(model, styleIdx) {
     out = parseJsonLoose(await callGemini(buildPrompt(model, styleIdx), ANALYSIS_SCHEMA));
   }
   if (typeof out.fazit !== "string" || !Array.isArray(out.actions)) throw new Error("Unerwartetes Format");
+  out = cleanTexts(out);
   cache[styleIdx] = { key: situationKey(model), at: Date.now(), texts: out };
   store.set(CONFIG.storage.gemini, cache);
   return out;
