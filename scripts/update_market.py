@@ -162,6 +162,10 @@ def load_cnn() -> dict:
         return pts[-1]["y"], prev["y"]
 
     fg = data["fear_and_greed"]
+    per_day = {}   # ein Wert pro Tag (Intraday-Duplikate zusammenfassen)
+    for p in data["fear_and_greed_historical"]["data"]:
+        per_day[datetime.fromtimestamp(p["x"] / 1000, timezone.utc).date()] = p["y"]
+    hist = [per_day[d] for d in sorted(per_day)]
     vix, vix_prev = last_and_prev_day("market_volatility_vix")
     pc, pc_prev = last_and_prev_day("put_call_options")
     return {
@@ -170,37 +174,64 @@ def load_cnn() -> dict:
         "vix": {"value": rnd(vix), "prev": rnd(vix_prev)},
         "putCall": {"value": rnd(pc, 3), "prev": rnd(pc_prev, 3)},
         "parts": {k: {"score": rnd(data[k]["score"], 1), "rating": data[k]["rating"]} for k in CNN_PARTS},
+        "fearGreedHistory": [rnd(v, 1) for v in hist[-15:]],   # für den Erholungs-Radar
     }
+
+
+def bands(closes: list[float]) -> tuple[float, float, float]:
+    win = closes[-BB_DAYS:]
+    mid, sd = statistics.fmean(win), statistics.pstdev(win)
+    return mid + BB_STD * sd, mid, mid - BB_STD * sd
 
 
 def load_bollinger() -> dict:
     closes = [c for _, c in yahoo_closes(BOLLINGER_TICKER, "3mo")]
-    win = closes[-BB_DAYS:]
-    mid, sd = statistics.fmean(win), statistics.pstdev(win)
-    upper, lower, last = mid + BB_STD * sd, mid - BB_STD * sd, closes[-1]
+    upper, mid, lower = bands(closes)
+    last = closes[-1]
+    # Lag der Kurs in den letzten 5 Tagen unter dem unteren Band und ist jetzt wieder darüber?
+    was_below = any(closes[-i] < bands(closes[:len(closes) - i + 1])[2] for i in range(2, 7))
     return {"ticker": BOLLINGER_TICKER, "price": rnd(last), "upper": rnd(upper), "middle": rnd(mid),
             "lower": rnd(lower), "percentB": rnd((last - lower) / (upper - lower), 3) if upper != lower else 0.5,
-            "bandwidthPct": rnd((upper - lower) / mid * 100)}
+            "bandwidthPct": rnd((upper - lower) / mid * 100),
+            "returnedIntoBand": was_below and last > lower}
+
+
+def load_erholung(sentiment: dict | None, rates: dict | None) -> dict:
+    """Erholungs-Radar: drei Anzeichen, dass die Panik nachlässt (Gegenstück zum Frühwarner)."""
+    out = {}
+    if sentiment:
+        hist = sentiment["fearGreedHistory"]
+        now, prev, min10 = hist[-1], hist[-2], min(hist[-11:-1])
+        out["fearTurn"] = {"value": now, "min10": min10, "green": min10 < 25 and now > 25 and now > prev}
+    vix, vix3m = last_prev("^VIX")["value"], last_prev("^VIX3M")["value"]
+    out["vixCurve"] = {"vix": vix, "vix3m": vix3m, "green": vix < vix3m}
+    if rates:
+        hy = fred_series("BAMLH0A0HYM2", 15)
+        vals = [v for _, v in hy]
+        out["credit"] = {"value": vals[-1], "sma10": rnd(sma(vals, 10), 3), "green": vals[-1] < sma(vals, 10)}
+    return out
 
 
 # ── Hauptprogramm ─────────────────────────────────────────────
 def main() -> int:
     errors: list[str] = []
     rates = safe(load_rates, "FRED", errors)
+    sentiment = safe(load_cnn, "CNN", errors)
     result = {
         "updated": datetime.now(timezone.utc).isoformat(timespec="minutes"),
-        "sentiment": safe(load_cnn, "CNN", errors),
+        "sentiment": sentiment,
         "quotes": safe(load_quotes, "Kurse", errors),
         "rates": rates,
         "etfs": safe(load_etfs, "ETFs", errors),
         "fruehwarner": safe(lambda: load_fruehwarner(rates), "Frühwarner", errors),
         "bollinger": safe(load_bollinger, "Bollinger", errors),
+        "erholung": safe(lambda: load_erholung(sentiment, rates), "Erholung", errors),
         "errors": errors,
     }
     OUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     OUT_FILE.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    sections = ("sentiment", "quotes", "rates", "etfs", "fruehwarner", "bollinger")
+    sections = ("sentiment", "quotes", "rates", "etfs", "fruehwarner", "bollinger", "erholung")
     return 1 if all(result[k] is None for k in sections) else 0
 
 
