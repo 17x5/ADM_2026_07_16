@@ -1,0 +1,146 @@
+{
+  "updated": "2026-11-20T19:38+00:00",
+  "sentiment": {
+    "fearGreed": {
+      "value": 10.6,
+      "prev": 18.7,
+      "week": 37.4,
+      "rating": "extreme fear"
+    },
+    "vix": {
+      "value": 33.27,
+      "prev": 28.44
+    },
+    "putCall": {
+      "value": 0.931,
+      "prev": 0.902
+    },
+    "parts": {
+      "market_momentum_sp500": {
+        "score": 0.6,
+        "rating": "extreme fear"
+      },
+      "stock_price_strength": {
+        "score": 28.8,
+        "rating": "fear"
+      },
+      "stock_price_breadth": {
+        "score": 20.6,
+        "rating": "extreme fear"
+      },
+      "put_call_options": {
+        "score": 2.2,
+        "rating": "extreme fear"
+      },
+      "market_volatility_vix": {
+        "score": 2.6,
+        "rating": "extreme fear"
+      },
+      "junk_bond_demand": {
+        "score": 18.2,
+        "rating": "extreme fear"
+      },
+      "safe_haven_demand": {
+        "score": 0.8,
+        "rating": "extreme fear"
+      }
+    }
+  },
+  "quotes": {
+    "sp500": {
+      "value": 6963.0,
+      "prev": 7175.83,
+      "changePct": -2.97,
+      "date": "2026-11-20"
+    },
+    "move": {
+      "value": 103.8,
+      "prev": 96.04,
+      "changePct": 8.08,
+      "date": "2026-11-20"
+    },
+    "gold": {
+      "value": 3515.1,
+      "prev": 3685.5,
+      "changePct": -4.62,
+      "date": "2026-11-20"
+    },
+    "oil": {
+      "value": 83.36,
+      "prev": 83.21,
+      "changePct": 0.18,
+      "date": "2026-11-20"
+    },
+    "bitcoin": {
+      "value": 58229.85,
+      "prev": 61901.82,
+      "changePct": -5.93,
+      "date": "2026-11-20"
+    }
+  },
+  "rates": {
+    "yieldCurve": {
+      "value": 0.28,
+      "prev": 0.27,
+      "date": "2026-11-19"
+    },
+    "hySpread": {
+      "value": 3.52,
+      "prev": 3.47,
+      "date": "2026-11-19",
+      "sma50": 3.146
+    }
+  },
+  "etfs": {
+    "core": {
+      "name": "MSCI Core",
+      "currency": "CHF",
+      "price": 35.255,
+      "prevClose": 36.525,
+      "changePct": -3.48
+    },
+    "equal": {
+      "name": "MSCI Equal Weight",
+      "currency": "EUR",
+      "price": 5.919,
+      "prevClose": 6.028,
+      "changePct": -1.81
+    },
+    "emerging": {
+      "name": "MSCI Emerging",
+      "currency": "EUR",
+      "price": 40.955,
+      "prevClose": 43.08,
+      "changePct": -4.93
+    }
+  },
+  "fruehwarner": {
+    "smallCaps": {
+      "ratio": 0.37151,
+      "sma50": 0.36611,
+      "diffPct": 1.48,
+      "red": false
+    },
+    "breadth": {
+      "ratio": 0.30054,
+      "sma50": 0.28271,
+      "diffPct": 6.31,
+      "red": false
+    },
+    "credit": {
+      "value": 3.52,
+      "sma50": 3.146,
+      "red": true
+    }
+  },
+  "bollinger": {
+    "ticker": "SWDA.L",
+    "price": 10288.0,
+    "upper": 11153.33,
+    "middle": 10788.3,
+    "lower": 10423.27,
+    "percentB": -0.185,
+    "bandwidthPct": 6.77
+  },
+  "errors": []
+}
