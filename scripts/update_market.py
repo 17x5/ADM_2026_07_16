@@ -135,16 +135,15 @@ def load_rates() -> dict:
 
 
 def load_fruehwarner(rates: dict | None) -> dict:
-    spy, iwm, rsp = (dict(yahoo_closes(t)) for t in ("SPY", "IWM", "RSP"))
-    dates = sorted(set(spy) & set(iwm) & set(rsp))
+    """Frühwarner: fallen Small Caps und der breite Markt UNTER ihren 50-Tage-Schnitt?
+    Absolut gemessen (nicht im Vergleich zum S&P 500), damit ein breiter Absturz sicher erkannt wird."""
+    def trend_signal(ticker: str) -> dict:
+        c = [v for _, v in yahoo_closes(ticker)]
+        avg = sma(c, SMA_DAYS)
+        return {"price": rnd(c[-1]), "sma50": rnd(avg), "diffPct": rnd((c[-1] / avg - 1) * 100, 2), "red": c[-1] < avg}
 
-    def ratio_signal(num: dict) -> dict:
-        r = [num[d] / spy[d] for d in dates]
-        avg = sma(r, SMA_DAYS)
-        return {"ratio": rnd(r[-1], 5), "sma50": rnd(avg, 5),
-                "diffPct": rnd((r[-1] / avg - 1) * 100, 2), "red": r[-1] < avg}
-
-    out = {"smallCaps": ratio_signal(iwm), "breadth": ratio_signal(rsp)}
+    out = {"smallCaps": trend_signal("IWM"),   # Russell 2000
+           "breadth": trend_signal("RSP")}     # S&P 500 gleichgewichtet = breiter Markt
     if rates:
         hy = rates["hySpread"]
         out["credit"] = {"value": hy["value"], "sma50": hy["sma50"], "red": hy["value"] > hy["sma50"]}
