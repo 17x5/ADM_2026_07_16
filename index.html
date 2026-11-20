@@ -26,6 +26,7 @@
   --red-text: #F08A7A;
   --green-text: #7FCB8A;
   --violet: #D2B4FF;
+  --blue: #4F8FE0;
   --neutral: #6B7480;
   --radius: 14px;
   --gap: 10px;
@@ -62,12 +63,13 @@ button, input, select { font-family: inherit; }
 .dot[data-level="green"]  { background: var(--green); }
 .dot[data-level="yellow"] { background: var(--yellow); }
 .dot[data-level="red"]    { background: var(--red); }
+.dot[data-level="blue"]   { background: var(--blue); }
 
 /* Kopfzeile */
 .header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .header h1 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.2px; }
 .live { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 12px; color: var(--muted); }
-.live__badge { display: flex; align-items: center; gap: 5px; font-weight: 600; font-size: 11px; }
+.live__badge { display: flex; align-items: center; gap: 5px; font-weight: 600; }
 .live__badge[data-open="true"] { color: var(--red-text); }
 .live__badge[data-open="true"]::before { content: ""; width: 8px; height: 8px; border-radius: 999px; background: var(--red); }
 .live__info[data-stale="true"] { color: var(--yellow); }
@@ -127,6 +129,7 @@ button, input, select { font-family: inherit; }
 .verdict[data-level="green"]  { color: var(--green-text); }
 .verdict[data-level="yellow"] { color: var(--yellow); }
 .verdict[data-level="red"]    { color: var(--red-text); }
+.verdict[data-level="blue"]   { color: #8DB8F0; }
 
 .phase { background: var(--card-inset); border-left: 3px solid var(--neutral); border-radius: 0 8px 8px 0; padding: 8px 10px; }
 .phase[data-level="green"]  { border-left-color: var(--green); }
@@ -144,6 +147,12 @@ button, input, select { font-family: inherit; }
 .ind-row__desc { grid-column: 2 / 5; font-size: 12px; color: var(--muted); line-height: 1.4; }
 .kachel-fazit { background: var(--card-inset); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 13px; line-height: 1.45; color: var(--text-2); }
 
+.boll { display: flex; flex-direction: column; gap: 6px; padding-top: 4px; }
+.boll__bar { position: relative; height: 12px; border-radius: 999px; overflow: visible;
+  background: linear-gradient(to right,
+    var(--red) 0 25%, var(--yellow) 25% 35%, var(--blue) 35% 65%, var(--yellow) 65% 75%, var(--green) 75% 100%); }
+.boll__marker { position: absolute; top: -5px; width: 6px; height: 22px; margin-left: -3px; border-radius: 3px; background: var(--text); box-shadow: 0 0 0 2px var(--bg); }
+.boll__labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
 .button-link { font-size: 14px; font-weight: 600; text-align: center; border: 1px solid #2E3640; border-radius: 10px; padding: 12px; text-decoration: none; display: block; }
 .seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
 .seg button { background: none; border: none; color: var(--muted); font-size: 12px; min-height: 36px; cursor: pointer; }
@@ -202,7 +211,7 @@ button, input, select { font-family: inherit; }
 /* ════════════════════════════════════════════════════════════
    1. KONFIGURATION
    ════════════════════════════════════════════════════════════ */
-const APP_VERSION = "2026-11-20 | 21:30";   // manuell setzen, Zürcher Zeit
+const APP_VERSION = "2026-11-20 | 21:45";   // manuell setzen, Zürcher Zeit
 
 const CONFIG = {
   dataUrl: "data/market.json",          // erzeugt von .github/workflows/update-market.yml
@@ -784,17 +793,25 @@ const PANELS = {
     const b = model.raw.bollinger;
     if (!b) return `<p class="muted">Keine Bollinger-Daten.</p>`;
     const pb = b.percentB;
-    const pos = pb < 0 ? "unter dem unteren Band" : pb > 1 ? "über dem oberen Band"
-      : pb < 0.2 ? "am unteren Band" : pb > 0.8 ? "am oberen Band" : "in der Mitte";
-    const lvl = pb < 0.2 ? "red" : pb > 0.8 ? "yellow" : "green";
+    // Position auf der Skala: 0 % = deutlich unter dem Band, 100 % = deutlich darüber
+    const marker = Math.max(2, Math.min(98, ((pb + 0.5) / 2) * 100));
+    const zone = pb < 0 ? { lvl: "red", t: "Stark gefallen", d: "Der Kurs liegt unter seinem üblichen Bereich der letzten 20 Tage. Das ist selten und oft folgt eine Gegenbewegung. Ein Boden ist damit aber nicht bestätigt." }
+      : pb < 0.2 ? { lvl: "yellow", t: "Günstig", d: "Der Kurs liegt am unteren Rand seines üblichen Bereichs." }
+      : pb <= 0.8 ? { lvl: "blue", t: "Normal", d: "Der Kurs bewegt sich im üblichen Bereich der letzten 20 Tage." }
+      : pb <= 1 ? { lvl: "yellow", t: "Teuer", d: "Der Kurs liegt am oberen Rand seines üblichen Bereichs." }
+      : { lvl: "green", t: "Stark gestiegen", d: "Der Kurs liegt über seinem üblichen Bereich. Oft folgt eine Verschnaufpause." };
+    const swing = b.bandwidthPct > 8 ? "hoch" : b.bandwidthPct < 3 ? "tief" : "normal";
     return `
-      <div class="kv"><span></span><span><b>iShares Core MSCI World · SWDA</b></span><span>20 T · 2σ</span></div>
-      <div class="kv">${dot(lvl)}<span>Position</span><span>${pos}</span></div>
-      ${b.returnedIntoBand ? `<div class="kv">${dot("green")}<span>Rückkehr ins Band</span><span>positives Zeichen</span></div>` : ""}
-      <div class="kv">${dot("none")}<span>Bänder o · m · u</span><span class="num">${fmt(b.upper, 0)} · ${fmt(b.middle, 0)} · ${fmt(b.lower, 0)}</span></div>
-      <div class="kv">${dot("none")}<span>Kurs (GBX)</span><span class="num">${fmt(b.price, 0)}</span></div>
-      <div class="kv">${dot("none")}<span>Bandbreite</span><span class="num">${fmt(b.bandwidthPct, 1)} %</span></div>
-      <a class="button-link" href="${CONFIG.tradingViewUrl}" target="_blank" rel="noopener">In TradingView öffnen ↗</a>`;
+      <div class="kv"><span></span><span><b>iShares Core MSCI World</b></span><span>letzte 20 Tage</span></div>
+      <div class="boll">
+        <div class="boll__bar"><span class="boll__marker" style="left:${marker}%"></span></div>
+        <div class="boll__labels"><span>stark gefallen</span><span>üblicher Bereich</span><span>stark gestiegen</span></div>
+      </div>
+      <div class="kv">${dot(zone.lvl)}<span class="verdict" data-level="${zone.lvl}">${zone.t}</span><span></span></div>
+      <p>${zone.d}</p>
+      <div class="kv">${dot("none")}<span>Schwankung</span><span>${swing} (${fmt(b.bandwidthPct, 1)} %)</span></div>
+      ${b.returnedIntoBand ? `<div class="kv">${dot("green")}<span>Zurück im üblichen Bereich</span><span>positives Zeichen</span></div>` : ""}
+      <a class="button-link" href="${CONFIG.tradingViewUrl}" target="_blank" rel="noopener">Chart in TradingView öffnen ↗</a>`;
   },
 };
 
