@@ -202,7 +202,7 @@ button, input, select { font-family: inherit; }
 /* ════════════════════════════════════════════════════════════
    1. KONFIGURATION
    ════════════════════════════════════════════════════════════ */
-const APP_VERSION = "2026-11-20 | 21:10";   // manuell setzen, Zürcher Zeit
+const APP_VERSION = "2026-11-20 | 21:30";   // manuell setzen, Zürcher Zeit
 
 const CONFIG = {
   dataUrl: "data/market.json",          // erzeugt von .github/workflows/update-market.yml
@@ -348,6 +348,14 @@ function fruehwarnerLevel(fw) {
   return reds >= 3 ? "red" : reds === 2 ? "yellow" : "green";
 }
 
+// Erholungs-Radar: 3 grün = Boden wahrscheinlich, 2 = erste Zeichen, sonst noch kein Boden
+function erholungLevel(er) {
+  if (!er) return "none";
+  const greens = ["fearTurn", "vixCurve", "credit"].filter((k) => er[k]?.green).length;
+  return greens >= 3 ? "green" : greens === 2 ? "yellow" : "none";
+}
+const ERHOLUNG_TEXT = { green: "Boden wahrscheinlich", yellow: "Erste Zeichen", none: "Noch kein Boden" };
+
 // Wellen-Modell: Phase aus Angst & Gier, Marktbreite und VIX
 function detectPhase(fg, breadth, vix) {
   const p = T.phase;
@@ -359,12 +367,16 @@ function detectPhase(fg, breadth, vix) {
   return { code: "W3", status: "Gesund" };
 }
 
-// Marktdiagnose = Welle × Frühwarner
-function diagnose(phase, fwLevel) {
+// Marktdiagnose = Welle × Frühwarner × Erholungs-Radar
+function diagnose(phase, fwLevel, erLevel) {
   const down = phase === "A" || phase === "C";
   const up = phase === "W1" || phase === "W3" || phase === "W5";
   const fwRed = fwLevel === "red";
   if (!phase) return { level: "none", title: "Keine Diagnose", text: "Es fehlen Daten." };
+  if (down && erLevel === "green") return { level: "green", title: "Boden in Sicht – Kaufgelegenheit",
+    text: "Die Panik lässt nach: Angst, VIX und Kreditmarkt entspannen sich. Eine gute Phase für die nächste Tranche." };
+  if (down && erLevel === "yellow" && !fwRed) return { level: "green", title: "Korrektur mit ersten Erholungszeichen",
+    text: "Der Markt ist gesund und die Panik beginnt nachzulassen. Ein Boden ist noch nicht bestätigt." };
   if (down && !fwRed) return { level: "green", title: "Korrektur im gesunden Markt",
     text: "Der Rückgang dürfte begrenzt bleiben. Kippt der Frühwarner, wird daraus ein breiter Abwärtstrend." };
   if (down && fwRed) return { level: "red", title: "Breiter Abwärtstrend",
@@ -403,6 +415,7 @@ function buildModel(m) {
   const phase = detectPhase(fg, breadth, vix);
   const phaseLevel = phase.code ? PHASES[phase.code].level : "none";
   const fwLevel = fruehwarnerLevel(m.fruehwarner);
+  const erLevel = erholungLevel(m.erholung);
   const ratio = isNum(q.gold?.value) && isNum(q.oil?.value) && q.oil.value > 0 ? q.gold.value / q.oil.value : null;
 
   // Einzelindikatoren je Kachel
@@ -442,9 +455,9 @@ function buildModel(m) {
   ];
 
   return {
-    raw: m, groups, signals, phase, phaseLevel, fwLevel,
+    raw: m, groups, signals, phase, phaseLevel, fwLevel, erLevel,
     overall: overallLevel(signals.map((x) => x.level)),
-    diag: diagnose(phase.code, fwLevel),
+    diag: diagnose(phase.code, fwLevel, erLevel),
     clock: marketClock(m.updated),
   };
 }
@@ -499,6 +512,7 @@ function geminiFacts(model) {
   return {
     welle: model.phase.code, welle_status: model.phase.status, marktdiagnose: model.diag.title,
     gesamtampel: model.overall, fruehwarner: m.fruehwarner,
+    erholungs_radar: { status: ERHOLUNG_TEXT[model.erLevel], details: m.erholung },
     angst_gier: m.sentiment?.fearGreed, vix: m.sentiment?.vix, put_call: m.sentiment?.putCall,
     cnn_teilindikatoren: m.sentiment?.parts, kurse: m.quotes, zinsen: m.rates,
     etfs: m.etfs, bollinger_swda: m.bollinger,
@@ -513,6 +527,7 @@ Sprachniveau: ${STYLE_LEVELS[styleIdx].prompt}
 REGELN:
 1. Nutze ausschliesslich die Daten unten. Erfinde keine Zahlen, keine Unternehmensnachrichten.
 2. Die Welle und die Marktdiagnose sind gesetzt. Widersprich ihnen nicht.
+   Nenne neben Risiken auch positive Anzeichen (Erholungs-Radar, Frühwarner), wenn die Daten sie zeigen.
 3. Weder beschönigen noch dramatisieren. Chancen und Risiken gleich gewichten.
 4. Rechtschreibung: Verwende IMMER die Umlaute ä, ö, ü, Ä, Ö, Ü – niemals ae, oe, ue als Ersatz.
    Verwende NIE das Zeichen ß, schreibe immer ss (Schweizer Rechtschreibung). Du-Form.
@@ -529,7 +544,7 @@ ${JSON.stringify(geminiFacts(model))}`;
 
 // Gratis-Stufe von Gemini: nur wenige Anfragen pro Tag. Deshalb wird nur neu analysiert,
 // wenn sich die Lage ändert oder die letzte Analyse älter als CONFIG.analysisMaxAgeMin ist.
-const situationKey = (model) => [model.phase.code, model.overall, model.fwLevel, model.diag.title].join("|");
+const situationKey = (model) => [model.phase.code, model.overall, model.fwLevel, model.erLevel, model.diag.title].join("|");
 
 async function getAnalysis(model, styleIdx) {
   const cache = store.get(CONFIG.storage.gemini) || {};
@@ -738,13 +753,16 @@ const PANELS = {
 
   diag(model) {
     const fw = model.raw.fruehwarner || {};
+    const er = model.raw.erholung || {};
     const sig = (x) => (x ? (x.red ? "red" : "green") : "none");
+    const pos = (x) => (x ? (x.green ? "green" : "none") : "none");   // positive Signale: grün oder grau
     const kv = (lvl, a, b) => `<div class="kv">${dot(lvl)}<span>${a}</span><span class="num">${b}</span></div>`;
     const ph = model.phase.code ? PHASES[model.phase.code] : null;
     return `
       <div class="chips">
         <span class="chip">${dot(model.phaseLevel)}Welle ${esc(model.phase.code || "–")}</span>
         <span class="chip">${dot(model.fwLevel)}Frühwarner</span>
+        <span class="chip">${dot(model.erLevel)}Erholung</span>
       </div>
       <div class="verdict" data-level="${model.diag.level}">${esc(model.diag.title)}</div>
       <p class="muted">${esc(model.diag.text)}</p>
@@ -752,6 +770,11 @@ const PANELS = {
         ${kv(sig(fw.smallCaps), "Small Caps", fw.smallCaps ? fmtPct(fw.smallCaps.diffPct) : "–")}
         ${kv(sig(fw.breadth), "Marktbreite", fw.breadth ? fmtPct(fw.breadth.diffPct) : "–")}
         ${kv(sig(fw.credit), "Kredit-Spreads", fw.credit ? fmt(fw.credit.value, 2) + " %" : "–")}
+      </div>
+      <div class="block"><h3>Erholungs-Radar · ${ERHOLUNG_TEXT[model.erLevel]}</h3>
+        ${kv(pos(er.fearTurn), "Angst dreht", er.fearTurn ? `${fmt(er.fearTurn.value, 0)} (Tief ${fmt(er.fearTurn.min10, 0)})` : "–")}
+        ${kv(pos(er.vixCurve), "VIX entspannt", er.vixCurve ? `${fmt(er.vixCurve.vix, 1)} vs. ${fmt(er.vixCurve.vix3m, 1)}` : "–")}
+        ${kv(pos(er.credit), "Kredit beruhigt", er.credit ? `${fmt(er.credit.value, 2)} vs. ${fmt(er.credit.sma10, 2)}` : "–")}
       </div>
       ${ph ? `<div class="block"><h3>Aktuelle Phase</h3>
         <div class="phase" data-level="${ph.level}"><div class="phase__name">${esc(ph.name)}</div><div class="phase__desc">${esc(ph.desc)}</div></div></div>` : ""}`;
@@ -767,6 +790,7 @@ const PANELS = {
     return `
       <div class="kv"><span></span><span><b>iShares Core MSCI World · SWDA</b></span><span>20 T · 2σ</span></div>
       <div class="kv">${dot(lvl)}<span>Position</span><span>${pos}</span></div>
+      ${b.returnedIntoBand ? `<div class="kv">${dot("green")}<span>Rückkehr ins Band</span><span>positives Zeichen</span></div>` : ""}
       <div class="kv">${dot("none")}<span>Bänder o · m · u</span><span class="num">${fmt(b.upper, 0)} · ${fmt(b.middle, 0)} · ${fmt(b.lower, 0)}</span></div>
       <div class="kv">${dot("none")}<span>Kurs (GBX)</span><span class="num">${fmt(b.price, 0)}</span></div>
       <div class="kv">${dot("none")}<span>Bandbreite</span><span class="num">${fmt(b.bandwidthPct, 1)} %</span></div>
