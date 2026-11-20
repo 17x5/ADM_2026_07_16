@@ -1,80 +1,97 @@
 {
-  "updated": "2026-11-20T19:38+00:00",
+  "updated": "2026-11-20T21:16+00:00",
   "sentiment": {
     "fearGreed": {
-      "value": 10.6,
+      "value": 9.6,
       "prev": 18.7,
       "week": 37.4,
       "rating": "extreme fear"
     },
     "vix": {
-      "value": 33.27,
+      "value": 39.72,
       "prev": 28.44
     },
     "putCall": {
-      "value": 0.931,
+      "value": 0.942,
       "prev": 0.902
     },
     "parts": {
       "market_momentum_sp500": {
-        "score": 0.6,
+        "score": 0.2,
         "rating": "extreme fear"
       },
       "stock_price_strength": {
-        "score": 28.8,
+        "score": 27.4,
         "rating": "fear"
       },
       "stock_price_breadth": {
-        "score": 20.6,
+        "score": 20.0,
         "rating": "extreme fear"
       },
       "put_call_options": {
-        "score": 2.2,
+        "score": 2.0,
         "rating": "extreme fear"
       },
       "market_volatility_vix": {
-        "score": 2.6,
+        "score": 0.7,
         "rating": "extreme fear"
       },
       "junk_bond_demand": {
-        "score": 18.2,
+        "score": 16.2,
         "rating": "extreme fear"
       },
       "safe_haven_demand": {
         "score": 0.8,
         "rating": "extreme fear"
       }
-    }
+    },
+    "fearGreedHistory": [
+      19.4,
+      23.5,
+      34.2,
+      20.0,
+      24.4,
+      31.5,
+      37.4,
+      35.9,
+      40.3,
+      37.4,
+      31.1,
+      26.0,
+      29.9,
+      15.9,
+      9.6
+    ]
   },
   "quotes": {
     "sp500": {
-      "value": 6963.0,
+      "value": 6910.39,
       "prev": 7175.83,
-      "changePct": -2.97,
+      "changePct": -3.7,
       "date": "2026-11-20"
     },
     "move": {
-      "value": 103.8,
+      "value": 106.24,
       "prev": 96.04,
-      "changePct": 8.08,
+      "changePct": 10.62,
       "date": "2026-11-20"
     },
     "gold": {
-      "value": 3515.1,
+      "value": 3524.5,
       "prev": 3685.5,
-      "changePct": -4.62,
+      "changePct": -4.37,
       "date": "2026-11-20"
     },
     "oil": {
-      "value": 83.36,
+      "value": 83.86,
       "prev": 83.21,
-      "changePct": 0.18,
+      "changePct": 0.78,
       "date": "2026-11-20"
     },
     "bitcoin": {
-      "value": 58229.85,
+      "value": 58169.62,
       "prev": 61901.82,
-      "changePct": -5.93,
+      "changePct": -6.03,
       "date": "2026-11-20"
     }
   },
@@ -116,15 +133,15 @@
   },
   "fruehwarner": {
     "smallCaps": {
-      "ratio": 0.37151,
-      "sma50": 0.36611,
-      "diffPct": 1.48,
+      "ratio": 0.37205,
+      "sma50": 0.36612,
+      "diffPct": 1.62,
       "red": false
     },
     "breadth": {
-      "ratio": 0.30054,
+      "ratio": 0.30026,
       "sma50": 0.28271,
-      "diffPct": 6.31,
+      "diffPct": 6.21,
       "red": false
     },
     "credit": {
@@ -140,7 +157,25 @@
     "middle": 10788.3,
     "lower": 10423.27,
     "percentB": -0.185,
-    "bandwidthPct": 6.77
+    "bandwidthPct": 6.77,
+    "returnedIntoBand": false
+  },
+  "erholung": {
+    "fearTurn": {
+      "value": 9.6,
+      "min10": 15.9,
+      "green": false
+    },
+    "vixCurve": {
+      "vix": 39.53,
+      "vix3m": 32.27,
+      "green": false
+    },
+    "credit": {
+      "value": 3.52,
+      "sma10": 3.355,
+      "green": false
+    }
   },
   "errors": []
 }
