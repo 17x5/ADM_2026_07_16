@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-21T01:04+00:00",
+  "updated": "2026-11-21T03:14+00:00",
   "sentiment": {
     "fearGreed": {
       "value": 9.7,
@@ -89,9 +89,9 @@
       "date": "2026-11-20"
     },
     "bitcoin": {
-      "value": 58829.73,
+      "value": 58332.36,
       "prev": 61901.82,
-      "changePct": -4.96,
+      "changePct": -5.77,
       "date": "2026-11-21"
     }
   },
@@ -133,15 +133,15 @@
   },
   "fruehwarner": {
     "smallCaps": {
-      "price": 264.22,
-      "sma50": 278.91,
-      "diffPct": -5.27,
+      "price": 256.61,
+      "sma50": 278.26,
+      "diffPct": -7.78,
       "red": true
     },
     "breadth": {
-      "price": 211.63,
-      "sma50": 214.95,
-      "diffPct": -1.54,
+      "price": 207.44,
+      "sma50": 214.8,
+      "diffPct": -3.43,
       "red": true
     },
     "credit": {
