@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-20T22:09+00:00",
+  "updated": "2026-11-21T01:04+00:00",
   "sentiment": {
     "fearGreed": {
       "value": 9.7,
@@ -77,22 +77,22 @@
       "date": "2026-11-20"
     },
     "gold": {
-      "value": 3538.0,
+      "value": 3539.0,
       "prev": 3685.5,
-      "changePct": -4.0,
+      "changePct": -3.98,
       "date": "2026-11-20"
     },
     "oil": {
-      "value": 83.59,
+      "value": 83.62,
       "prev": 83.21,
-      "changePct": 0.46,
+      "changePct": 0.49,
       "date": "2026-11-20"
     },
     "bitcoin": {
-      "value": 58938.51,
+      "value": 58829.73,
       "prev": 61901.82,
-      "changePct": -4.79,
-      "date": "2026-11-20"
+      "changePct": -4.96,
+      "date": "2026-11-21"
     }
   },
   "rates": {
@@ -112,36 +112,36 @@
     "core": {
       "name": "MSCI Core",
       "currency": "CHF",
-      "price": 35.255,
-      "prevClose": 36.525,
-      "changePct": -3.48
+      "price": 36.525,
+      "prevClose": 36.615,
+      "changePct": -0.25
     },
     "equal": {
       "name": "MSCI Equal Weight",
       "currency": "EUR",
-      "price": 5.919,
-      "prevClose": 6.028,
-      "changePct": -1.81
+      "price": 6.028,
+      "prevClose": 6.072,
+      "changePct": -0.72
     },
     "emerging": {
       "name": "MSCI Emerging",
       "currency": "EUR",
-      "price": 40.955,
-      "prevClose": 43.08,
-      "changePct": -4.93
+      "price": 43.08,
+      "prevClose": 43.237,
+      "changePct": -0.36
     }
   },
   "fruehwarner": {
     "smallCaps": {
-      "price": 256.61,
-      "sma50": 278.26,
-      "diffPct": -7.78,
+      "price": 264.22,
+      "sma50": 278.91,
+      "diffPct": -5.27,
       "red": true
     },
     "breadth": {
-      "price": 207.44,
-      "sma50": 214.8,
-      "diffPct": -3.43,
+      "price": 211.63,
+      "sma50": 214.95,
+      "diffPct": -1.54,
       "red": true
     },
     "credit": {
@@ -152,12 +152,12 @@
   },
   "bollinger": {
     "ticker": "SWDA.L",
-    "price": 10288.0,
-    "upper": 11153.33,
-    "middle": 10788.3,
-    "lower": 10423.27,
-    "percentB": -0.185,
-    "bandwidthPct": 6.77,
+    "price": 10609.0,
+    "upper": 11102.33,
+    "middle": 10817.45,
+    "lower": 10532.57,
+    "percentB": 0.134,
+    "bandwidthPct": 5.27,
     "returnedIntoBand": false
   },
   "erholung": {
