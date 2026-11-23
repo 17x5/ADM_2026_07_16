@@ -33,8 +33,8 @@ FRED_KEY = os.environ.get("FRED_API_KEY", "").strip()
 
 ETFS = {  # Schlüssel → Yahoo-Ticker (ISIN nur zur Dokumentation)
     "core":     {"ticker": "WRDUSW.SW", "name": "MSCI Core",         "currency": "CHF", "isin": "IE00BD4TXV59"},
-    "equal":    {"ticker": "MWEQ.DE",   "name": "MSCI Equal Weight", "currency": "EUR", "isin": "IE000OEF25S1"},
-    "emerging": {"ticker": "IS3N.DE",   "name": "MSCI Emerging",     "currency": "EUR", "isin": "IE00BKM4GZ66"},
+    "equal":    {"ticker": "MWEQ.SW",   "name": "MSCI Equal Weight", "currency": "CHF", "isin": "IE000OEF25S1"},
+    "emerging": {"ticker": "EIMI.SW",   "name": "MSCI Emerging",     "currency": "USD", "isin": "IE00BKM4GZ66"},
 }
 QUOTES = {  # Einzelwerte mit Vortagesvergleich
     "sp500":   "^GSPC",
