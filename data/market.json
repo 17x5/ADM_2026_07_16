@@ -1,27 +1,27 @@
 {
-  "updated": "2026-11-23T15:47+00:00",
+  "updated": "2026-11-23T17:19+00:00",
   "sentiment": {
     "fearGreed": {
-      "value": 20.1,
+      "value": 17.4,
       "prev": 9.7,
       "week": 31.1,
       "rating": "extreme fear"
     },
     "vix": {
-      "value": 26.25,
+      "value": 27.62,
       "prev": 35.89
     },
     "putCall": {
-      "value": 0.875,
+      "value": 0.903,
       "prev": 0.945
     },
     "parts": {
       "market_momentum_sp500": {
-        "score": 5.6,
+        "score": 3.6,
         "rating": "extreme fear"
       },
       "stock_price_strength": {
-        "score": 28.8,
+        "score": 28.4,
         "rating": "fear"
       },
       "stock_price_breadth": {
@@ -29,19 +29,19 @@
         "rating": "extreme fear"
       },
       "put_call_options": {
-        "score": 15.2,
+        "score": 8.4,
         "rating": "extreme fear"
       },
       "market_volatility_vix": {
-        "score": 40.9,
+        "score": 32.5,
         "rating": "fear"
       },
       "junk_bond_demand": {
-        "score": 24.0,
+        "score": 24.4,
         "rating": "extreme fear"
       },
       "safe_haven_demand": {
-        "score": 8.6,
+        "score": 7.0,
         "rating": "extreme fear"
       }
     },
@@ -60,38 +60,38 @@
       29.9,
       15.9,
       18.6,
-      20.1
+      17.4
     ]
   },
   "quotes": {
     "sp500": {
-      "value": 7258.54,
+      "value": 7249.42,
       "prev": 6910.39,
-      "changePct": 5.04,
+      "changePct": 4.91,
       "date": "2026-11-23"
     },
     "move": {
-      "value": 104.63,
+      "value": 102.8,
       "prev": 106.31,
-      "changePct": -1.58,
+      "changePct": -3.31,
       "date": "2026-11-23"
     },
     "gold": {
-      "value": 3675.9,
+      "value": 3663.6,
       "prev": 3515.4,
-      "changePct": 4.57,
+      "changePct": 4.22,
       "date": "2026-11-23"
     },
     "oil": {
-      "value": 80.53,
+      "value": 80.89,
       "prev": 83.98,
-      "changePct": -4.11,
+      "changePct": -3.68,
       "date": "2026-11-23"
     },
     "bitcoin": {
-      "value": 62725.59,
+      "value": 61958.28,
       "prev": 61161.91,
-      "changePct": 2.56,
+      "changePct": 1.3,
       "date": "2026-11-23"
     }
   },
@@ -112,39 +112,39 @@
     "core": {
       "name": "MSCI Core",
       "currency": "CHF",
-      "price": 36.425,
+      "price": 36.265,
       "prevClose": 35.255,
-      "changePct": 3.32,
+      "changePct": 2.86,
       "date": "2026-11-23"
     },
     "equal": {
       "name": "MSCI Equal Weight",
       "currency": "CHF",
-      "price": 5.528,
+      "price": 5.557,
       "prevClose": 5.458,
-      "changePct": 1.28,
+      "changePct": 1.81,
       "date": "2026-11-23"
     },
     "emerging": {
       "name": "MSCI Emerging",
       "currency": "USD",
-      "price": 48.07,
+      "price": 47.735,
       "prevClose": 45.01,
-      "changePct": 6.8,
+      "changePct": 6.05,
       "date": "2026-11-23"
     }
   },
   "fruehwarner": {
     "smallCaps": {
-      "price": 264.73,
-      "sma50": 277.8,
-      "diffPct": -4.7,
+      "price": 265.01,
+      "sma50": 277.81,
+      "diffPct": -4.61,
       "red": true
     },
     "breadth": {
-      "price": 212.44,
+      "price": 212.68,
       "sma50": 214.75,
-      "diffPct": -1.07,
+      "diffPct": -0.96,
       "red": true
     },
     "credit": {
@@ -155,23 +155,23 @@
   },
   "bollinger": {
     "ticker": "SWDA.L",
-    "price": 10642.0,
-    "upper": 11099.63,
-    "middle": 10806.0,
-    "lower": 10512.37,
-    "percentB": 0.221,
-    "bandwidthPct": 5.43,
-    "returnedIntoBand": false
+    "price": 10600.0,
+    "upper": 11139.81,
+    "middle": 10771.9,
+    "lower": 10403.99,
+    "percentB": 0.266,
+    "bandwidthPct": 6.83,
+    "returnedIntoBand": true
   },
   "erholung": {
     "fearTurn": {
-      "value": 20.1,
+      "value": 17.4,
       "min10": 15.9,
       "green": false
     },
     "vixCurve": {
-      "vix": 25.94,
-      "vix3m": 24.78,
+      "vix": 27.75,
+      "vix3m": 25.9,
       "green": false
     },
     "credit": {
