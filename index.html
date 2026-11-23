@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <!-- ⚙️ VERSION: hier anpassen (Zürcher Zeit) -->
-<script>const APP_VERSION = "2026-11-20 | 22:25";</script>
+<script>const APP_VERSION = "2026-11-23 | 10:40";</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0B0E13">
@@ -89,11 +89,20 @@ button, input, select { font-family: inherit; }
 .ai-badge[data-state="ok"]::before   { background: var(--green); }
 .ai-badge[data-state="busy"]::before { background: var(--yellow); }
 .ai-badge[data-state="fail"]::before { background: var(--red); }
+.ai-badge[data-state="off"] { opacity: 0.6; }
+/* Schieber Gemini ein/aus (Klickfläche 44×28, sichtbar 34×20) */
+.switch { position: relative; width: 44px; height: 28px; margin: -4px -6px; background: none; border: none; padding: 0; cursor: pointer; flex-shrink: 0; }
+.switch::before { content: ""; position: absolute; left: 5px; top: 4px; width: 34px; height: 20px; border-radius: 999px; background: var(--line); transition: background 0.15s; }
+.switch::after { content: ""; position: absolute; left: 8px; top: 7px; width: 14px; height: 14px; border-radius: 999px; background: var(--muted); transition: left 0.15s, background 0.15s; }
+.switch[aria-checked="true"]::before { background: var(--green); }
+.switch[aria-checked="true"]::after { left: 22px; background: #fff; }
+.switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; border-radius: 999px; }
 
 /* Smiley-Reihe */
-.signals { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); column-gap: 4px; padding: 6px 4px; }
+.signals { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); column-gap: 3px; padding: 6px 3px; }
 .signal { background: none; border: none; color: var(--text); display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 2px 0; min-height: 44px; min-width: 0; cursor: pointer; }
-.signal__name { font-size: clamp(10px, 2.8vw, 12px); font-weight: 600; white-space: nowrap; }
+/* Name darf nur an &shy; umbrechen (Früh-warner); feste Höhe hält die Zeilen darunter auf einer Linie */
+.signal__name { font-size: clamp(10px, 2.7vw, 11.5px); font-weight: 600; line-height: 13px; height: 26px; display: flex; align-items: center; text-align: center; hyphens: manual; }
 .signal__src { font-size: clamp(10px, 2.6vw, 11px); color: var(--muted); white-space: nowrap; }
 .signal__value { font-size: 15px; font-weight: 700; height: 19px; line-height: 19px; }
 .signal__range { font-size: 11px; color: #AEB6C0; height: 14px; line-height: 14px; }
@@ -112,9 +121,10 @@ button, input, select { font-family: inherit; }
 .etf__chg { display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--muted); }
 .etf__chg[data-dir="down"] { color: var(--red-text); }
 .etf__chg[data-dir="up"]   { color: var(--green-text); }
+.etf__date { font-size: 10px; color: var(--muted); }
 
 /* Tabs */
-.tablist { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-bottom: 1px solid var(--line); }
+.tablist { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border-bottom: 1px solid var(--line); }
 .tab { background: none; border: none; min-height: 44px; padding: 0 2px; font-size: clamp(10px, 2.7vw, 12px); color: var(--muted); font-weight: 500; white-space: nowrap; cursor: pointer; }
 .tab[aria-selected="true"] { color: var(--text); font-weight: 700; box-shadow: inset 0 -2px 0 var(--accent); }
 .panel { padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 10px; }
@@ -184,6 +194,7 @@ button, input, select { font-family: inherit; }
     <h1>Markt-Cockpit</h1>
     <div class="live">
       <span class="live__row">
+        <button type="button" class="switch" id="aiSwitch" role="switch" aria-checked="true" aria-label="Gemini ein- oder ausschalten" title="Gemini ein/aus" data-action="ai-toggle"></button>
         <span class="ai-badge" id="aiBadge" data-state="idle" title="Gemini-Verbindung">Gemini</span>
         <span class="live__badge" id="liveBadge">–</span>
       </span>
@@ -232,11 +243,12 @@ const CONFIG = {
   workerUrl: "https://adm-dashboard-proxy-google-api.siciliano-735.workers.dev",
   refreshUrl: "",                       // URL des Workers "cockpit-refresh" eintragen; leer = nur neu laden
   refreshMinutes: 5,
-  staleMinutes: 90,                     // ältere Daten werden gelb markiert
+  staleMinutes: 90,                     // ältere Daten werden gelb markiert (bei offener Börse)
+  maxAgeHours: 24,                      // älter als das: immer gelb und "veraltet"
   bottomFinderUrl: "https://de.tradingview.com/script/9iof2PC9/",
   tradingViewUrl: "https://www.tradingview.com/chart/NQ4ANQk2/?symbol=LSE%3ASWDA",
   analysisMaxAgeMin: 180,              // höchstens alle 3 h neu analysieren, ausser die Lage ändert sich
-  storage: { gemini: "cockpit.gemini.v4", style: "analyseStyleLevel" },
+  storage: { gemini: "cockpit.gemini.v5", style: "analyseStyleLevel", aiOn: "cockpit.gemini.enabled" },   // v5: neuer Prompt (Zahlenformat)
 };
 
 // Ampel-Schwellen. level() liest: ab "yellow" gelb, ab "red" rot; lowerIsWorse kehrt die Richtung um.
@@ -277,6 +289,7 @@ const TABS = [
   { id: "ind",    label: "Indikatoren" },
   { id: "diag",   label: "Diagnose" },
   { id: "boll",   label: "Bollinger" },
+  { id: "frage",  label: "Frage" },
 ];
 
 const ETF_ICONS = { core: "globe", equal: "bars", emerging: "sprout" };
@@ -372,13 +385,13 @@ function fruehwarnerLevel(fw) {
   return reds >= 3 ? "red" : reds === 2 ? "yellow" : "green";
 }
 
-// Erholungs-Radar: 3 grün = Boden wahrscheinlich, 2 = erste Zeichen, sonst noch kein Boden
+// Erholungs-Radar: 3 grün = Boden wahrscheinlich, 2 = erste Zeichen, 0–1 = noch kein Boden (rot)
 function erholungLevel(er) {
   if (!er) return "none";
   const greens = ["fearTurn", "vixCurve", "credit"].filter((k) => er[k]?.green).length;
-  return greens >= 3 ? "green" : greens === 2 ? "yellow" : "none";
+  return greens >= 3 ? "green" : greens === 2 ? "yellow" : "red";
 }
-const ERHOLUNG_TEXT = { green: "Boden wahrscheinlich", yellow: "Erste Zeichen", none: "Noch kein Boden" };
+const ERHOLUNG_TEXT = { green: "Boden wahrscheinlich", yellow: "Erste Zeichen", red: "Noch kein Boden", none: "Keine Daten" };
 
 // Wellen-Modell: Phase aus Angst & Gier, Marktbreite und VIX
 function detectPhase(fg, breadth, vix) {
@@ -410,6 +423,16 @@ function diagnose(phase, fwLevel, erLevel) {
   return { level: "green", title: "Gesunder Trend", text: "Kein Handlungsbedarf." };
 }
 
+// "Mo 23.11." in Zürcher Zeit
+function dayDate(d) {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("de-CH", { timeZone: "Europe/Zurich", weekday: "short", day: "2-digit", month: "2-digit" })
+    .formatToParts(d).map((x) => [x.type, x.value]));
+  return `${p.weekday.replace(".", "")} ${p.day}.${p.month}.`;
+}
+
+// "2026-11-20" → "20.11."
+const isoToDayMonth = (iso) => (/^\d{4}-\d{2}-\d{2}$/.test(iso || "") ? `${iso.slice(8, 10)}.${iso.slice(5, 7)}.` : "");
+
 function marketClock(updatedIso, now = new Date()) {
   const ny = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
   const day = ny.getDay();
@@ -418,10 +441,11 @@ function marketClock(updatedIso, now = new Date()) {
   const zh = (d) => d.toLocaleTimeString("de-CH", { timeZone: "Europe/Zurich", hour: "2-digit", minute: "2-digit" });
   const updated = updatedIso ? new Date(updatedIso) : null;
   const ageMin = updated ? (now - updated) / 60000 : Infinity;
+  const tooOld = ageMin > CONFIG.maxAgeHours * 60;
   return {
     open,
-    stale: open && ageMin > CONFIG.staleMinutes,
-    label: updated ? `Stand ${zh(updated)}` : "Keine Daten",
+    stale: (open && ageMin > CONFIG.staleMinutes) || tooOld,
+    label: updated ? `Stand ${dayDate(updated)} ${zh(updated)}${tooOld ? " · veraltet" : ""}` : "Keine Daten",
   };
 }
 
@@ -473,14 +497,16 @@ function buildModel(m) {
   const signals = [
     { name: "Puls", src: "VIX", tab: "ind", value: fmt(vix, 1), range: "20 | 25", level: level(vix, T.vix), trend: trend(vix, s.vix?.prev) },
     { name: "Schutz", src: "Put/Call", tab: "ind", value: fmt(s.putCall?.value, 2), range: "0,6 | 0,8", level: level(s.putCall?.value, T.putCall), trend: trend(s.putCall?.value, s.putCall?.prev) },
-    { name: "Stimmung", src: "Angst&Gier", tab: "ind", value: isNum(fg) ? Math.round(fg) : "–", range: "0–100", level: fearGreedLevel(fg), trend: trend(fg, s.fearGreed?.prev, true) },
-    { name: "Frühwarner", src: "3 Signale", tab: "diag", lights: m.fruehwarner || {}, level: fwLevel, trend: "same" },
+    { name: "Stimmung", src: "Angst&Gier", tab: "ind", value: isNum(fg) ? Math.round(fg) : "–", range: "45 | 25", level: fearGreedLevel(fg), trend: trend(fg, s.fearGreed?.prev, true) },
+    { name: "Früh&shy;warner", src: "3 Signale", tab: "diag", lights: m.fruehwarner || {}, level: fwLevel, trend: "same" },
     { name: "Welle", src: "Elliott", tab: "diag", value: phase.code || "–", level: phaseLevel, trend: "same" },
+    { name: "Erholung", src: "3 Signale", tab: "diag", recovery: m.erholung || {}, level: erLevel, trend: "same", inOverall: false },
   ];
 
   return {
     raw: m, groups, signals, phase, phaseLevel, fwLevel, erLevel,
-    overall: overallLevel(signals.map((x) => x.level)),
+    // Gesamtampel wie bisher nur aus den fünf Warn-Smileys; Erholung zählt nicht mit
+    overall: overallLevel(signals.filter((x) => x.inOverall !== false).map((x) => x.level)),
     diag: diagnose(phase.code, fwLevel, erLevel),
     clock: marketClock(m.updated),
   };
@@ -553,6 +579,14 @@ function geminiFacts(model) {
     angst_gier: m.sentiment?.fearGreed, vix: m.sentiment?.vix, put_call: m.sentiment?.putCall,
     cnn_teilindikatoren: m.sentiment?.parts, kurse: m.quotes, zinsen: m.rates,
     etfs: m.etfs, bollinger_swda: m.bollinger,
+    // So stehen die Werte in den Kacheln. Gemini soll genau diese Schreibweise verwenden.
+    anzeige: {
+      vix: fmt(m.sentiment?.vix?.value, 1), vix_vortag: fmt(m.sentiment?.vix?.prev, 1),
+      angst_gier: isNum(m.sentiment?.fearGreed?.value) ? String(Math.round(m.sentiment.fearGreed.value)) : "–",
+      angst_gier_vortag: isNum(m.sentiment?.fearGreed?.prev) ? String(Math.round(m.sentiment.fearGreed.prev)) : "–",
+      put_call: fmt(m.sentiment?.putCall?.value, 2),
+      sp500_veraenderung: fmtPct(m.quotes?.sp500?.changePct, 1),
+    },
   };
 }
 
@@ -569,6 +603,8 @@ REGELN:
 4. Rechtschreibung: Verwende IMMER die Umlaute ä, ö, ü, Ä, Ö, Ü – niemals ae, oe, ue als Ersatz.
    Verwende NIE das Zeichen ß, schreibe immer ss (Schweizer Rechtschreibung). Du-Form.
    Schreibe reinen Text: keine HTML-Codes wie &#228; oder &auml;, kein Markdown.
+5. Zahlen: Übernimm VIX, Angst & Gier, Put/Call und S&P-500-Veränderung exakt aus "anzeige"
+   (Dezimalkomma, gleiche Rundung). Alle übrigen Zahlen ebenfalls mit Dezimalkomma.
 
 Antworte NUR mit diesem JSON:
 {"fazit": "3–4 Sätze Fliesstext zur Gesamtlage inkl. wichtigster Veränderung zum Vortag",
@@ -589,6 +625,7 @@ async function getAnalysis(model, styleIdx) {
   const hit = cache[styleIdx];
   const fresh = hit && hit.key === situationKey(model) && Date.now() - hit.at < CONFIG.analysisMaxAgeMin * 60000;
   if (fresh) return hit.texts;
+  if (!ui.aiOn) return null;   // Schieber aus: keine Anfrage an Gemini
 
   let out;
   try {
@@ -653,16 +690,26 @@ function arrow(dir) {
 
 const dot = (lvl, label = "") => `<span class="dot" data-level="${lvl}"${label ? ` title="${esc(label)}"` : ""}></span>`;
 
-const GEMINI_STATUS_TEXT = { idle: "Gemini: noch nicht abgefragt", busy: "Gemini: Anfrage läuft", ok: "Gemini: erreichbar", fail: "Gemini: nicht erreichbar" };
+const GEMINI_STATUS_TEXT = { off: "Gemini: ausgeschaltet", idle: "Gemini: noch nicht abgefragt", busy: "Gemini: Anfrage läuft", ok: "Gemini: erreichbar", fail: "Gemini: nicht erreichbar" };
 let geminiBusy = 0;
 function setGeminiStatus(state) {
   if (state === "busy") geminiBusy++;
   else geminiBusy = Math.max(0, geminiBusy - 1);
-  const shown = geminiBusy > 0 ? "busy" : state;
+  const shown = geminiBusy > 0 ? "busy" : ui.aiOn ? state : "off";
   const el = $("aiBadge");
   el.dataset.state = shown;
   el.title = GEMINI_STATUS_TEXT[shown];
   el.setAttribute("aria-label", GEMINI_STATUS_TEXT[shown]);
+}
+
+function renderAiSwitch() {
+  $("aiSwitch").setAttribute("aria-checked", String(ui.aiOn));
+  if (geminiBusy === 0) {
+    const state = ui.aiOn ? "idle" : "off";
+    $("aiBadge").dataset.state = state;
+    $("aiBadge").title = GEMINI_STATUS_TEXT[state];
+    $("aiBadge").setAttribute("aria-label", GEMINI_STATUS_TEXT[state]);
+  }
 }
 
 function renderHeader(model) {
@@ -680,12 +727,15 @@ function renderSignals(model) {
   $("overallBar").textContent = `Gesamt: ${LEVEL_TEXT[model.overall]}`;
   $("signalsCard").dataset.level = model.overall;
   const sig = (x) => (x ? (x.red ? "red" : "green") : "none");
+  const pos = (x) => (x ? (x.green ? "green" : "none") : "none");   // Erholung: grün oder grau
   $("signals").innerHTML = model.signals.map((s) => {
     const value = s.lights
       ? `<span class="lights">${dot(sig(s.lights.smallCaps), "Small Caps")}${dot(sig(s.lights.breadth), "Breite")}${dot(sig(s.lights.credit), "Kredit")}</span>`
+      : s.recovery
+      ? `<span class="lights">${dot(pos(s.recovery.fearTurn), "Angst dreht")}${dot(pos(s.recovery.vixCurve), "VIX entspannt")}${dot(pos(s.recovery.credit), "Kredit beruhigt")}</span>`
       : `<span class="signal__value num">${esc(s.value)}</span>`;
-    return `<button type="button" class="signal" data-tab="${s.tab}" aria-label="${s.name}: ${LEVEL_TEXT[s.level]}">
-      ${smiley(s.level)}<span class="signal__name">${s.name}</span><span class="signal__src">${s.src}</span>
+    return `<button type="button" class="signal" data-tab="${s.tab}" aria-label="${s.name.replace("&shy;", "")}: ${LEVEL_TEXT[s.level]}">
+      ${smiley(s.level, 32)}<span class="signal__name">${s.name}</span><span class="signal__src">${s.src}</span>
       ${value}<span class="signal__range num">${s.range || ""}</span>${arrow(s.trend)}</button>`;
   }).join("");
 }
@@ -729,6 +779,7 @@ function renderEtfs(model) {
       <span class="etf__name">${icon(ic)}${esc(e.name)}</span>
       <span class="etf__price num">${fmt(e.price, 2)}<span class="etf__cur"> ${esc(e.currency)}</span></span>
       <span class="etf__chg num" data-dir="${dir}">${arrow(dir === "up" ? "better" : dir === "down" ? "worse" : "same")}${fmtPct(e.changePct)}</span>
+      ${e.date ? `<span class="etf__date num">Kurs ${isoToDayMonth(e.date)}</span>` : ""}
     </div>`;
   }).join("");
 }
@@ -743,6 +794,7 @@ const ui = {
   answer: null,
   asking: false,
   style: Number.isInteger(store.get(CONFIG.storage.style)) ? store.get(CONFIG.storage.style) : 1,
+  aiOn: store.get(CONFIG.storage.aiOn) !== false,   // Standard: ein
 };
 
 function renderTabs() {
@@ -750,7 +802,9 @@ function renderTabs() {
     `<button type="button" class="tab" role="tab" data-tab="${t.id}" aria-selected="${t.id === ui.tab}">${t.label}</button>`).join("");
 }
 
-const analysisNote = () => ui.analysisState === "nodata"
+const analysisNote = () => ui.analysisState === "off"
+  ? `<p class="muted">Gemini ist ausgeschaltet. Du siehst die berechneten Werte.</p>`
+  : ui.analysisState === "nodata"
   ? `<p class="error-text">Noch keine Marktdaten. Starte auf GitHub unter Actions den Workflow „Marktdaten aktualisieren“.</p>`
   : ui.analysisState === "loading"
   ? `<p class="loading">Gemini formuliert die Analyse… (bis 60 Sekunden)</p>`
@@ -761,18 +815,20 @@ const PANELS = {
     const text = ui.analysis ? `<p>${esc(ui.analysis.fazit)}</p>` : `${analysisNote()}<p>${esc(model.diag.title)}. ${esc(model.diag.text)}</p>`;
     return `${text}
       <div class="block">
-        <h3>Frage an Gemini</h3>
-        <form class="ask" data-action="ask">
-          <input type="text" name="q" placeholder="z. B. Was bedeutet ein MOVE über 110?" aria-label="Frage an Gemini" ${ui.asking ? "disabled" : ""}>
-          <button type="submit" ${ui.asking ? "disabled" : ""}>Fragen</button>
-        </form>
-        ${ui.asking ? `<p class="loading">Gemini antwortet… (meist 15–30 Sekunden)</p>` : ui.answer ? `<p>${esc(ui.answer)}</p>` : ""}
-      </div>
-      <div class="block">
         <h3>Sprachniveau</h3>
         <div class="seg" role="group" aria-label="Sprachniveau">${STYLE_LEVELS.map((s, i) =>
           `<button type="button" data-style="${i}" aria-pressed="${i === ui.style}">${s.label}</button>`).join("")}</div>
       </div>`;
+  },
+
+  frage() {
+    if (!ui.aiOn) return `<h3>Frage an Gemini</h3><p class="muted">Gemini ist ausgeschaltet. Schalte es oben mit dem Schieber ein.</p>`;
+    return `<h3>Frage an Gemini</h3>
+      <form class="ask" data-action="ask">
+        <input type="text" name="q" placeholder="z. B. Was bedeutet ein MOVE über 110?" aria-label="Frage an Gemini" ${ui.asking ? "disabled" : ""}>
+        <button type="submit" ${ui.asking ? "disabled" : ""}>Fragen</button>
+      </form>
+      ${ui.asking ? `<p class="loading">Gemini antwortet… (meist 15–30 Sekunden)</p>` : ui.answer ? `<p>${esc(ui.answer)}</p>` : ""}`;
   },
 
   action() {
@@ -885,6 +941,13 @@ function renderAll(model) {
 function bindEvents() {
   document.addEventListener("click", (ev) => {
     if (ev.target.closest("[data-action='refresh']")) { manualRefresh(); return; }
+    if (ev.target.closest("[data-action='ai-toggle']")) {
+      ui.aiOn = !ui.aiOn;
+      store.set(CONFIG.storage.aiOn, ui.aiOn);
+      renderAiSwitch();
+      if (model?.raw?.updated) loadAnalysis(); else if (model) renderPanel(model);
+      return;
+    }
     const el = ev.target.closest("[data-tab], [data-group], [data-action='back'], [data-style]");
     if (!el || !model) return;
     if (el.dataset.tab) {
@@ -911,7 +974,7 @@ function bindEvents() {
     if (ev.target.dataset.action !== "ask") return;
     ev.preventDefault();
     const question = new FormData(ev.target).get("q")?.toString().trim();
-    if (!question || !model) return;
+    if (!question || !model || !ui.aiOn) return;
     ui.asking = true; renderPanel(model);
     try { ui.answer = await askQuestion(model, question, ui.style); }
     catch (err) { ui.answer = geminiErrorText(err); }
@@ -925,10 +988,10 @@ function bindEvents() {
 let model = null;
 
 async function loadAnalysis() {
-  ui.analysisState = "loading";
+  ui.analysisState = ui.aiOn ? "loading" : "off";
   try {
     ui.analysis = await getAnalysis(model, ui.style);
-    ui.analysisState = "ok";
+    ui.analysisState = ui.analysis ? "ok" : "off";
   } catch (err) {
     console.warn("[Cockpit] Gemini:", err);
     ui.analysisState = "error";
@@ -979,6 +1042,7 @@ async function manualRefresh() {
 }
 
 bindEvents();
+renderAiSwitch();
 refresh();
 setInterval(refresh, CONFIG.refreshMinutes * 60000);
 </script>
