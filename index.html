@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <!-- ⚙️ VERSION: hier anpassen (Zürcher Zeit) -->
-<script>const APP_VERSION = "2026-11-23 | 10:47";</script>
+<script>const APP_VERSION = "2026-11-23 | 10:51";</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0B0E13">
@@ -727,7 +727,7 @@ function renderSignals(model) {
   $("overallBar").textContent = `Gesamt: ${LEVEL_TEXT[model.overall]}`;
   $("signalsCard").dataset.level = model.overall;
   const sig = (x) => (x ? (x.red ? "red" : "green") : "none");
-  const pos = (x) => (x ? (x.green ? "green" : "none") : "none");   // Erholung: grün oder grau
+  const pos = (x) => (x ? (x.green ? "green" : "yellow") : "none");   // Erholung: grün = erfüllt, gelb = noch nicht, grau = keine Daten
   $("signals").innerHTML = model.signals.map((s) => {
     const value = s.lights
       ? `<span class="lights">${dot(sig(s.lights.smallCaps), "Small Caps")}${dot(sig(s.lights.breadth), "Breite")}${dot(sig(s.lights.credit), "Kredit")}</span>`
@@ -850,7 +850,7 @@ const PANELS = {
     const fw = model.raw.fruehwarner || {};
     const er = model.raw.erholung || {};
     const sig = (x) => (x ? (x.red ? "red" : "green") : "none");
-    const pos = (x) => (x ? (x.green ? "green" : "none") : "none");   // positive Signale: grün oder grau
+    const pos = (x) => (x ? (x.green ? "green" : "yellow") : "none");   // Erholung: grün = erfüllt, gelb = noch nicht, grau = keine Daten
     const kv = (lvl, a, b) => `<div class="kv">${dot(lvl)}<span>${a}</span><span class="num">${b}</span></div>`;
     const ph = model.phase.code ? PHASES[model.phase.code] : null;
     return `
