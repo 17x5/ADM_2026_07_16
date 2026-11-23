@@ -116,7 +116,8 @@ def load_etfs() -> dict:
     for key, cfg in ETFS.items():
         q = last_prev(cfg["ticker"], 3)
         out[key] = {"name": cfg["name"], "currency": cfg["currency"],
-                    "price": q["value"], "prevClose": q["prev"], "changePct": q["changePct"]}
+                    "price": q["value"], "prevClose": q["prev"], "changePct": q["changePct"],
+                    "date": q["date"]}
     return out
 
 
