@@ -1,10 +1,10 @@
 {
-  "updated": "2026-11-24T03:25+00:00",
+  "updated": "2026-11-24T06:04+00:00",
   "sentiment": {
     "fearGreed": {
       "value": 17.0,
-      "prev": 9.7,
-      "week": 31.1,
+      "prev": 17.0,
+      "week": 26.0,
       "rating": "extreme fear"
     },
     "vix": {
@@ -46,7 +46,6 @@
       }
     },
     "fearGreedHistory": [
-      23.5,
       34.2,
       20.0,
       24.4,
@@ -60,6 +59,7 @@
       29.9,
       15.9,
       18.6,
+      17.0,
       17.0
     ]
   },
@@ -77,21 +77,21 @@
       "date": "2026-11-23"
     },
     "gold": {
-      "value": 3630.4,
+      "value": 3631.7,
       "prev": 3651.4,
-      "changePct": -0.58,
+      "changePct": -0.54,
       "date": "2026-11-24"
     },
     "oil": {
-      "value": 80.29,
+      "value": 79.77,
       "prev": 80.17,
-      "changePct": 0.15,
+      "changePct": -0.5,
       "date": "2026-11-24"
     },
     "bitcoin": {
-      "value": 59815.8,
+      "value": 60386.52,
       "prev": 61161.91,
-      "changePct": -2.2,
+      "changePct": -1.27,
       "date": "2026-11-24"
     }
   },
