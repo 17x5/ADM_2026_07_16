@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <!-- ⚙️ VERSION: hier anpassen (Zürcher Zeit) -->
-<script>const APP_VERSION = "2026-11-24 | 18:00";</script>
+<script>const APP_VERSION = "2026-11-25 | 11:45";</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0B0E13">
@@ -120,7 +120,8 @@ button, input, select { font-family: inherit; }
 
 /* ETFs */
 .etfs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.etf { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+.etf { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; color: var(--text); text-decoration: none; }
+a.etf:active { border-color: var(--accent); }
 .etf__name { display: flex; align-items: center; gap: 3px; font-size: 11px; color: var(--muted); white-space: nowrap; max-width: 100%; overflow: hidden; }
 .etf__price { font-size: 15px; font-weight: 700; }
 .etf__cur { font-size: 11px; font-weight: 500; color: var(--muted); }
@@ -301,6 +302,10 @@ const TABS = [
 ];
 
 const ETF_ICONS = { core: "globe", equal: "bars", emerging: "sprout" };
+// Absprung zur Kursquelle (Yahoo Finance, gleiche Börse und Währung wie in data/market.json).
+// Fallback, falls market.json noch keinen Ticker enthält.
+const ETF_TICKERS = { core: "WRDUSW.SW", equal: "MWEQ.SW", emerging: "EIMI.SW" };
+const etfUrl = (ticker) => `https://finance.yahoo.com/quote/${encodeURIComponent(ticker)}/`;
 
 const STYLE_LEVELS = [
   { label: "Einsteiger", prompt: "Erkläre sehr einfach, ohne Fachbegriffe. Ein Alltagsvergleich ist erlaubt, darf aber kein Risiko verharmlosen." },
@@ -815,12 +820,13 @@ function renderEtfs(model) {
     const e = etfs[key];
     if (!e) return `<div class="etf"><span class="etf__name">${icon(ic)}–</span></div>`;
     const dir = e.changePct > 0 ? "up" : e.changePct < 0 ? "down" : "flat";
-    return `<div class="etf">
+    const ticker = e.ticker || ETF_TICKERS[key];
+    return `<a class="etf" href="${etfUrl(ticker)}" target="_blank" rel="noopener" aria-label="${esc(e.name)} auf Yahoo Finance öffnen (${esc(ticker)})">
       <span class="etf__name">${icon(ic)}${esc(e.name)}</span>
       <span class="etf__price num">${fmt(e.price, 2)}<span class="etf__cur"> ${esc(e.currency)}</span></span>
       <span class="etf__chg num" data-dir="${dir}">${arrow(dir === "up" ? "better" : dir === "down" ? "worse" : "same")}${fmtPct(e.changePct)}</span>
       ${e.date ? `<span class="etf__date num">Kurs ${isoToDayMonth(e.date)}</span>` : ""}
-    </div>`;
+    </a>`;
   }).join("");
 }
 
