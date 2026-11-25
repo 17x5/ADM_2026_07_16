@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <!-- ⚙️ VERSION: hier anpassen (Zürcher Zeit) -->
-<script>const APP_VERSION = "2026-11-25 | 11:45";</script>
+<script>const APP_VERSION = "2026-11-25 | 11:52";</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0B0E13">
@@ -943,7 +943,11 @@ const PANELS = {
       <div class="kv">${dot(zone.lvl)}<span class="verdict" data-level="${zone.lvl}">${zone.t}</span><span></span></div>
       <p>${zone.d}</p>
       <div class="kv">${dot("none")}<span>Schwankung</span><span>${swing} (${fmt(b.bandwidthPct, 1)} %)</span></div>
-      ${b.returnedIntoBand ? `<div class="kv">${dot("green")}<span>Zurück im üblichen Bereich</span><span>positives Zeichen</span></div>` : ""}
+      ${b.returnedIntoBand
+        ? (isNum(b.price) && isNum(b.middle) && b.price > b.middle
+          ? `<div class="kv">${dot("green")}<span>Erholung bestätigt</span><span>über 20-Tage-Schnitt</span></div>`
+          : `<div class="kv">${dot("yellow")}<span>Erstes Erholungszeichen</span><span>zurück im Band</span></div>`)
+        : ""}
       <a class="button-link" href="${CONFIG.tradingViewUrl}" target="_blank" rel="noopener">Chart in TradingView öffnen ↗</a>`;
   },
 };
