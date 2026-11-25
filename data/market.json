@@ -1,15 +1,15 @@
 {
-  "updated": "2026-11-25T04:54+00:00",
+  "updated": "2026-11-25T10:45+00:00",
   "sentiment": {
     "fearGreed": {
-      "value": 17.4,
-      "prev": 17.0,
-      "week": 26.0,
+      "value": 15.6,
+      "prev": 17.4,
+      "week": 29.9,
       "rating": "extreme fear"
     },
     "vix": {
-      "value": 26.36,
-      "prev": 26.62
+      "value": 29.3,
+      "prev": 26.36
     },
     "putCall": {
       "value": 0.903,
@@ -21,11 +21,11 @@
         "rating": "extreme fear"
       },
       "stock_price_strength": {
-        "score": 28.4,
+        "score": 29.2,
         "rating": "fear"
       },
       "stock_price_breadth": {
-        "score": 16.6,
+        "score": 17.0,
         "rating": "extreme fear"
       },
       "put_call_options": {
@@ -33,11 +33,11 @@
         "rating": "extreme fear"
       },
       "market_volatility_vix": {
-        "score": 42.9,
+        "score": 29.1,
         "rating": "fear"
       },
       "junk_bond_demand": {
-        "score": 17.8,
+        "score": 17.6,
         "rating": "extreme fear"
       },
       "safe_haven_demand": {
@@ -46,7 +46,6 @@
       }
     },
     "fearGreedHistory": [
-      34.2,
       20.0,
       24.4,
       31.5,
@@ -60,7 +59,8 @@
       15.9,
       18.6,
       14.9,
-      17.4
+      15.6,
+      15.6
     ]
   },
   "quotes": {
@@ -77,21 +77,21 @@
       "date": "2026-11-24"
     },
     "gold": {
-      "value": 3546.5,
+      "value": 3557.4,
       "prev": 3561.9,
-      "changePct": -0.43,
+      "changePct": -0.13,
       "date": "2026-11-25"
     },
     "oil": {
-      "value": 80.73,
+      "value": 81.43,
       "prev": 82.05,
-      "changePct": -1.61,
+      "changePct": -0.76,
       "date": "2026-11-25"
     },
     "bitcoin": {
-      "value": 58994.29,
-      "prev": 61210.98,
-      "changePct": -3.62,
+      "value": 58851.91,
+      "prev": 59747.77,
+      "changePct": -1.5,
       "date": "2026-11-25"
     }
   },
@@ -112,26 +112,29 @@
     "core": {
       "name": "MSCI Core",
       "currency": "CHF",
-      "price": 36.265,
-      "prevClose": 35.255,
-      "changePct": 2.86,
-      "date": "2026-11-23"
+      "price": 35.2,
+      "prevClose": 35.575,
+      "changePct": -1.05,
+      "date": "2026-11-25",
+      "ticker": "WRDUSW.SW"
     },
     "equal": {
       "name": "MSCI Equal Weight",
       "currency": "CHF",
-      "price": 5.557,
-      "prevClose": 5.458,
-      "changePct": 1.81,
-      "date": "2026-11-23"
+      "price": 5.475,
+      "prevClose": 5.48,
+      "changePct": -0.09,
+      "date": "2026-11-25",
+      "ticker": "MWEQ.SW"
     },
     "emerging": {
       "name": "MSCI Emerging",
       "currency": "USD",
-      "price": 47.735,
-      "prevClose": 45.01,
-      "changePct": 6.05,
-      "date": "2026-11-23"
+      "price": 45.455,
+      "prevClose": 46.185,
+      "changePct": -1.58,
+      "date": "2026-11-25",
+      "ticker": "EIMI.SW"
     }
   },
   "fruehwarner": {
@@ -155,22 +158,22 @@
   },
   "bollinger": {
     "ticker": "SWDA.L",
-    "price": 10600.0,
-    "upper": 11139.81,
-    "middle": 10771.9,
-    "lower": 10403.99,
-    "percentB": 0.266,
-    "bandwidthPct": 6.83,
+    "price": 10375.0,
+    "upper": 11097.07,
+    "middle": 10709.0,
+    "lower": 10320.93,
+    "percentB": 0.07,
+    "bandwidthPct": 7.25,
     "returnedIntoBand": true
   },
   "erholung": {
     "fearTurn": {
-      "value": 17.4,
+      "value": 15.6,
       "min10": 14.9,
       "green": false
     },
     "vixCurve": {
-      "vix": 26.36,
+      "vix": 29.58,
       "vix3m": 25.47,
       "green": false
     },
