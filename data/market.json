@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-25T01:15+00:00",
+  "updated": "2026-11-25T04:54+00:00",
   "sentiment": {
     "fearGreed": {
       "value": 17.4,
@@ -77,21 +77,21 @@
       "date": "2026-11-24"
     },
     "gold": {
-      "value": 3541.9,
-      "prev": 3651.4,
-      "changePct": -3.0,
+      "value": 3546.5,
+      "prev": 3561.9,
+      "changePct": -0.43,
       "date": "2026-11-25"
     },
     "oil": {
-      "value": 81.69,
-      "prev": 80.17,
-      "changePct": 1.9,
+      "value": 80.73,
+      "prev": 82.05,
+      "changePct": -1.61,
       "date": "2026-11-25"
     },
     "bitcoin": {
-      "value": 59476.2,
+      "value": 58994.29,
       "prev": 61210.98,
-      "changePct": -2.83,
+      "changePct": -3.62,
       "date": "2026-11-25"
     }
   },
@@ -136,15 +136,15 @@
   },
   "fruehwarner": {
     "smallCaps": {
-      "price": 265.74,
-      "sma50": 277.82,
-      "diffPct": -4.35,
+      "price": 267.14,
+      "sma50": 277.46,
+      "diffPct": -3.72,
       "red": true
     },
     "breadth": {
-      "price": 212.82,
+      "price": 213.96,
       "sma50": 214.75,
-      "diffPct": -0.9,
+      "diffPct": -0.37,
       "red": true
     },
     "credit": {
