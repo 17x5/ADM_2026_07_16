@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-26T10:23+00:00",
+  "updated": "2026-11-26T12:47+00:00",
   "sentiment": {
     "fearGreed": {
       "value": 15.0,
@@ -77,21 +77,21 @@
       "date": "2026-11-25"
     },
     "gold": {
-      "value": 3592.6,
+      "value": 3599.2,
       "prev": 3535.8,
-      "changePct": 1.61,
+      "changePct": 1.79,
       "date": "2026-11-26"
     },
     "oil": {
-      "value": 83.81,
+      "value": 84.63,
       "prev": 83.68,
-      "changePct": 0.16,
+      "changePct": 1.14,
       "date": "2026-11-26"
     },
     "bitcoin": {
-      "value": 60733.07,
+      "value": 60833.73,
       "prev": 60378.2,
-      "changePct": 0.59,
+      "changePct": 0.75,
       "date": "2026-11-26"
     }
   },
@@ -112,27 +112,27 @@
     "core": {
       "name": "MSCI Core",
       "currency": "CHF",
-      "price": 35.8,
+      "price": 35.87,
       "prevClose": 34.71,
-      "changePct": 3.14,
+      "changePct": 3.34,
       "date": "2026-11-26",
       "ticker": "WRDUSW.SW"
     },
     "equal": {
       "name": "MSCI Equal Weight",
       "currency": "CHF",
-      "price": 5.544,
+      "price": 5.568,
       "prevClose": 5.415,
-      "changePct": 2.38,
+      "changePct": 2.83,
       "date": "2026-11-26",
       "ticker": "MWEQ.SW"
     },
     "emerging": {
       "name": "MSCI Emerging",
       "currency": "USD",
-      "price": 46.545,
+      "price": 46.6,
       "prevClose": 44.725,
-      "changePct": 4.07,
+      "changePct": 4.19,
       "date": "2026-11-26",
       "ticker": "EIMI.SW"
     }
@@ -158,12 +158,12 @@
   },
   "bollinger": {
     "ticker": "SWDA.L",
-    "price": 10520.0,
-    "upper": 11080.44,
-    "middle": 10679.45,
-    "lower": 10278.46,
-    "percentB": 0.301,
-    "bandwidthPct": 7.51,
+    "price": 10531.0,
+    "upper": 11080.14,
+    "middle": 10680.0,
+    "lower": 10279.86,
+    "percentB": 0.314,
+    "bandwidthPct": 7.49,
     "returnedIntoBand": true
   },
   "erholung": {
@@ -173,7 +173,7 @@
       "green": false
     },
     "vixCurve": {
-      "vix": 26.92,
+      "vix": 26.94,
       "vix3m": 26.29,
       "green": false
     },
