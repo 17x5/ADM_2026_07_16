@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-26T12:47+00:00",
+  "updated": "2026-11-26T16:20+00:00",
   "sentiment": {
     "fearGreed": {
       "value": 15.0,
@@ -77,21 +77,21 @@
       "date": "2026-11-25"
     },
     "gold": {
-      "value": 3599.2,
+      "value": 3601.0,
       "prev": 3535.8,
-      "changePct": 1.79,
+      "changePct": 1.84,
       "date": "2026-11-26"
     },
     "oil": {
-      "value": 84.63,
+      "value": 84.88,
       "prev": 83.68,
-      "changePct": 1.14,
+      "changePct": 1.43,
       "date": "2026-11-26"
     },
     "bitcoin": {
-      "value": 60833.73,
+      "value": 60536.06,
       "prev": 60378.2,
-      "changePct": 0.75,
+      "changePct": 0.26,
       "date": "2026-11-26"
     }
   },
@@ -112,9 +112,9 @@
     "core": {
       "name": "MSCI Core",
       "currency": "CHF",
-      "price": 35.87,
+      "price": 35.93,
       "prevClose": 34.71,
-      "changePct": 3.34,
+      "changePct": 3.51,
       "date": "2026-11-26",
       "ticker": "WRDUSW.SW"
     },
@@ -130,9 +130,9 @@
     "emerging": {
       "name": "MSCI Emerging",
       "currency": "USD",
-      "price": 46.6,
+      "price": 46.55,
       "prevClose": 44.725,
-      "changePct": 4.19,
+      "changePct": 4.08,
       "date": "2026-11-26",
       "ticker": "EIMI.SW"
     }
@@ -158,12 +158,12 @@
   },
   "bollinger": {
     "ticker": "SWDA.L",
-    "price": 10531.0,
-    "upper": 11080.14,
-    "middle": 10680.0,
-    "lower": 10279.86,
-    "percentB": 0.314,
-    "bandwidthPct": 7.49,
+    "price": 10544.0,
+    "upper": 11079.86,
+    "middle": 10680.65,
+    "lower": 10281.44,
+    "percentB": 0.329,
+    "bandwidthPct": 7.48,
     "returnedIntoBand": true
   },
   "erholung": {
@@ -173,7 +173,7 @@
       "green": false
     },
     "vixCurve": {
-      "vix": 26.94,
+      "vix": 26.62,
       "vix3m": 26.29,
       "green": false
     },
