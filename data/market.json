@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-25T21:33+00:00",
+  "updated": "2026-11-26T00:49+00:00",
   "sentiment": {
     "fearGreed": {
       "value": 15.2,
@@ -77,29 +77,29 @@
       "date": "2026-11-25"
     },
     "gold": {
-      "value": 3597.4,
+      "value": 3605.2,
       "prev": 3561.9,
-      "changePct": 1.0,
-      "date": "2026-11-25"
+      "changePct": 1.22,
+      "date": "2026-11-26"
     },
     "oil": {
-      "value": 84.18,
+      "value": 84.09,
       "prev": 82.05,
-      "changePct": 2.6,
-      "date": "2026-11-25"
+      "changePct": 2.49,
+      "date": "2026-11-26"
     },
     "bitcoin": {
-      "value": 60319.09,
+      "value": 60399.2,
       "prev": 59747.77,
-      "changePct": 0.96,
-      "date": "2026-11-25"
+      "changePct": 1.09,
+      "date": "2026-11-26"
     }
   },
   "rates": {
     "yieldCurve": {
-      "value": 0.28,
-      "prev": 0.29,
-      "date": "2026-11-24"
+      "value": 0.24,
+      "prev": 0.28,
+      "date": "2026-11-25"
     },
     "hySpread": {
       "value": 3.72,
@@ -112,28 +112,28 @@
     "core": {
       "name": "MSCI Core",
       "currency": "CHF",
-      "price": 34.71,
-      "prevClose": 35.575,
-      "changePct": -2.43,
-      "date": "2026-11-25",
+      "price": 35.575,
+      "prevClose": 36.265,
+      "changePct": -1.9,
+      "date": "2026-11-24",
       "ticker": "WRDUSW.SW"
     },
     "equal": {
       "name": "MSCI Equal Weight",
       "currency": "CHF",
-      "price": 5.415,
-      "prevClose": 5.48,
-      "changePct": -1.19,
-      "date": "2026-11-25",
+      "price": 5.48,
+      "prevClose": 5.557,
+      "changePct": -1.39,
+      "date": "2026-11-24",
       "ticker": "MWEQ.SW"
     },
     "emerging": {
       "name": "MSCI Emerging",
       "currency": "USD",
-      "price": 44.725,
-      "prevClose": 46.185,
-      "changePct": -3.16,
-      "date": "2026-11-25",
+      "price": 46.185,
+      "prevClose": 47.735,
+      "changePct": -3.25,
+      "date": "2026-11-24",
       "ticker": "EIMI.SW"
     }
   },
@@ -158,13 +158,13 @@
   },
   "bollinger": {
     "ticker": "SWDA.L",
-    "price": 10243.0,
-    "upper": 11116.58,
-    "middle": 10702.4,
-    "lower": 10288.22,
-    "percentB": -0.055,
-    "bandwidthPct": 7.74,
-    "returnedIntoBand": false
+    "price": 10417.0,
+    "upper": 11121.82,
+    "middle": 10741.7,
+    "lower": 10361.58,
+    "percentB": 0.073,
+    "bandwidthPct": 7.08,
+    "returnedIntoBand": true
   },
   "erholung": {
     "fearTurn": {
