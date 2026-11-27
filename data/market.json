@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-27T09:50+00:00",
+  "updated": "2026-11-27T12:16+00:00",
   "sentiment": {
     "fearGreed": {
       "value": 17.9,
@@ -8,7 +8,7 @@
       "rating": "extreme fear"
     },
     "vix": {
-      "value": 24.66,
+      "value": 25.1,
       "prev": 28.29
     },
     "putCall": {
@@ -77,21 +77,21 @@
       "date": "2026-11-25"
     },
     "gold": {
-      "value": 3707.9,
+      "value": 3695.9,
       "prev": 3535.8,
-      "changePct": 4.87,
+      "changePct": 4.53,
       "date": "2026-11-27"
     },
     "oil": {
-      "value": 85.92,
+      "value": 85.18,
       "prev": 83.68,
-      "changePct": 2.68,
+      "changePct": 1.79,
       "date": "2026-11-27"
     },
     "bitcoin": {
-      "value": 61585.67,
+      "value": 61564.98,
       "prev": 60494.71,
-      "changePct": 1.8,
+      "changePct": 1.77,
       "date": "2026-11-27"
     }
   },
@@ -112,27 +112,27 @@
     "core": {
       "name": "MSCI Core",
       "currency": "CHF",
-      "price": 36.44,
+      "price": 36.215,
       "prevClose": 35.9,
-      "changePct": 1.5,
+      "changePct": 0.88,
       "date": "2026-11-27",
       "ticker": "WRDUSW.SW"
     },
     "equal": {
       "name": "MSCI Equal Weight",
       "currency": "CHF",
-      "price": 5.61,
+      "price": 5.618,
       "prevClose": 5.559,
-      "changePct": 0.92,
+      "changePct": 1.06,
       "date": "2026-11-27",
       "ticker": "MWEQ.SW"
     },
     "emerging": {
       "name": "MSCI Emerging",
       "currency": "USD",
-      "price": 47.58,
+      "price": 47.455,
       "prevClose": 46.54,
-      "changePct": 2.23,
+      "changePct": 1.97,
       "date": "2026-11-27",
       "ticker": "EIMI.SW"
     }
@@ -158,12 +158,12 @@
   },
   "bollinger": {
     "ticker": "SWDA.L",
-    "price": 10650.0,
-    "upper": 11069.06,
-    "middle": 10672.3,
-    "lower": 10275.54,
-    "percentB": 0.472,
-    "bandwidthPct": 7.44,
+    "price": 10606.0,
+    "upper": 11067.82,
+    "middle": 10670.1,
+    "lower": 10272.38,
+    "percentB": 0.419,
+    "bandwidthPct": 7.45,
     "returnedIntoBand": true
   },
   "erholung": {
@@ -173,7 +173,7 @@
       "green": false
     },
     "vixCurve": {
-      "vix": 24.59,
+      "vix": 25.46,
       "vix3m": 26.29,
       "green": true
     },
