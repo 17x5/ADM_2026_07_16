@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <!-- ⚙️ VERSION: hier anpassen (Zürcher Zeit) -->
-<script>const APP_VERSION = "2026-11-25 | 14:40";</script>
+<script>const APP_VERSION = "2026-11-27 | 11:00";</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0B0E13">
@@ -29,6 +29,7 @@
   --green-text: #7FCB8A;
   --violet: #D2B4FF;
   --blue: #4F8FE0;
+  --frame: #2A4A7A;
   --neutral: #6B7480;
   --radius: 14px;
   --gap: 10px;
@@ -50,7 +51,7 @@ button, input, select { font-family: inherit; }
 /* ════════════════════════════════════════════════════════════
    3. KOMPONENTEN
    ════════════════════════════════════════════════════════════ */
-.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.card { background: var(--card); border: 1px solid var(--frame); border-radius: var(--radius); overflow: hidden; }
 .card[data-level="green"]  { border: 1.5px solid var(--green); }
 .card[data-level="yellow"] { border: 1.5px solid var(--yellow); }
 .card[data-level="red"]    { border: 1.5px solid var(--red); }
@@ -69,7 +70,8 @@ button, input, select { font-family: inherit; }
 
 /* Kopfzeile */
 .header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.header h1 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.2px; white-space: nowrap; }
+.header h1 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.2px; white-space: nowrap;
+  border: 1px solid var(--frame); border-radius: 10px; padding: 4px 12px; background: var(--card); }
 .info-row { display: flex; align-items: center; gap: 2px; white-space: nowrap; }
 .refresh { background: none; border: none; color: var(--accent); width: 40px; height: 40px; margin: -10px -2px -10px -10px; display: flex; align-items: center; justify-content: center; border-radius: 10px; cursor: pointer; }
 .refresh:disabled { color: var(--muted); cursor: default; }
@@ -120,7 +122,7 @@ button, input, select { font-family: inherit; }
 
 /* ETFs */
 .etfs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.etf { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; color: var(--text); text-decoration: none; }
+.etf { background: var(--card); border: 1px solid var(--frame); border-radius: 12px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; color: var(--text); text-decoration: none; }
 a.etf:active { border-color: var(--accent); }
 .etf__name { display: flex; align-items: center; gap: 3px; font-size: 11px; color: var(--muted); white-space: nowrap; max-width: 100%; overflow: hidden; }
 .etf__price { font-size: 15px; font-weight: 700; }
@@ -137,6 +139,7 @@ a.etf:active { border-color: var(--accent); }
 .panel { padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 10px; }
 .panel p { margin: 0; font-size: 14px; line-height: 1.45; }
 .panel h3 { margin: 0; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+.panel h3.plain { text-transform: none; letter-spacing: 0; font-size: 12px; }
 .block { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--line); padding-top: 8px; }
 .loading { color: var(--muted); font-size: 13px; }
 .error-text { color: var(--red-text); font-size: 13px; }
@@ -181,14 +184,27 @@ a.etf:active { border-color: var(--accent); }
 .boll__marker { position: absolute; top: -5px; width: 6px; height: 22px; margin-left: -3px; border-radius: 3px; background: var(--text); box-shadow: 0 0 0 2px var(--bg); }
 .boll__labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
 .button-link { font-size: 14px; font-weight: 600; text-align: center; border: 1px solid #2E3640; border-radius: 10px; padding: 12px; text-decoration: none; display: block; }
-.seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-.seg button { background: none; border: none; color: var(--muted); font-size: 12px; min-height: 36px; cursor: pointer; }
-.seg button[aria-pressed="true"] { background: var(--line); color: var(--text); font-weight: 600; }
+.seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.seg button { background: none; border: 1px solid var(--c); border-radius: 10px; color: var(--muted); font-size: 12px; min-height: 36px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: color-mix(in srgb, var(--c) 22%, transparent); color: var(--text); font-weight: 600; }
+.seg button[data-style="0"] { --c: var(--green); }
+.seg button[data-style="1"] { --c: var(--yellow); }
+.seg button[data-style="2"] { --c: var(--red); }
 .ask { display: flex; gap: 8px; }
 .ask input { flex: 1; min-width: 0; background: var(--card-inset); border: 1px solid var(--line); border-radius: 10px; color: var(--text); font-size: 14px; padding: 10px 12px; min-height: 44px; }
 .ask input:focus { outline: none; border-color: var(--accent); }
 .ask button { background: var(--line); border: none; border-radius: 10px; color: var(--text); font-size: 13px; font-weight: 600; padding: 0 14px; min-height: 44px; cursor: pointer; }
 .ask button:disabled, .ask input:disabled { opacity: 0.5; }
+
+.header h1 { display: flex; align-items: center; gap: 8px; }
+.logo { width: 22px; height: 22px; border-radius: 5px; }
+#appTitle span { transition: color 0.3s; }
+#appTitle[data-level="green"]  span { color: var(--green-text); }
+#appTitle[data-level="yellow"] span { color: var(--yellow); }
+#appTitle[data-level="red"]    span { color: var(--red-text); }
+#appTitle[data-level="green"]  { border-color: var(--green); }
+#appTitle[data-level="yellow"] { border-color: var(--yellow); }
+#appTitle[data-level="red"]    { border-color: var(--red); }
 
 /* Fusszeile */
 .footer { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); padding: 0 4px; }
@@ -198,7 +214,7 @@ a.etf:active { border-color: var(--accent); }
 <main class="app">
 
   <header class="header">
-    <h1>Markt-Cockpit</h1>
+    <h1 id="appTitle"><img class="logo" src="favicon.png" alt="" onerror="this.remove()"><span>Markt-Cockpit</span></h1>
     <div class="live">
       <span class="live__row">
         <button type="button" class="switch" id="aiSwitch" role="switch" aria-checked="true" aria-label="Gemini ein- oder ausschalten" title="Gemini ein/aus" data-action="ai-toggle"></button>
@@ -771,6 +787,7 @@ function renderSignals(model) {
   $("overallBar").dataset.level = model.overall;
   $("overallBar").textContent = `Gesamt: ${LEVEL_TEXT[model.overall]}`;
   $("signalsCard").dataset.level = model.overall;
+  $("appTitle").dataset.level = model.overall;
   const sig = (x) => (x ? (x.red ? "red" : "green") : "none");
   const pos = (x) => (x ? (x.green ? "green" : "yellow") : "none");   // Erholung: grün = erfüllt, gelb = noch nicht, grau = keine Daten
   $("signals").innerHTML = model.signals.map((s) => {
@@ -862,7 +879,7 @@ const PANELS = {
     const text = ui.analysis ? `<p>${esc(ui.analysis.fazit)}</p>` : `${analysisNote()}<p>${esc(model.diag.title)}. ${esc(model.diag.text)}</p>`;
     return `${text}
       <div class="block">
-        <h3>Sprachniveau</h3>
+        <h3 class="plain">Sprachniveau</h3>
         <div class="seg" role="group" aria-label="Sprachniveau">${STYLE_LEVELS.map((s, i) =>
           `<button type="button" data-style="${i}" aria-pressed="${i === ui.style}">${s.label}</button>`).join("")}</div>
       </div>`;
