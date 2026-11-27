@@ -2,12 +2,15 @@
 <html lang="de">
 <head>
 <!-- ⚙️ VERSION: hier anpassen (Zürcher Zeit) -->
-<script>const APP_VERSION = "2026-11-27 | 13:33";</script>
+<script>const APP_VERSION = "2026-11-27 | 14:32";</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0B0E13">
 <link rel="icon" type="image/png" href="favicon.png">
 <title>Markt-Cockpit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&display=swap">
 <style>
 /* ════════════════════════════════════════════════════════════
    1. DESIGN-TOKENS
@@ -197,18 +200,21 @@ a.etf:active { border-color: var(--accent); }
 .ask button:disabled, .ask input:disabled { opacity: 0.5; }
 
 .header h1 { display: flex; align-items: center; gap: 8px; }
-.logo { width: 22px; height: 22px; border-radius: 5px; }
-#appTitle span { transition: color 0.3s; }
-#appTitle[data-level="green"]  span { color: var(--green); }
-#appTitle[data-level="yellow"] span { color: var(--yellow); }
-#appTitle[data-level="red"]    span { color: var(--red); }
+/* Schriftzug Poster: MARKT senkrecht in Ampelfarben, COCKPIT in der Farbe der Gesamtampel */
+.wm { display: flex; align-items: center; gap: 4px; line-height: 1; }
+.wm__top { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 9.5px; font-weight: 800; letter-spacing: 0.28em;
+  background: linear-gradient(to top, var(--red) 0 36%, var(--yellow) 36% 64%, var(--green) 64% 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent; }
+.wm__main { --lv: var(--text); font-family: Anton, Impact, "Arial Narrow", sans-serif; font-weight: 400; font-size: 36px; letter-spacing: 1px; line-height: 0.95;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--lv) 55%, #fff), var(--lv) 55%, color-mix(in srgb, var(--lv) 65%, #000));
+  -webkit-background-clip: text; background-clip: text; color: transparent; }
+#appTitle[data-level="green"]  .wm__main { --lv: var(--green); }
+#appTitle[data-level="yellow"] .wm__main { --lv: var(--yellow); }
+#appTitle[data-level="red"]    .wm__main { --lv: var(--red); }
 
 /* Kopfzeile auf schmalen Handys: Titel darf schrumpfen, rechte Seite kompakter */
 .header h1 { min-width: 0; flex-shrink: 1; }
-/* Titel zweizeilig, Logo über beide Zeilen */
-#appTitle { font-size: 19px; line-height: 1.1; }
-#appTitle .logo { width: 28px; height: 28px; border-radius: 6px; }
-@media (max-width: 380px) { #appTitle { gap: 6px; } #appTitle .logo { width: 26px; height: 26px; } }
+@media (max-width: 380px) { .wm__main { font-size: 33px; } }
 .live { flex-shrink: 0; }
 @media (max-width: 420px) {
   .header { gap: 6px; }
@@ -225,7 +231,7 @@ a.etf:active { border-color: var(--accent); }
 <main class="app">
 
   <header class="header">
-    <h1 id="appTitle"><img class="logo" src="favicon.png" alt="" onerror="this.remove()"><span>Markt-<br>Cockpit</span></h1>
+    <h1 id="appTitle" aria-label="Markt-Cockpit"><span class="wm" aria-hidden="true"><span class="wm__top">MARKT</span><span class="wm__main">COCKPIT</span></span></h1>
     <div class="live">
       <span class="live__row">
         <button type="button" class="switch" id="aiSwitch" role="switch" aria-checked="true" aria-label="Gemini ein- oder ausschalten" title="Gemini ein/aus" data-action="ai-toggle"></button>
