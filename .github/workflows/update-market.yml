@@ -4,8 +4,8 @@ name: Marktdaten aktualisieren
 # Ein Lauf, ein Commit, ein Pages-Deploy statt fünf.
 on:
   schedule:
-    - cron: "*/30 6-21 * * 1-5"   # alle 30 Min, Mo–Fr, 6–21 Uhr UTC
-    - cron: "15 22 * * 1-5"       # Schlusswerte nach US-Börsenschluss
+    - cron: "*/30 7-20 * * 1-5"   # alle 30 Min, 07:00–20:30 UTC
+    - cron: "15 21 * * 1-5"       # Schlusswerte US
   workflow_dispatch: {}
 
 permissions:
