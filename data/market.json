@@ -1,19 +1,19 @@
 {
-  "updated": "2026-11-27T12:16+00:00",
+  "updated": "2026-11-27T13:48+00:00",
   "sentiment": {
     "fearGreed": {
-      "value": 17.9,
+      "value": 20.2,
       "prev": 15.6,
       "week": 18.6,
       "rating": "extreme fear"
     },
     "vix": {
-      "value": 25.1,
+      "value": 25.44,
       "prev": 28.29
     },
     "putCall": {
-      "value": 0.917,
-      "prev": 0.903
+      "value": 0.843,
+      "prev": 0.917
     },
     "parts": {
       "market_momentum_sp500": {
@@ -29,7 +29,7 @@
         "rating": "extreme fear"
       },
       "put_call_options": {
-        "score": 7.0,
+        "score": 23.6,
         "rating": "extreme fear"
       },
       "market_volatility_vix": {
@@ -58,9 +58,9 @@
       18.6,
       14.9,
       11.0,
-      17.9,
-      17.9,
-      17.9
+      20.2,
+      20.2,
+      20.2
     ]
   },
   "quotes": {
@@ -77,21 +77,21 @@
       "date": "2026-11-25"
     },
     "gold": {
-      "value": 3695.9,
+      "value": 3672.6,
       "prev": 3535.8,
-      "changePct": 4.53,
+      "changePct": 3.87,
       "date": "2026-11-27"
     },
     "oil": {
-      "value": 85.18,
+      "value": 84.67,
       "prev": 83.68,
-      "changePct": 1.79,
+      "changePct": 1.18,
       "date": "2026-11-27"
     },
     "bitcoin": {
-      "value": 61564.98,
+      "value": 61465.64,
       "prev": 60494.71,
-      "changePct": 1.77,
+      "changePct": 1.6,
       "date": "2026-11-27"
     }
   },
@@ -112,9 +112,9 @@
     "core": {
       "name": "MSCI Core",
       "currency": "CHF",
-      "price": 36.215,
+      "price": 36.315,
       "prevClose": 35.9,
-      "changePct": 0.88,
+      "changePct": 1.16,
       "date": "2026-11-27",
       "ticker": "WRDUSW.SW"
     },
@@ -130,9 +130,9 @@
     "emerging": {
       "name": "MSCI Emerging",
       "currency": "USD",
-      "price": 47.455,
+      "price": 47.52,
       "prevClose": 46.54,
-      "changePct": 1.97,
+      "changePct": 2.11,
       "date": "2026-11-27",
       "ticker": "EIMI.SW"
     }
@@ -158,22 +158,22 @@
   },
   "bollinger": {
     "ticker": "SWDA.L",
-    "price": 10606.0,
-    "upper": 11067.82,
-    "middle": 10670.1,
-    "lower": 10272.38,
-    "percentB": 0.419,
+    "price": 10621.8,
+    "upper": 11068.16,
+    "middle": 10670.89,
+    "lower": 10273.62,
+    "percentB": 0.438,
     "bandwidthPct": 7.45,
     "returnedIntoBand": true
   },
   "erholung": {
     "fearTurn": {
-      "value": 17.9,
+      "value": 20.2,
       "min10": 11.0,
       "green": false
     },
     "vixCurve": {
-      "vix": 25.46,
+      "vix": 25.45,
       "vix3m": 26.29,
       "green": true
     },
