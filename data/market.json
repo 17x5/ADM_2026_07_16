@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-26T22:12+00:00",
+  "updated": "2026-11-27T00:43+00:00",
   "sentiment": {
     "fearGreed": {
       "value": 15.0,
@@ -77,22 +77,22 @@
       "date": "2026-11-25"
     },
     "gold": {
-      "value": 3593.4,
+      "value": 3595.9,
       "prev": 3535.8,
-      "changePct": 1.63,
-      "date": "2026-11-26"
+      "changePct": 1.7,
+      "date": "2026-11-27"
     },
     "oil": {
-      "value": 84.91,
+      "value": 85.15,
       "prev": 83.68,
-      "changePct": 1.47,
-      "date": "2026-11-26"
+      "changePct": 1.76,
+      "date": "2026-11-27"
     },
     "bitcoin": {
-      "value": 60463.21,
+      "value": 60602.82,
       "prev": 60378.2,
-      "changePct": 0.14,
-      "date": "2026-11-26"
+      "changePct": 0.37,
+      "date": "2026-11-27"
     }
   },
   "rates": {
@@ -112,28 +112,28 @@
     "core": {
       "name": "MSCI Core",
       "currency": "CHF",
-      "price": 35.9,
-      "prevClose": 34.71,
-      "changePct": 3.43,
-      "date": "2026-11-26",
+      "price": 34.71,
+      "prevClose": 35.575,
+      "changePct": -2.43,
+      "date": "2026-11-25",
       "ticker": "WRDUSW.SW"
     },
     "equal": {
       "name": "MSCI Equal Weight",
       "currency": "CHF",
-      "price": 5.559,
-      "prevClose": 5.415,
-      "changePct": 2.66,
-      "date": "2026-11-26",
+      "price": 5.415,
+      "prevClose": 5.48,
+      "changePct": -1.19,
+      "date": "2026-11-25",
       "ticker": "MWEQ.SW"
     },
     "emerging": {
       "name": "MSCI Emerging",
       "currency": "USD",
-      "price": 46.54,
-      "prevClose": 44.725,
-      "changePct": 4.06,
-      "date": "2026-11-26",
+      "price": 44.725,
+      "prevClose": 46.185,
+      "changePct": -3.16,
+      "date": "2026-11-25",
       "ticker": "EIMI.SW"
     }
   },
@@ -158,13 +158,13 @@
   },
   "bollinger": {
     "ticker": "SWDA.L",
-    "price": 10527.0,
-    "upper": 11080.24,
-    "middle": 10679.8,
-    "lower": 10279.36,
-    "percentB": 0.309,
-    "bandwidthPct": 7.5,
-    "returnedIntoBand": true
+    "price": 10243.0,
+    "upper": 11116.58,
+    "middle": 10702.4,
+    "lower": 10288.22,
+    "percentB": -0.055,
+    "bandwidthPct": 7.74,
+    "returnedIntoBand": false
   },
   "erholung": {
     "fearTurn": {
