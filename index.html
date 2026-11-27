@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <!-- ⚙️ VERSION: hier anpassen (Zürcher Zeit) -->
-<script>const APP_VERSION = "2026-11-27 | 14:59";</script>
+<script>const APP_VERSION = "2026-11-27 | 15:11";</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0B0E13">
@@ -156,8 +156,8 @@ a.etf:active { border-color: var(--accent); }
 .action__title { font-size: 14px; font-weight: 600; }
 .action__text { font-size: 13px; color: #AEB6C0; line-height: 1.4; }
 
-.chips { display: flex; gap: 8px; flex-wrap: wrap; }
-.chip { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; background: var(--card-inset); border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px; }
+.chips { display: flex; gap: 5px; flex-wrap: nowrap; }   /* immer eine Zeile */
+.chip { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; background: var(--card-inset); border: 1px solid var(--line); border-radius: 999px; padding: 3px 8px; white-space: nowrap; min-width: 0; }
 .verdict { font-size: 15px; font-weight: 700; }
 .verdict[data-level="green"]  { color: var(--green-text); }
 .verdict[data-level="yellow"] { color: var(--yellow); }
