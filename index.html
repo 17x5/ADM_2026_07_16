@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <!-- ⚙️ VERSION: hier anpassen (Zürcher Zeit) -->
-<script>const APP_VERSION = "2026-11-27 | 13:25";</script>
+<script>const APP_VERSION = "2026-11-27 | 13:28";</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0B0E13">
@@ -205,12 +205,13 @@ a.etf:active { border-color: var(--accent); }
 
 /* Kopfzeile auf schmalen Handys: Titel darf schrumpfen, rechte Seite kompakter */
 .header h1 { min-width: 0; flex-shrink: 1; }
-#appTitle span { overflow: hidden; text-overflow: ellipsis; }
+/* Titel zweizeilig, Logo über beide Zeilen */
+#appTitle { font-size: 24px; line-height: 1.05; }
+#appTitle .logo { width: 34px; height: 34px; border-radius: 7px; }
+@media (max-width: 380px) { #appTitle { gap: 6px; } #appTitle .logo { width: 30px; height: 30px; } }
 .live { flex-shrink: 0; }
 @media (max-width: 420px) {
   .header { gap: 6px; }
-  .header h1 { font-size: clamp(18px, calc(10vw - 17px), 24px); gap: 6px; padding: 3px 0; }
-  .logo { width: 22px; height: 22px; }
   .live { font-size: 11px; }
   .live__row { gap: 6px; }
   .live__badge, .ai-badge { gap: 4px; }
@@ -224,7 +225,7 @@ a.etf:active { border-color: var(--accent); }
 <main class="app">
 
   <header class="header">
-    <h1 id="appTitle"><img class="logo" src="favicon.png" alt="" onerror="this.remove()"><span>Markt-Cockpit</span></h1>
+    <h1 id="appTitle"><img class="logo" src="favicon.png" alt="" onerror="this.remove()"><span>Markt-<br>Cockpit</span></h1>
     <div class="live">
       <span class="live__row">
         <button type="button" class="switch" id="aiSwitch" role="switch" aria-checked="true" aria-label="Gemini ein- oder ausschalten" title="Gemini ein/aus" data-action="ai-toggle"></button>
