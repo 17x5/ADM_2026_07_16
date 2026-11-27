@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-27T09:47+00:00",
+  "updated": "2026-11-27T09:50+00:00",
   "sentiment": {
     "fearGreed": {
       "value": 17.9,
@@ -77,21 +77,21 @@
       "date": "2026-11-25"
     },
     "gold": {
-      "value": 3706.6,
+      "value": 3707.9,
       "prev": 3535.8,
-      "changePct": 4.83,
+      "changePct": 4.87,
       "date": "2026-11-27"
     },
     "oil": {
-      "value": 85.87,
+      "value": 85.92,
       "prev": 83.68,
-      "changePct": 2.62,
+      "changePct": 2.68,
       "date": "2026-11-27"
     },
     "bitcoin": {
-      "value": 61626.89,
+      "value": 61585.67,
       "prev": 60494.71,
-      "changePct": 1.87,
+      "changePct": 1.8,
       "date": "2026-11-27"
     }
   },
@@ -130,9 +130,9 @@
     "emerging": {
       "name": "MSCI Emerging",
       "currency": "USD",
-      "price": 47.61,
+      "price": 47.58,
       "prevClose": 46.54,
-      "changePct": 2.3,
+      "changePct": 2.23,
       "date": "2026-11-27",
       "ticker": "EIMI.SW"
     }
@@ -158,11 +158,11 @@
   },
   "bollinger": {
     "ticker": "SWDA.L",
-    "price": 10649.0,
-    "upper": 11069.02,
-    "middle": 10672.25,
-    "lower": 10275.48,
-    "percentB": 0.471,
+    "price": 10650.0,
+    "upper": 11069.06,
+    "middle": 10672.3,
+    "lower": 10275.54,
+    "percentB": 0.472,
     "bandwidthPct": 7.44,
     "returnedIntoBand": true
   },
