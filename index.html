@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <!-- ⚙️ VERSION: hier anpassen (Zürcher Zeit) -->
-<script>const APP_VERSION = "2026-11-27 | 14:44";</script>
+<script>const APP_VERSION = "2026-11-27 | 14:47";</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0B0E13">
@@ -798,22 +798,8 @@ function renderHeader(model) {
   $("liveInfo").textContent = c.label;
   $("liveInfo").dataset.stale = c.stale;
   $("build").textContent = `Build ${APP_VERSION}`;
-  fitTitle();
 }
 
-// COCKPIT so gross wie möglich, aber nie breiter als der freie Platz neben der rechten Anzeige
-function fitTitle() {
-  const main = document.querySelector(".wm__main");
-  const live = document.querySelector(".live");
-  if (!main || !live) return;
-  const tooWide = () => main.getBoundingClientRect().right > live.getBoundingClientRect().left - 12;   // mind. 12 px Abstand
-  let size = 34;
-  main.style.fontSize = size + "px";
-  while (size > 20 && tooWide()) {
-    size -= 1;
-    main.style.fontSize = size + "px";
-  }
-}
 
 function renderSignals(model) {
   $("overallBar").dataset.level = model.overall;
@@ -1146,8 +1132,6 @@ async function manualRefresh() {
 }
 
 bindEvents();
-window.addEventListener("resize", fitTitle);
-document.fonts?.ready.then(fitTitle);   // nach dem Laden der Schrift Anton neu messen
 renderAiSwitch();
 refresh();
 setInterval(refresh, CONFIG.refreshMinutes * 60000);
