@@ -1,23 +1,23 @@
 {
-  "updated": "2026-11-27T17:44+00:00",
+  "updated": "2026-11-27T19:23+00:00",
   "sentiment": {
     "fearGreed": {
-      "value": 24.7,
+      "value": 24.8,
       "prev": 15.6,
       "week": 18.6,
       "rating": "extreme fear"
     },
     "vix": {
-      "value": 24.6,
+      "value": 23.81,
       "prev": 28.29
     },
     "putCall": {
-      "value": 0.865,
+      "value": 0.864,
       "prev": 0.917
     },
     "parts": {
       "market_momentum_sp500": {
-        "score": 7.6,
+        "score": 8.2,
         "rating": "extreme fear"
       },
       "stock_price_strength": {
@@ -29,7 +29,7 @@
         "rating": "fear"
       },
       "put_call_options": {
-        "score": 18.8,
+        "score": 19.0,
         "rating": "extreme fear"
       },
       "market_volatility_vix": {
@@ -37,11 +37,11 @@
         "rating": "neutral"
       },
       "junk_bond_demand": {
-        "score": 20.8,
+        "score": 19.2,
         "rating": "extreme fear"
       },
       "safe_haven_demand": {
-        "score": 17.4,
+        "score": 18.8,
         "rating": "extreme fear"
       }
     },
@@ -60,38 +60,38 @@
       11.0,
       20.9,
       21.3,
-      24.7
+      24.8
     ]
   },
   "quotes": {
     "sp500": {
-      "value": 7277.32,
+      "value": 7297.49,
       "prev": 7182.78,
-      "changePct": 1.32,
+      "changePct": 1.6,
       "date": "2026-11-27"
     },
     "move": {
-      "value": 95.31,
+      "value": 95.3,
       "prev": 97.54,
-      "changePct": -2.28,
+      "changePct": -2.29,
       "date": "2026-11-27"
     },
     "gold": {
-      "value": 3665.5,
+      "value": 3668.5,
       "prev": 3535.8,
-      "changePct": 3.67,
+      "changePct": 3.75,
       "date": "2026-11-27"
     },
     "oil": {
-      "value": 82.7,
+      "value": 83.12,
       "prev": 83.68,
-      "changePct": -1.17,
+      "changePct": -0.67,
       "date": "2026-11-27"
     },
     "bitcoin": {
-      "value": 59511.84,
+      "value": 59873.91,
       "prev": 60494.71,
-      "changePct": -1.62,
+      "changePct": -1.03,
       "date": "2026-11-27"
     }
   },
@@ -103,9 +103,9 @@
     },
     "hySpread": {
       "value": 3.77,
-      "prev": 3.72,
-      "date": "2026-11-25",
-      "sma50": 3.227
+      "prev": 3.77,
+      "date": "2026-11-26",
+      "sma50": 3.248
     }
   },
   "etfs": {
@@ -139,20 +139,20 @@
   },
   "fruehwarner": {
     "smallCaps": {
-      "price": 272.45,
-      "sma50": 276.9,
-      "diffPct": -1.61,
+      "price": 273.79,
+      "sma50": 276.93,
+      "diffPct": -1.13,
       "red": true
     },
     "breadth": {
-      "price": 217.85,
-      "sma50": 214.91,
-      "diffPct": 1.37,
+      "price": 218.38,
+      "sma50": 214.93,
+      "diffPct": 1.61,
       "red": false
     },
     "credit": {
       "value": 3.77,
-      "sma50": 3.227,
+      "sma50": 3.248,
       "red": true
     }
   },
@@ -168,18 +168,18 @@
   },
   "erholung": {
     "fearTurn": {
-      "value": 24.7,
+      "value": 24.8,
       "min10": 11.0,
       "green": false
     },
     "vixCurve": {
-      "vix": 24.55,
-      "vix3m": 24.25,
-      "green": false
+      "vix": 23.81,
+      "vix3m": 23.82,
+      "green": true
     },
     "credit": {
       "value": 3.77,
-      "sma10": 3.507,
+      "sma10": 3.564,
       "green": false
     }
   },
