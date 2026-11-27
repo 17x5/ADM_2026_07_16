@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <!-- ⚙️ VERSION: hier anpassen (Zürcher Zeit) -->
-<script>const APP_VERSION = "2026-11-27 | 14:50";</script>
+<script>const APP_VERSION = "2026-11-27 | 14:59";</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0B0E13">
@@ -220,6 +220,18 @@ a.etf:active { border-color: var(--accent); }
   .live { font-size: 11px; }
   .live__row { gap: 6px; }
   .live__badge, .ai-badge { gap: 4px; }
+}
+
+/* Sprungziel kurz hervorheben (Tipp auf einen Smiley) */
+/* 2x blinken, danach hinterlegt bleiben, bis man woanders hin tippt */
+.focused { background: color-mix(in srgb, var(--accent) 14%, transparent); border-radius: 8px; }
+.flash { animation: blink2 1.3s ease-in-out; }
+@keyframes blink2 {
+  0%, 20%  { background: color-mix(in srgb, var(--accent) 28%, transparent); }
+  30%, 45% { background: transparent; }
+  55%, 70% { background: color-mix(in srgb, var(--accent) 28%, transparent); }
+  80%      { background: transparent; }
+  100%     { background: color-mix(in srgb, var(--accent) 14%, transparent); }
 }
 
 /* Fusszeile */
@@ -543,12 +555,12 @@ function buildModel(m) {
   groups.forEach((g) => { g.level = groupLevel(g.rows.map((x) => x.level)); });
 
   const signals = [
-    { name: "Puls", src: "VIX", tab: "ind", value: fmt(vix, 1), range: "20 | 25", level: level(vix, T.vix), trend: trend(vix, s.vix?.prev) },
-    { name: "Schutz", src: "Put/Call", tab: "ind", value: fmt(s.putCall?.value, 2), range: "0,6 | 0,8", level: level(s.putCall?.value, T.putCall), trend: trend(s.putCall?.value, s.putCall?.prev) },
-    { name: "Stimmung", src: "Angst&Gier", tab: "ind", value: isNum(fg) ? Math.round(fg) : "–", range: "45 | 25", level: fearGreedLevel(fg), trend: trend(fg, s.fearGreed?.prev, true) },
-    { name: "Früh&shy;warner", src: "3 Signale", tab: "diag", lights: m.fruehwarner || {}, level: fwLevel, trend: "same" },
-    { name: "Welle", src: "Elliott", tab: "diag", value: phase.code || "–", level: phaseLevel, trend: "same" },
-    { name: "Erholung", src: "3 Signale", tab: "diag", recovery: m.erholung || {}, level: erLevel, trend: "same", inOverall: false },
+    { name: "Puls", src: "VIX", tab: "ind", group: "sentiment", focus: "VIX", value: fmt(vix, 1), range: "20 | 25", level: level(vix, T.vix), trend: trend(vix, s.vix?.prev) },
+    { name: "Schutz", src: "Put/Call", tab: "ind", group: "sentiment", focus: "Put/Call", value: fmt(s.putCall?.value, 2), range: "0,6 | 0,8", level: level(s.putCall?.value, T.putCall), trend: trend(s.putCall?.value, s.putCall?.prev) },
+    { name: "Stimmung", src: "Angst&Gier", tab: "ind", group: "sentiment", focus: "Angst & Gier", value: isNum(fg) ? Math.round(fg) : "–", range: "45 | 25", level: fearGreedLevel(fg), trend: trend(fg, s.fearGreed?.prev, true) },
+    { name: "Früh&shy;warner", src: "3 Signale", tab: "diag", focus: "fw", lights: m.fruehwarner || {}, level: fwLevel, trend: "same" },
+    { name: "Welle", src: "Elliott", tab: "diag", focus: "phase", value: phase.code || "–", level: phaseLevel, trend: "same" },
+    { name: "Erholung", src: "3 Signale", tab: "diag", focus: "er", recovery: m.erholung || {}, level: erLevel, trend: "same", inOverall: false },
   ];
 
   return {
@@ -814,7 +826,7 @@ function renderSignals(model) {
       : s.recovery
       ? `<span class="lights">${dot(pos(s.recovery.fearTurn), "Angst dreht")}${dot(pos(s.recovery.vixCurve), "VIX entspannt")}${dot(pos(s.recovery.credit), "Kredit beruhigt")}</span>`
       : `<span class="signal__value num">${esc(s.value)}</span>`;
-    return `<button type="button" class="signal" data-tab="${s.tab}" aria-label="${s.name.replace("&shy;", "")}: ${LEVEL_TEXT[s.level]}">
+    return `<button type="button" class="signal" data-tab="${s.tab}" data-open="${s.group || ""}" data-focus="${s.focus || ""}" aria-label="${s.name.replace("&shy;", "")}: ${LEVEL_TEXT[s.level]}">
       ${smiley(s.level, 32)}<span class="signal__name">${s.name}</span><span class="signal__src">${s.src}</span>
       ${value}<span class="signal__range num">${s.range || ""}</span>${arrow(s.trend)}</button>`;
   }).join("");
@@ -876,6 +888,7 @@ const ui = {
   asking: false,
   style: Number.isInteger(store.get(CONFIG.storage.style)) ? store.get(CONFIG.storage.style) : 1,
   aiOn: store.get(CONFIG.storage.aiOn) !== false,   // Standard: ein
+  focus: null,               // per Smiley angesprungener Wert (bleibt hinterlegt)
   geminiError: null,         // letzter Fehler: { at, summary, code, detail }
 };
 
@@ -943,17 +956,17 @@ const PANELS = {
       </div>
       <div class="verdict" data-level="${model.diag.level}">${esc(model.diag.title)}</div>
       <p class="muted">${esc(model.diag.text)}</p>
-      <div class="block"><h3>Frühwarner · vs. 50-Tage-Schnitt</h3>
+      <div class="block" data-focus-id="fw"><h3>Frühwarner · vs. 50-Tage-Schnitt</h3>
         ${kv(sig(fw.smallCaps), "Small Caps", fw.smallCaps ? fmtPct(fw.smallCaps.diffPct) : "–")}
         ${kv(sig(fw.breadth), "Marktbreite", fw.breadth ? fmtPct(fw.breadth.diffPct) : "–")}
         ${kv(sig(fw.credit), "Kredit-Spreads", fw.credit ? fmt(fw.credit.value, 2) + " %" : "–")}
       </div>
-      <div class="block"><h3>Erholungs-Radar · ${ERHOLUNG_TEXT[model.erLevel]}</h3>
+      <div class="block" data-focus-id="er"><h3>Erholungs-Radar · ${ERHOLUNG_TEXT[model.erLevel]}</h3>
         ${kv(pos(er.fearTurn), "Angst dreht", er.fearTurn ? `${fmt(er.fearTurn.value, 0)} (Tief ${fmt(er.fearTurn.min10, 0)})` : "–")}
         ${kv(pos(er.vixCurve), "VIX entspannt", er.vixCurve ? `${fmt(er.vixCurve.vix, 1)} vs. ${fmt(er.vixCurve.vix3m, 1)}` : "–")}
         ${kv(pos(er.credit), "Kredit beruhigt", er.credit ? `${fmt(er.credit.value, 2)} vs. ${fmt(er.credit.sma10, 2)}` : "–")}
       </div>
-      ${ph ? `<div class="block"><h3>Aktuelle Phase</h3>
+      ${ph ? `<div class="block" data-focus-id="phase"><h3>Aktuelle Phase</h3>
         <div class="phase" data-level="${ph.level}"><div class="phase__name">${esc(ph.name)}</div><div class="phase__desc">${esc(ph.desc)}</div></div></div>` : ""}`;
   },
 
@@ -1004,7 +1017,7 @@ function renderGroupDetail(model, id) {
   return `${back}
     <div class="kv">${dot(g.level)}<span><b>${esc(g.name)}</b></span><span></span></div>
     <div>${g.rows.map((r) => `
-      <div class="ind-row">${dot(r.level)}<span class="ind-row__name">${esc(r.name)}</span>
+      <div class="ind-row" data-focus-id="${esc(r.name)}">${dot(r.level)}<span class="ind-row__name">${esc(r.name)}</span>
         <span class="ind-row__val num">${esc(r.value)}</span>${arrow(r.trend)}
         <span class="ind-row__desc">${esc(r.desc)}</span></div>`).join("")}</div>
     ${fazit ? `<div class="kachel-fazit">${esc(fazit)}</div>` : ""}`;
@@ -1012,7 +1025,10 @@ function renderGroupDetail(model, id) {
 
 function renderPanel(model) {
   $("tabPanel").innerHTML = PANELS[ui.tab](model);
+  focusTarget()?.classList.add("focused");   // Hinterlegung bleibt auch nach dem Aktualisieren
 }
+
+const focusTarget = () => ui.focus ? $("tabPanel").querySelector(`[data-focus-id="${CSS.escape(ui.focus)}"]`) : null;
 
 function renderAll(model) {
   renderHeader(model);
@@ -1043,13 +1059,24 @@ function bindEvents() {
     if (el.dataset.tab) {
       ev.preventDefault();
       ui.tab = el.dataset.tab;
-      ui.group = null;
+      ui.group = el.dataset.open || null;      // Smiley: passende Kachel direkt öffnen
+      ui.focus = el.dataset.focus || null;     // Wert, der hinterlegt bleibt
       renderTabs();
-      if (!el.classList.contains("tab")) $("tabsCard").scrollIntoView({ behavior: "smooth", block: "start" });
+      renderPanel(model);
+      const target = focusTarget();
+      if (target) {                             // zum Wert springen, 2x blinken
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+        target.classList.add("flash");
+      } else if (!el.classList.contains("tab")) {
+        $("tabsCard").scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      return;
     } else if (el.dataset.group) {
       ui.group = el.dataset.group;
+      ui.focus = null;
     } else if (el.dataset.action === "back") {
       ui.group = null;
+      ui.focus = null;
     } else if (el.dataset.style) {
       if (Number(el.dataset.style) === ui.style) return;
       ui.style = Number(el.dataset.style);
