@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-27T00:43+00:00",
+  "updated": "2026-11-27T04:16+00:00",
   "sentiment": {
     "fearGreed": {
       "value": 15.0,
@@ -77,21 +77,21 @@
       "date": "2026-11-25"
     },
     "gold": {
-      "value": 3595.9,
+      "value": 3654.4,
       "prev": 3535.8,
-      "changePct": 1.7,
+      "changePct": 3.35,
       "date": "2026-11-27"
     },
     "oil": {
-      "value": 85.15,
+      "value": 85.75,
       "prev": 83.68,
-      "changePct": 1.76,
+      "changePct": 2.47,
       "date": "2026-11-27"
     },
     "bitcoin": {
-      "value": 60602.82,
+      "value": 61426.02,
       "prev": 60378.2,
-      "changePct": 0.37,
+      "changePct": 1.74,
       "date": "2026-11-27"
     }
   },
