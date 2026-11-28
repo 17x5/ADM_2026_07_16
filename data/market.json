@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-28T11:58+00:00",
+  "updated": "2026-11-28T12:15+00:00",
   "sentiment": {
     "fearGreed": {
       "value": 24.9,
@@ -89,9 +89,9 @@
       "date": "2026-11-27"
     },
     "bitcoin": {
-      "value": 59174.73,
+      "value": 59239.91,
       "prev": 59866.37,
-      "changePct": -1.16,
+      "changePct": -1.05,
       "date": "2026-11-28"
     }
   },
