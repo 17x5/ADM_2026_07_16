@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-28T03:19+00:00",
+  "updated": "2026-11-28T11:58+00:00",
   "sentiment": {
     "fearGreed": {
       "value": 24.9,
@@ -77,9 +77,9 @@
       "date": "2026-11-27"
     },
     "gold": {
-      "value": 3668.5,
+      "value": 3639.6,
       "prev": 3535.8,
-      "changePct": 3.75,
+      "changePct": 2.94,
       "date": "2026-11-27"
     },
     "oil": {
@@ -89,9 +89,9 @@
       "date": "2026-11-27"
     },
     "bitcoin": {
-      "value": 59901.96,
-      "prev": 60494.71,
-      "changePct": -0.98,
+      "value": 59174.73,
+      "prev": 59866.37,
+      "changePct": -1.16,
       "date": "2026-11-28"
     }
   },
@@ -112,28 +112,28 @@
     "core": {
       "name": "MSCI Core",
       "currency": "CHF",
-      "price": 35.9,
-      "prevClose": 34.71,
-      "changePct": 3.43,
-      "date": "2026-11-26",
+      "price": 36.265,
+      "prevClose": 35.9,
+      "changePct": 1.02,
+      "date": "2026-11-27",
       "ticker": "WRDUSW.SW"
     },
     "equal": {
       "name": "MSCI Equal Weight",
       "currency": "CHF",
-      "price": 5.559,
-      "prevClose": 5.415,
-      "changePct": 2.66,
-      "date": "2026-11-26",
+      "price": 5.63,
+      "prevClose": 5.559,
+      "changePct": 1.28,
+      "date": "2026-11-27",
       "ticker": "MWEQ.SW"
     },
     "emerging": {
       "name": "MSCI Emerging",
       "currency": "USD",
-      "price": 46.54,
-      "prevClose": 44.725,
-      "changePct": 4.06,
-      "date": "2026-11-26",
+      "price": 47.595,
+      "prevClose": 46.54,
+      "changePct": 2.27,
+      "date": "2026-11-27",
       "ticker": "EIMI.SW"
     }
   },
@@ -158,12 +158,12 @@
   },
   "bollinger": {
     "ticker": "SWDA.L",
-    "price": 10527.0,
-    "upper": 11080.24,
-    "middle": 10679.8,
-    "lower": 10279.36,
-    "percentB": 0.309,
-    "bandwidthPct": 7.5,
+    "price": 10618.0,
+    "upper": 11068.06,
+    "middle": 10670.7,
+    "lower": 10273.34,
+    "percentB": 0.434,
+    "bandwidthPct": 7.45,
     "returnedIntoBand": true
   },
   "erholung": {
